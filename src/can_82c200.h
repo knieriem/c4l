@@ -196,7 +196,11 @@ typedef struct canregs {
 } canregs_t;
 #endif
 
+#ifdef CAN_PORT_IO_INDIR
+#  define CAN_RANGE 0x02
+#else
 #define CAN_RANGE 0x20
+#endif
 
 #ifdef CAN_PELICANMODE
 /*--- Mode Register -------- PeliCAN -------------------*/

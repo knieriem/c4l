@@ -148,6 +148,8 @@
 
 # ifdef  CAN_PORT_IO
 #  define __CAN_TYPE__ _BUS_TYPE "PeliCAN-port I/O "
+# elif   CAN_PORT_IO_INDIR
+#  define __CAN_TYPE__ _BUS_TYPE "PeliCAN indirect port I/O "
 # else
 #  define __CAN_TYPE__ _BUS_TYPE "PeliCAN-memory mapped "
 # endif
@@ -156,6 +158,8 @@
 
 # ifdef  CAN_PORT_IO
 #  define __CAN_TYPE__ _BUS_TYPE "Philips-Basic-CAN port I/O "
+# elif   CAN_PORT_IO_INDIR
+#  define __CAN_TYPE__ _BUS_TYPE "Philips-Basic-CAN indirect port I/O "
 # else
 #  define __CAN_TYPE__ _BUS_TYPE "Philips-Basic-CAN memory mapped "
 # endif
@@ -568,7 +572,73 @@ extern int pcimod_scan(void);
 #define CANtest(bd,adr,m)	\
 	(inb((int) &((canregs_t *)Base[bd])->adr  ) & m )
 
-#else 	/* CAN_PORT_IO */
+#elif CAN_PORT_IO_INDIR
+
+/* using indirect port I/O with inb()/outb() for e.g. ADNP 1486 */
+
+/* read from CAN register `reg' */
+static inline unsigned char
+inreg(unsigned char reg, int base)
+{
+   unsigned char res;
+
+   unsigned long flags;
+
+   save_flags (flags);
+   cli();
+
+   outb (reg, base);
+   res = inb (base + 1);
+
+   restore_flags (flags);
+
+   return res;
+}
+
+/* write `val' to CAN register `reg' */
+static inline void
+outreg (unsigned char val, unsigned char reg, int base)
+{
+   unsigned long flags;
+
+#ifdef IODEBUG
+   unsigned char before = inreg(reg, base);
+#endif
+   save_flags (flags);
+   cli();
+
+   outb (reg, base);
+   outb (val, base + 1);
+
+   restore_flags (flags);
+
+#ifdef IODEBUG
+   printk ("CANoutreg@0x%03x: 0x%02x (0x%02x) <- 0x%02x (0x%02x)\n",
+	   base, reg, before, val, inreg (reg, base));
+#endif
+}
+
+/* get byte offset of `adr' within `canregs_t' structure */
+#define canregs_offs(adr) (&((canregs_t *) 0)->adr - (uint8 *) 0)
+
+#define canregs_spec(adr, bd) canregs_offs (adr), Base[bd]
+
+#define CANout(bd,adr,v) \
+    (outreg (v, canregs_spec (adr, bd)))
+
+#define CANin(bd,adr)    \
+    (inreg (canregs_spec (adr, bd)))
+
+#define CANset(bd,adr,m)	\
+    (outreg (inreg (canregs_spec (adr, bd)) | m, canregs_spec (adr, bd)))
+
+#define CANreset(bd,adr,m)	\
+    (outreg (inreg (canregs_spec (adr, bd)) & ~m, canregs_spec (adr, bd)))
+
+#define CANtest(bd,adr,m)	\
+    (inreg (canregs_spec (adr, bd)) & m)
+
+#else
 /* using memory acces with readb(), writeb() */
 /* #error  memory I/O access */
 /* #define can_base Base */

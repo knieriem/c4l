@@ -323,6 +323,8 @@ int index = 0;
 		printk("%02x ",
 #ifdef  CAN_PORT_IO
 		inb((int) (Base[minor] + index)) );
+#elif   CAN_PORT_IO_INDIR
+                ({outb (index, Base[minor]); inb (Base[minor] + 1);}) );
 #else
 		readb((u32) (can_base[minor] + index)) );
 #endif
