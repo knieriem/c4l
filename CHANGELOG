@@ -1,0 +1,64 @@
+2.6 - 2.5 had a very serious bug. Because of wrong index definitions into
+      the Sysctl array, it was possible to set the Base address and IRQ
+      to 0 when using the CPC-PCI board
+
+2.5 - removed bug in can_ioctl(); thanks to stefan.panwinkler@contec.at
+      Suport for Advantech Pcm-3680
+
+2.4 - because the driver must be compiled for a specific TARGET
+      now some "configuration" values are preset at compile time:
+      IOModel, Outc, VendOpt.
+      nevertheless, Outc can be overwritten
+    - Makefile checks for supported TARGET
+
+
+2.3 - /proc/sys/CAN/version now contains also the target name can4linux
+    is compiled for
+    - ioctl() get status returns additional the size and 
+      number of rx and tx messages in buffers
+    - improved tx buffer handling 
+    - Support I+ME PcSlimLine ISA card with SJA1000
+
+!!!!!!!!
+2.2 - may be somethg wrong with this version with the CPC-PCI support !!!!
+!!!!!Unterst.Controller: SJA1000
+     Karten: ATCANMINI_BASIC, ATCANMINI_PELICAN
+	CPC_PCI, IXXAT_PCI03
+ 
+2.1 - freigegeben
+     2.0 - (nicht released)
+     erste Version abgerüstet,
+     Übersetzbar ohne LDDK und nur für einen Controller-typ,
+     bzw. Kartentyp, Auswählbar zur Kompile-Zeit,
+     dadurch für embedded Systeme verwendbar (benötigt weniger Speicher)
+
+     Dokumentation als HTML, erzeugt mit Doxygen
+
+--------------------------------------------------------------------------
+1.4 - Anpassung Headerfiles an 2.4.18 - warnings beseitigt
+
+1.3 - Überarbeitung für 2.4.x
+    nur mit lddk 1.p4
+    jetzt sollte es wirklich gehen
+    (getestet mit 3*AT-CAN-MINI, )
+
+1.2 - aktuelle Bugbeseitigung für Bauer
+    nur mit lddk 1.p3
+    Übersetzbar auch auf neueren Kernel 2.4.4 (nicht für alle Rechner!)
+
+1.1 - Unterstützung für ELIMA
+     und alle Kernelversionen bis 2.3.x
+     (2.0, 2.2, 2.4.0)
+
+1.0p1 - Support für intel82527 verbessert, Bugbeseitigung
+    - Codebereinigung
+      (Arbeitet immer noch mit der gleichen LDDK Version wie 1.0)
+
+1.0 - erste stabile Version
+      unterstützt 82c200/sja100
+	  AT-CAN-MINI
+	  ....
+      unterstützt 82527
+	  CPC-XT
+
+

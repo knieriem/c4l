@@ -1,0 +1,161 @@
+.TH "can.h" 3 "15 Jun 2001" "can4linux" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+can.h \-  
+.SH SYNOPSIS
+.br
+.PP
+.SS "Data Structures"
+
+.in +1c
+.ti -1c
+.RI "struct \fBcanmsg_t\fP"
+.br
+.RI "\fIThe CAN message structure.\fP"
+.ti -1c
+.RI "struct \fBCommand_par\fP"
+.br
+.RI "\fIIOCTL Command request parameter structure.\fP"
+.ti -1c
+.RI "struct \fBConfig_par\fP"
+.br
+.RI "\fIIOCTL Configuration request parameter structure.\fP"
+.ti -1c
+.RI "struct \fBSend_par\fP"
+.br
+.RI "\fIIOCTL Send request parameter structure.\fP"
+.ti -1c
+.RI "struct \fBReceive_par\fP"
+.br
+.RI "\fIIOCTL Receive request parameter structure.\fP"
+.ti -1c
+.RI "struct \fBConfigureRTR_par\fP"
+.br
+.RI "\fIIOCTL ConfigureRTR request parameter structure.\fP"
+.in -1c
+.SS "Defines"
+
+.in +1c
+.ti -1c
+.RI "#define \fBCAN_MSG_LENGTH\fP   8"
+.br
+.RI "\fImaximum length of a CAN frame.\fP"
+.ti -1c
+.RI "#define \fBMSG_RTR\fP   (1<<0)"
+.br
+.RI "\fIRTR Message.\fP"
+.ti -1c
+.RI "#define \fBMSG_OVR\fP   (1<<1)"
+.br
+.RI "\fIMessage overflow error.\fP"
+.ti -1c
+.RI "#define \fBMSG_EXT\fP   (1<<2)"
+.br
+.RI "\fIextended message format.\fP"
+.ti -1c
+.RI "#define \fBMSG_PASSIVE\fP   (1<<4)"
+.br
+.RI "\fIcontroller in error passive.\fP"
+.ti -1c
+.RI "#define \fBMSG_ERR_MASK\fP   (MSG_OVR + MSG_PASSIVE)"
+.br
+.RI "\fImask used for detecting CAN errors in the \fBcanmsg_t\fP flags field.\fP"
+.ti -1c
+.RI "#define \fBCOMMAND\fP   0"
+.br
+.RI "\fIIOCTL command request.\fP"
+.ti -1c
+.RI "#define \fBCONFIG\fP   1"
+.br
+.RI "\fIIOCTL configuration request.\fP"
+.ti -1c
+.RI "#define \fBSEND\fP   2"
+.br
+.RI "\fIIOCTL request.\fP"
+.ti -1c
+.RI "#define \fBRECEIVE\fP   3"
+.br
+.RI "\fIIOCTL request.\fP"
+.ti -1c
+.RI "#define \fBCONFIGURERTR\fP   4"
+.br
+.RI "\fIIOCTL request.\fP"
+.ti -1c
+.RI "#define \fBCMD_START\fP   1"
+.br
+.RI "\fI---------- IOCTL Command subcommands.\fP"
+.ti -1c
+.RI "#define \fBCMD_STOP\fP   2"
+.br
+.ti -1c
+.RI "#define \fBCMD_RESET\fP   3"
+.br
+.ti -1c
+.RI "#define \fBCONF_ACCM\fP   0"
+.br
+.RI "\fI---------- IOCTL Configure targets.\fP"
+.ti -1c
+.RI "#define \fBCONF_ACCC\fP   1"
+.br
+.ti -1c
+.RI "#define \fBCONF_TIMING\fP   2"
+.br
+.ti -1c
+.RI "#define \fBCONF_OMODE\fP   3"
+.br
+.ti -1c
+.RI "#define \fBCONF_FILTER\fP   4"
+.br
+.ti -1c
+.RI "#define \fBCONF_FENABLE\fP   5"
+.br
+.ti -1c
+.RI "#define \fBCONF_FDISABLE\fP   6"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef struct \fBCommand_par\fP  \fBCommand_par_t\fP"
+.br
+.RI "\fIIOCTL Command request parameter structure.\fP"
+.ti -1c
+.RI "typedef struct \fBConfig_par\fP  \fBConfig_par_t\fP"
+.br
+.RI "\fIIOCTL Configuration request parameter structure.\fP"
+.ti -1c
+.RI "typedef struct \fBSend_par\fP  \fBSend_par_t\fP"
+.br
+.RI "\fIIOCTL Send request parameter structure.\fP"
+.ti -1c
+.RI "typedef struct \fBReceive_par\fP  \fBReceive_par_t\fP"
+.br
+.RI "\fIIOCTL Receive request parameter structure.\fP"
+.ti -1c
+.RI "typedef struct \fBConfigureRTR_par\fP  \fBConfigureRTR_par_t\fP"
+.br
+.RI "\fIIOCTL ConfigureRTR request parameter structure.\fP"
+.in -1c
+.SH "DETAILED DESCRIPTION"
+.PP 
+ 
+.PP
+\fBAuthor(s): \fP
+.in +1c
+Heinz-Jürgen Oertel, port GmbH 
+.PP
+\fBRevision: \fP
+.in +1c
+ 1.1.1.1  
+.PP
+\fBDate: \fP
+.in +1c
+ 2001/06/11 18:30:54 
+.PP
+can4linux interface definitions
+.PP
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for can4linux from the source code.

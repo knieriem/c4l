@@ -1,0 +1,47 @@
+.TH "canmsg_t" 3 "1 Dec 2002" "can4linux" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+canmsg_t \- The CAN message structure. 
+.SH SYNOPSIS
+.br
+.PP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "int \fBflags\fP"
+.br
+.RI "\fIflags, indicating or controlling special message properties\fP"
+.ti -1c
+.RI "int \fBcob\fP"
+.br
+.RI "\fICAN object number, used in Full CAN.\fP"
+.ti -1c
+.RI "unsigned long \fBid\fP"
+.br
+.RI "\fICAN message ID, 4 bytes.\fP"
+.ti -1c
+.RI "timeval \fBtimestamp\fP"
+.br
+.RI "\fItime stamp for received messages\fP"
+.ti -1c
+.RI "short int \fBlength\fP"
+.br
+.RI "\fInumber of bytes in the CAN message\fP"
+.ti -1c
+.RI "unsigned char \fBdata\fP [CAN_MSG_LENGTH]"
+.br
+.RI "\fIdata, 0...8 bytes\fP"
+.in -1c
+.SH "DETAILED DESCRIPTION"
+.PP 
+The CAN message structure.
+.PP
+Used for all data transfers between the application and the driver using read() or write(). 
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for can4linux from the source code.

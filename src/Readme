@@ -1,0 +1,27 @@
+
+is derived from the LLP projects can4linux driver
+
+the most of the ddl stuff is removed
+as is the support for supporting different chip-sets and i/o models.
+some useful macros are anyway used in this version
+like the Debug functions ( DBGin();DBGout();)
+or function parameters which do differ in different Linux kernel versions.
+Since version 2.3 ther is a new debug macro called 
+DEBUG_TTY(level, "some printf text");
+This macro, if level is > dbgMask, print some text onto the console
+of the application program (not via syslog to /var/log/messages ).
+
+the IO Model - is compiled in (that means it must be selected at compile time)
+
+CAN Chip functions
+are coded in the files can_<CHIP>funcs.c, e.g. can_82c200func.c
+Basic hardware access functions are in can_82c200funcs.c
+
+all I/O depencies are in the Macros
+    CANout(bd,adr,v)
+    CANin(bd,adr)
+    CANset(bd,adr,m)
+    CANreset(bd,adr,m)
+    CANtest(bd,adr,m)
+defined in can_defs.h
+

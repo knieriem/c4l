@@ -1,0 +1,51 @@
+.TH "CanSja1000Status_par" 3 "14 Sep 2001" "can4linux" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+CanSja1000Status_par \- IOCTL CAN controller status request parameter structure. 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <can.h>\fR
+.PP
+.SS Data Fields
+
+.in +1c
+.ti -1c
+.RI "unsigned int \fBbaud\fR"
+.br
+.RI "\fIactual bit rate.\fR"
+.ti -1c
+.RI "unsigned char \fBstatus\fR"
+.br
+.RI "\fICAN controller status register.\fR"
+.ti -1c
+.RI "unsigned int \fBerror_warning_limit\fR"
+.br
+.RI "\fIthe error warning limit.\fR"
+.ti -1c
+.RI "unsigned int \fBrx_errors\fR"
+.br
+.RI "\fIcontent of RX error counter.\fR"
+.ti -1c
+.RI "unsigned int \fBtx_errors\fR"
+.br
+.RI "\fIcontent of TX error counter.\fR"
+.ti -1c
+.RI "unsigned int \fBerror_code\fR"
+.br
+.RI "\fIcontent of error code register.\fR"
+.ti -1c
+.RI "unsigned long \fBretval\fR"
+.br
+.RI "\fIreturn value.\fR"
+.in -1c
+.SH DETAILED DESCRIPTION
+.PP 
+IOCTL CAN controller status request parameter structure.
+.PP
+
+
+.SH AUTHOR
+.PP 
+Generated automatically by Doxygen for can4linux from the source code.

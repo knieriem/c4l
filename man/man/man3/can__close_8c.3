@@ -1,0 +1,67 @@
+.TH "can_close.c" 3 "15 Jun 2001" "can4linux" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+can_close.c \-  
+.SH SYNOPSIS
+.br
+.PP
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef int \fBcloseret_t\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "closeret_t \fBcan_close\fP (__LDDK_CLOSE_PARAM)"
+.br
+.RI "\fIint close(int fd); close a file descriptor.\fP"
+.in -1c
+.SH "DETAILED DESCRIPTION"
+.PP 
+ 
+.PP
+\fBAuthor(s): \fP
+.in +1c
+Heinz-Jürgen Oertel, port GmbH 
+.PP
+\fBRevision: \fP
+.in +1c
+ 1.2  
+.PP
+\fBDate: \fP
+.in +1c
+ 2001/06/15 15:31:35 
+.PP
+.SH "FUNCTION DOCUMENTATION"
+.PP 
+.SS "closeret_t can_close (__LDDK_CLOSE_PARAM)"
+.PP
+int close(int fd); close a file descriptor.
+.PP
+\fBParameters: \fP
+.in +1c
+.TP
+\fB\fIfd\fP\fP
+The descriptor to close.
+.PP
+\fBclose\fP closes a file descriptor, so that it no longer refers to any device and may be reused. 
+.PP
+\fBReturns: \fP
+.in +1c
+close returns zero on success, or -1 if an error occurred. 
+.PP
+\fBERRORS\fP
+.in +1c
+the following errors can occur
+.PP
+.TP
+ \fCBADF\fP \fBfd\fP isn't a valid open file descriptor 
+.PP
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for can4linux from the source code.

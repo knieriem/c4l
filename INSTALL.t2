@@ -1,0 +1,332 @@
+.\" Konfiguration
+.\" :vi:source ex_for_this:
+.so /z2/0/0310/t0060
+.RH $Short: "INSTALL can4linux.2.x" $
+.LF $Source: /z2/0/0530/software/can4linux/RCS/INSTALL.t2,v $
+.CF $State: Rel $
+.lF $Revision: 1.5 $
+.cF $Date: 2002/09/17 15:35:44 $
+.rF $of: 4 $
+.SH
+.ps +4
+can4linux 
+.ps -4
+- CAN Treiber für passive Karten mit CAN 82c200/SJA1000 Controllern
+.LP
+.NH 
+Installation
+.LP
+Entpacken sie den Treiber-Kode can4linux*tgz 
+in einem vorher eingerichteten Verzeichnis, z.B 
+.I can4linux
+.LS
+$ mkdir can4linux
+$ cd can4linux
+$ tar zcvf ../can4linux*tgz
+.LE
+Der Treiber wird für jede dafür vorgesehene Hardware speziell übersetzt.
+Eine Liste der möglichen Interface-Boards enthält das Makefile,
+das auch den Übersetzungsvorgang steuert.
+Übersetzen sie den Treiber, z.B:
+.LS
+$ make TARGET=ATCANMINI_PELICAN
+.LE
+Es entsteht im aktuellen Verzeichnis die Datei
+.I Can.o ,
+die Treiber-Objektdatei.
+.LP
+Erzeugen sie nun Einträge für Gerätedateien.
+Rufen sie dazu make auf:
+.LS
+$ make inodes
+.LE
+Die Voreinstellung für die major device number ist 91.
+Prüfen sie vorher, ob diese Nummer schon im \%System verwendet wird.
+(Sie ist jedoch offiziell für CAN reserviert.)
+.LP
+Gehen sie in das Verzeichnis
+.I etc .
+Suchen sie sich eine geeignete Konfiguration aus
+und editieren diese.
+.LP
+In den meisten Fällen können sie die vorhandenen Dateien:
+.I 2-at_can_mini.conf 
+oder
+.I 1-cpcpci.conf 
+verwenden.
+.LP
+Finden sie keine vorkonfigurierten Einträge,
+welche auf ihre Hardware zutreffen,
+sollten sie sehr sorgfältig ihre Hardware studieren
+und einen neuen Eintrag anlegen.
+.LP
+Legen sie eine Konfigurationsdatei, benannt nach ihrem Rechner, an. 
+Den Rechnernamen können sie abfragen mit:
+.LS
+$ uname -n 
+uschi
+$ cp 1-cpcpci.conf uschi.conf
+.LE
+.B
+Viele Einträge sind von der Hardware abhängig. -
+Vorsicht beim Einsatz selbstentwickelter Hardware.
+.LP
+Die Einträge in der Konfigurationsdatei werden über 
+die entsprechenden Einträge
+des Treibers im
+.I /proc
+Dateisystem geschrieben
+.LS
+/proc/sys/Can/*
+.LE
+Führen sie nun
+.LS
+$ make load
+.LE
+aus.
+Diese Anweisung lädt den Treiber Can.o
+mit dem Betriebssystemkommando
+.CW insmod (1)
+und überschreibt anschließend die Einträge in
+.I /proc/sys/Can/*
+mit den von ihnen gewählten Werten.
+.LP
+.B ACHTUNG !
+Beim Einsatz von PCI Karten
+verwendet der Treiber für Adressen und Interruptnummern sowie für die Art
+des Zugriffes
+Werte, welche er vom BIOS erhält.
+Diese Werte können dann nicht geändert
+bzw. überschrieben
+werden - ignorieren sie einfach
+diese Fehlermeldung beim Laden der Konfiguration.
+.NH 
+Test
+.LP
+Gehen sie nun in das Verzeichnis
+.I examples.
+Übersetzen sie die Applikationen.
+.LS
+$ cd examples
+$ make
+gcc -Wall -I../src -DUSE_RT_SCHEDULING   -c -o ctest.o ctest.c
+gcc   ctest.o   -o ctest
+gcc -Wall -I../src -DUSE_RT_SCHEDULING   -c -o baud.o baud.c
+gcc   baud.o   -o baud
+gcc -Wall -I../src -DUSE_RT_SCHEDULING   -c -o can_send.o can_send.c
+gcc   can_send.o   -o can_send
+gcc -Wall -I../src -DUSE_RT_SCHEDULING   -c -o acceptance.o acceptance.c
+gcc   acceptance.o   -o acceptance
+gcc -Wall -I../src -DUSE_RT_SCHEDULING   -c -o noiser.o noiser.c
+gcc   noiser.o   -o noiser
+gcc -Wall -I../src -DUSE_RT_SCHEDULING   -c -o receive.o receive.c
+gcc   receive.o   -o receive
+gcc -Wall -I../src -DUSE_RT_SCHEDULING   -c -o transmit.o transmit.c
+gcc   transmit.o   -o transmit
+gcc -Wall -I../src -DUSE_RT_SCHEDULING   -c -o can_verify.o can_verify.c
+gcc   can_verify.o   -o can_verify
+.LE
+Bevor sie nun
+.CW ctest
+aufrufen,
+beobachten sie die Ausschriften des Treibers
+in der Datei
+.I /var/log/messages.
+Dazu öffnen sie in einem seperatem
+.B xterm
+.LS
+$ tail -f /var/log/messages
+.LE
+(Superuser Rechte meist erforderlich.)
+.LP
+Um mehr Meldungen vom Treiber zu erhalten,
+erhöhen sie vorher den Debuglevel
+durch Schreiben auf den Eintrag
+.LS
+echo 7 > /proc/sys/Can/dbgMask
+.LE
+(Superuser Rechte meist erforderlich.)
+.LP
+oder sie benutzen das Script
+.LS
+\&./debug 7
+.LE
+Nach dem Start von 
+.CW ctest
+sehen sie in der Log-Datei:
+.LS no
+Sep 17 13:13:31 uschi kernel: Can: - :in  can_open
+Sep 17 13:13:31 uschi kernel: Can: - :in  CAN_VendorInit
+Sep 17 13:13:31 uschi kernel: Can: - :in  Can_RequestIrq
+Sep 17 13:13:31 uschi kernel: Can: - :Requested IRQ: 5 @ 0xce2e28c0
+Sep 17 13:13:31 uschi kernel: Can: - :out  
+Sep 17 13:13:31 uschi kernel: Can: - :out  
+Sep 17 13:13:31 uschi kernel: Can: - :in  Can_WaitInit
+Sep 17 13:13:31 uschi kernel: Can: - :out  
+Sep 17 13:13:31 uschi kernel: Can: - :in  Can_FifoInit
+Sep 17 13:13:31 uschi kernel: Can: - :out  
+Sep 17 13:13:31 uschi kernel: Can: - :in  CAN_ChipReset
+Sep 17 13:13:31 uschi kernel: Can: - : INT 0x0
+Sep 17 13:13:31 uschi kernel: 
+Sep 17 13:13:31 uschi kernel: Can: - :status=0x3c mode=0x1
+Sep 17 13:13:31 uschi kernel: Can: - :[0] CAN_mode 0x1
+Sep 17 13:13:31 uschi kernel: 
+Sep 17 13:13:31 uschi kernel: Can: - :[0] CAN_mode 0x9
+Sep 17 13:13:31 uschi kernel: 
+Sep 17 13:13:31 uschi kernel: Can: - :[0] CAN_mode 0x9
+Sep 17 13:13:31 uschi kernel: 
+Sep 17 13:13:31 uschi kernel: Can: - :in  CAN_SetTiming
+Sep 17 13:13:31 uschi kernel: Can: - :baud[0]=125
+Sep 17 13:13:31 uschi kernel: Can: - :tim0=0x3 tim1=0x1c
+Sep 17 13:13:31 uschi kernel: Can: - :out  
+Sep 17 13:13:31 uschi kernel: Can: - :[0] CAN_mode 0x9
+Sep 17 13:13:31 uschi kernel: 
+Sep 17 13:13:31 uschi kernel: Can: - :in  CAN_SetMask
+Sep 17 13:13:31 uschi kernel: Can: - :[0] acc=0xffffffff mask=0xffffffff
+Sep 17 13:13:31 uschi kernel: Can: - :out  
+Sep 17 13:13:31 uschi kernel: Can: - :[0] CAN_mode 0x9
+Sep 17 13:13:31 uschi kernel: 
+Sep 17 13:13:31 uschi kernel: Can: - :out  
+Sep 17 13:13:31 uschi kernel: Can: - :in  CAN_StartChip
+Sep 17 13:13:31 uschi kernel: Can: - :[0] CAN_mode 0x9
+Sep 17 13:13:31 uschi kernel: 
+Sep 17 13:13:31 uschi kernel: Can: - :start mode=0x8
+Sep 17 13:13:31 uschi kernel: Can: - :out  
+Sep 17 13:13:31 uschi kernel:  MODE 0x8, STAT 0x3c, IRQE 0xf,
+Sep 17 13:13:31 uschi kernel: Can: - :out  
+.LE
+Andere Ausschriften deuten auf fehlerhafte *.conf Konfigurationen 
+oder nicht unterstützte Hardware hin.
+.LP
+Starten sie nun
+.CW can_send
+zum Versenden einer Nachricht mit 8 Datenbyte mit dem Dateninhalt 0x55:
+.LS
+$ can_send -D can0 0x555 0x55 0x55 0x55 0x55 0x55 0x55 0x55 0x55
+.LE
+Nach Ausführen des Kommandos
+.CW can_send
+sollte auf dem CAN Bus eine Nachricht erscheinen.
+Ist der Bus nicht mit einer CAN Gegenstelle abgeschlossen,
+versucht der CAN Controller diese Message immer wieder abzusetzen,
+da er kein Acknowledge bekommt.
+Dies ist sehr gut mit einem Oszillographen zu beobachten.
+Durch den gewählten Identifier und das Muster der Datenbytes,
+sollte sehr einfach der kürzeste Signalwechsel erkennbar
+und ausmessbar sein.
+Bei 125 kBit/s beträgt die Zeit für den kürzesten Signalwechsel 8 µs.
+.LP
+Setzen sie den Debuglevel des Treibers zurück:
+.LS
+\&./debug 0
+.LE
+.NH
+Einträge in /proc/sys/Can
+.LP
+Siehe dazu auch die Beispiele in den Konfigurationsdateien
+.I etc/*.conf .
+.TS
+l | c | l.
+Eintrag	pro Kanal	Bedeutung
+_
+AccCode	*	CAN Controller Acceptance Code Register
+AccMask	*	CAN Controller Acceptance Maske
+Base	*	CAN Controller Adresse
+Baud	*	Bitrate in kBit/s
+ExtId	-	ohne Belang 
+IOModel		Ein Buchstabe pro Kanal für IO-Model
+IRQ	*	IRQ Nummer
+Outc	*	Output Control Register
+Overrun	*	Overrun Flag des Kanals
+RxErr	*	Anzahl der Rx Fehler
+Timeout	*	Timeout Wert
+TxErr	*	Anzahl der TX Fehler
+TxSpeed		Ein Buchstabe pro Kanal f|s; s - wird nicht mehr unterstützt
+VendOpt		Ein Buchstabe pro Kanal
+dbgMask		globaler DebugLevel
+version		Versionsstring
+.TE
+.LP
+Für die CAN Bitraten 
+10,20,40,50,125,250,500,800 und 1000 kBit/s
+werden die Werte für die Bit-Timing Register
+des CAN Controllers
+aus internen Tabellen geladen.
+Diese Tabellen gelten jedoch nur für eine Takt\%versorgung des 
+CAN Controllers mit 8 MHz (externer 16 MHz Quartz).
+Bei abweichenden Werten
+wird der Inhalt der Bit-Timing Register wie folgt berechnet:
+.LS
+BTR0 = (Baud >> 8) && 0xFF
+BTR1 =  Baud       && 0xFF
+.LE
+Beispiel für die Einstellung von 125 kBit/s für einen SJA1000 
+Controller mit einer Taktfrequenz von 10 MHz (20MHz),
+16 Quanten und einer Abtastrate (Sampling Point) von 87.5%:
+.LS
+Berechnete Werte für die Bit-Timing Register: BTR0 = 0x04
+                                              BTR1 = 0x1c
+.LE
+.LS
+Daraus folgt: Baud = (0x04 << 8) + 0x1c = 0x041c = 1052 
+.LE
+.LP
+Die Werte der Bit-Timing Register kann man sich durch
+Angabe der Taktfrequenz am CAN Controller und der
+geforderten Abtastrate mit dem Formular auf
+http://www.port.de/deutsch/canprod/sv_req_form.html
+berechnen.
+.LP
+.IP dbgMask
+globaler DebugLevel
+.br
+Standard 0 - keine Debugausgaben;
+.br
+Jedes Bit dieser Maske hat eine bestimmte Bedeutung:
+.TS
+l l.
+Bit	Bedeutung
+_
+0	Flag for setting all options=on
+1	log function entries
+2	log function exits
+3	log branches
+4	log data given to functions
+5	log interrupts
+6	log register info
+7	reserved
+.TE
+.IP Outc
+Das Output Control Register beim Philips 82C200/SJA1000
+.IP TxSpeed
+Der Buchstabe 'f' ('fast') bedeutet interruptgesteuertes Senden
+aus dem TX Puffer -
+.B Vorzugsvariante .
+Der Buchstabe 's' ('slow') bedeutet,
+es wird auf das Freiwerden des Sendepuffer im Controller gewartet.
+.B ACHTUNG !
+Die Option
+.B s 
+wird nicht länger unterstützt.
+.IP VendOpt
+Ein Buchstabe pro Kanal legt hersteller-spezifisches Verhalten fest.
+.br
+.ne 5
+.TS
+l | l.
+Buchstabe	Bedeutung
+_
+s	STZP Board
+.TE
+.NH
+Vorgehen im Fehlerfall
+.LP
+Bei allen Fehlfunktionen des Treibers,
+z.B.
+.B open ()
+returns
+EINVAL - invalid argument -,
+dbgMask Einschalten
+und
+.I /var/log/messages
+ansehen.

@@ -1,0 +1,77 @@
+.TH "can_read.c" 3 "1 Dec 2002" "can4linux" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+can_read.c \-  
+.SH SYNOPSIS
+.br
+.PP
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBcan_read\fP (__LDDK_READ_PARAM)"
+.br
+.RI "\fIssize_t read(int fd, void *buf, size_t count); the read system call\fP"
+.in -1c
+.SH "DETAILED DESCRIPTION"
+.PP 
+ 
+.PP
+\fBAuthor: \fP
+.in +1c
+Heinz-Jürgen Oertel, port GmbH 
+.PP
+\fBRevision: \fP
+.in +1c
+ 1.4  
+.PP
+\fBDate: \fP
+.in +1c
+ 2001/09/14 14:58:09 
+.PP
+Module Description  see Doxygen Doc for all possibilities
+.PP
+.SH "FUNCTION DOCUMENTATION"
+.PP 
+.SS "int can_read (__LDDK_READ_PARAM)"
+.PP
+ssize_t read(int fd, void *buf, size_t count); the read system call
+.PP
+\fBParameters: \fP
+.in +1c
+.TP
+\fB\fIfd\fP\fP
+The descriptor to read from. 
+.TP
+\fB\fIbuf\fP\fP
+The destination data buffer (array of CAN \fBcanmsg_t\fP). 
+.TP
+\fB\fIcount\fP\fP
+The number of bytes to read.read() attempts to read up to \fIcount\fP CAN messages from file descriptor fd into the buffer starting at buf. buf must be large enough to hold count times the size of  one CAN message structure \fB\fBcanmsg_t\fP\fP.
+.PP
+.nf
+int got;
+canmsg_t rx[80];                        // receive buffer for read()
+
+    got = read(can_fd, rx , 80 );
+    if( got > 0) {
+      ...
+    } else {
+        // read returned with error
+        fprintf(stderr, '- Received got = %d\n', got);
+        fflush(stderr);
+    }
+.fi
+\fBERRORS\fP
+.in +1c
+ the following errors can occur
+.TP
+ \fCEINVAL\fP \fBbuf\fP points not to an large enough area,
+.PP
+\fBReturns :\fP
+.in +1c
+ On success, the number of bytes read is returned (zero indicates end of file). It is not an error if this number is smaller than the number of bytes requested; this may happen for example because fewer bytes are actually available right now, or because read() was interrupted by a signal. On error, -1 is returned, and errno is set appropriately. 
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for can4linux from the source code.

@@ -1,0 +1,138 @@
+.TH "can_ioctl.c" 3 "1 Dec 2002" "can4linux" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+can_ioctl.c \-  
+.SH SYNOPSIS
+.br
+.PP
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBcan_Command\fP (struct inode *inode, int cmd)"
+.br
+.ti -1c
+.RI "int \fBcan_Send\fP (struct inode *inode, \fBcanmsg_t\fP *Tx)"
+.br
+.ti -1c
+.RI "int \fBcan_Receive\fP (struct inode *inode, \fBcanmsg_t\fP *Rx)"
+.br
+.ti -1c
+.RI "int \fBcan_GetStat\fP (struct inode *inode, CanSja1000Status_par_t *s)"
+.br
+.ti -1c
+.RI "int \fBcan_Config\fP (struct inode *inode, int target, unsigned long val1, unsigned long val2)"
+.br
+.ti -1c
+.RI "int \fBcan_ioctl\fP (__LDDK_IOCTL_PARAM)"
+.br
+.RI "\fIint ioctl(int fd, int request, ...); the CAN controllers control interface\fP"
+.in -1c
+.SH "DETAILED DESCRIPTION"
+.PP 
+ 
+.PP
+\fBAuthor: \fP
+.in +1c
+Heinz-Jürgen Oertel, port GmbH 
+.PP
+\fBRevision: \fP
+.in +1c
+ 1.5  
+.PP
+\fBDate: \fP
+.in +1c
+ 2002/10/25 10:39:54 
+.PP
+.SH "FUNCTION DOCUMENTATION"
+.PP 
+.SS "int can_ioctl (__LDDK_IOCTL_PARAM)"
+.PP
+int ioctl(int fd, int request, ...); the CAN controllers control interface
+.PP
+\fBParameters: \fP
+.in +1c
+.TP
+\fB\fIfd\fP\fP
+The descriptor to change properties 
+.TP
+\fB\fIrequest\fP\fP
+special configuration request 
+.TP
+\fB\fI...\fP\fP
+traditional a \fIchar\fP *argpThe \fIioctl\fP function manipulates the underlying device parameters of the CAN special device. In particular, many operating characteristics of character CAN driver may be controlled with \fIioctl\fP requests. The argument \fIfd\fP must be an open file descriptor.
+.PP
+An ioctl request has encoded in it whether the argument is an \fBin\fP parameter or \fBout\fP parameter, and the size of the argument argp in bytes. Macros and defines used in specifying an \fIioctl\fP request are located in the file can4linux.h .
+.PP
+The following \fIrequests\fP are defined:
+.PP
+.TP
+ \fCCOMMAND\fP some commands for start, stop and reset the CAN controller chip 
+.TP
+ \fCCONFIG\fP configure some of the device properties like acceptance filtering, bit timings, mode of the output control register or the optional software message filter configuration(not implemented yet). 
+.TP
+ \fCSTATUS\fP request the CAN controllers status 
+.TP
+ \fCSEND\fP a single message over the \fIioctl\fP interface  
+.TP
+ \fCRECEIVE\fP poll a receive message 
+.TP
+ \fCCONFIGURERTR\fP configure automatic rtr responses(not implemented)
+.PP
+The third argument is a parameter structure depending on the request. These are 
+.PP
+.nf
+struct Command_par
+struct Config_par
+struct CanSja1000Status_par
+struct ConfigureRTR_par
+struct Receive_par
+struct Send_par
+.fi
+ described in can4linux.h
+.PP
+\fBAcceptance Filtering\fP
+.in +1c
+\fBBasic\fP \fBCAN\fP. In the case of using standard identifiers in Basic CAN mode for receiving CAN messages only the low bytes are used to set acceptance code and mask for bits ID.10 ... ID.3
+.PP
+\fBPeliCAN\fP. For acceptance filtering the entries \fCAccCode\fP and \fCAccMask\fP are used like specified in the controllers manual for \fBSingle\fP \fBFilter\fP \fBConfiguration\fP . Both are 4 byte entries. In the case of using standard identifiers for receiving CAN messages also all 4 bytes can be used. In this case two bytes are used for acceptance code and mask for all 11 identifier bits plus additional the first two data bytes. The SJA1000 is working in the \fBSingle\fP \fBFilter\fP \\ Mode . 
+.PP
+.nf
+       Bits
+ mask  31 30 .....           4  3  2  1  0
+ code
+ -------------------------------------------
+ ID    28 27 .....           1  0  R  +--+-> unused
+                                   T
+                                   R
+.fi
+\fBReturns :\fP
+.in +1c
+On success, zero is returned. On error, -1 is returned, and errno is set appropriately.
+.PP
+\fBExample\fP
+.in +1c
+.PP
+.nf
+Config_par_t  cfg;
+volatile Command_par_t cmd;
+
+
+    cmd.cmd = CMD_STOP;
+    ioctl(can_fd, COMMAND, &cmd);
+
+    cfg.target = CONF_ACCM; 
+    cfg.val    = acc_mask;
+    ioctl(can_fd, CONFIG, &cfg);
+    cfg.target = CONF_ACCC; 
+    cfg.val    = acc_code;
+    ioctl(can_fd, CONFIG, &cfg);
+
+    cmd.cmd = CMD_START;
+    ioctl(can_fd, COMMAND, &cmd);
+.fi
+ 
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for can4linux from the source code.

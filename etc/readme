@@ -1,0 +1,24 @@
+2-at_can_mini.conf	- can be used with uschi
+3-at_can_mini.conf	- can be used with ulf or ulli
+cpcpci.conf		- simple configuration for 1 CPC-PCI
+emscpc.conf		- old, unmaintained, config for CPC-card
+
+
+
+---------------------------------------------------------------------------
+heinz.conf
+pccan.conf
+port.conf
+test.conf
+udo.conf
+ulf.conf
+ulla.conf
+ulli.conf
+ulli3.conf
+ulli_atpeli.conf
+ulli_cpcpci.conf
+ulli_iPC03_AtMini.conf
+ulrich.conf
+ulrike.conf
+uschi.conf
+uwe.conf

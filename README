@@ -1,0 +1,36 @@
+can4linux
+
+
+select your hardware in the makefile and call make
+
+see also src/Readme
+
+
+Memory mapped I/O
+===================================================
+If a CAN Board uses memory mapped I/O on ISA,
+be sure that the in the PC BIOS access to that memory area is enabled.
+You can for example use Alessandro Rubini's
+silly device driver to read out the ISA IO memory area to scan for
+a SJA100.
+
+$ cat /dev/sillyb | od --address-radix=x -t x1| less
+
+after an hardware reset (power on)
+you should find the following pattern:
+
+038000 21 ff 0c e0 00 00 00 00 00 60 ff ff ff ff ff ff
+038010 ff ff ff ff fd fb df ff 0b 00 08 31 ff ff ff 00
+
+(Adress is starting with 0 == 0x0a0000)
+The example above shows the result with a STZP/IXXAT PCI-03 board
+jumpered for 0xd800 with an sja1000 as CAN0.
+Especially "0c 0e" is the reset value for registers 2(status)
+and 3(interrupt).
+
+use 
+$ cat /dev/sillyb \
+| od --address-radix=x --skip-bytes 0x38000 --read-bytes=0x20 -t x1| less
+
+to see oly the 32 bytes at address 0xd8000.
+

@@ -1,0 +1,39 @@
+.TH "ConfigureRTR_par" 3 "15 Jun 2001" "can4linux" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ConfigureRTR_par \- IOCTL ConfigureRTR request parameter structure. 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <can.h>\fP
+.PP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "unsigned \fBmessage\fP"
+.br
+.RI "\fICAN message ID.\fP"
+.ti -1c
+.RI "\fBcanmsg_t\fP* \fBTx\fP"
+.br
+.RI "\fICAN message struct.\fP"
+.ti -1c
+.RI "int \fBerror\fP"
+.br
+.RI "\fIreturn value for errno.\fP"
+.ti -1c
+.RI "unsigned long \fBretval\fP"
+.br
+.RI "\fIreturn value.\fP"
+.in -1c
+.SH "DETAILED DESCRIPTION"
+.PP 
+IOCTL ConfigureRTR request parameter structure.
+.PP
+
+
+.SH "AUTHOR"
+.PP 
+Generated automatically by Doxygen for can4linux from the source code.

@@ -1,0 +1,54 @@
+.TH "Config_par" 3 "14 Sep 2001" "can4linux" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+Config_par \- IOCTL Configuration request parameter structure. 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <can.h>\fR
+.PP
+.SS Data Fields
+
+.in +1c
+.ti -1c
+.RI "int \fBtarget\fR"
+.br
+.RI "\fIspecial configuration target.\fR"
+.ti -1c
+.RI "unsigned long \fBval1\fR"
+.br
+.RI "\fI1.\fR"
+.ti -1c
+.RI "unsigned long \fBval2\fR"
+.br
+.RI "\fI2.\fR"
+.ti -1c
+.RI "int \fBerror\fR"
+.br
+.RI "\fIreturn value for errno.\fR"
+.ti -1c
+.RI "unsigned long \fBretval\fR"
+.br
+.RI "\fIreturn value.\fR"
+.in -1c
+.SH DETAILED DESCRIPTION
+.PP 
+IOCTL Configuration request parameter structure.
+.PP
+.SH FIELD DOCUMENTATION
+.PP 
+.SS unsigned long Config_par::val1
+.PP
+1.
+.PP
+parameter for the target 
+.SS unsigned long Config_par::val2
+.PP
+2.
+.PP
+parameter for the target 
+
+.SH AUTHOR
+.PP 
+Generated automatically by Doxygen for can4linux from the source code.
