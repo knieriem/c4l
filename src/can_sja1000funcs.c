@@ -360,6 +360,17 @@ uint8 tx2reg, stat;
     		"CAN[%d]: tx.flags=%d tx.id=0x%lx tx.length=%d stat=0x%x",
 		board, tx->flags, tx->id, tx->length, stat));
 
+
+    /* delay message sending for some micro-seconds, if requested by
+       the user */
+    if (tx->timestamp.tv_usec) {
+	if (tx->timestamp.tv_usec > 1000)
+	    mdelay (tx->timestamp.tv_usec / 1000);
+	else
+	    udelay (tx->timestamp.tv_usec);
+    }
+
+
     tx->length %= 9;			/* limit CAN message length to 8 */
     ext = (tx->flags & MSG_EXT);	/* read message format */
 
@@ -549,6 +560,87 @@ int CAN_VendorInit (int minor)
 
     DBGout(); return 0;
 }
+
+
+
+/* called from within CAN_Interrupt on transmit interrupt, and
+   from within the delayed_send tasklet */
+static void
+send_tx_queue_msg (int minor)
+{
+    int i;
+    unsigned int id;
+    int ext;
+
+    msg_fifo_t	 *TxFifo = &Tx_Buf[minor];
+
+    uint8 tx2reg;
+
+    tx2reg = (TxFifo->data[TxFifo->tail]).length;
+    if( (TxFifo->data[TxFifo->tail]).flags & MSG_RTR) {
+	tx2reg |= CAN_RTR;
+    }
+    ext = (TxFifo->data[TxFifo->tail]).flags & MSG_EXT;
+    id = (TxFifo->data[TxFifo->tail]).id;
+    if(ext) {
+	DBGprint(DBG_DATA, ("---> send ext message"));
+	CANout(minor, frameinfo, CAN_EFF + tx2reg);
+	CANout(minor, frame.extframe.canid1, (uint8)(id >> 21));
+	CANout(minor, frame.extframe.canid2, (uint8)(id >> 13));
+	CANout(minor, frame.extframe.canid3, (uint8)(id >> 5));
+	CANout(minor, frame.extframe.canid4, (uint8)(id << 3) & 0xff);
+    } else {
+	DBGprint(DBG_DATA, ("---> send std message"));
+	CANout(minor, frameinfo, CAN_SFF + tx2reg);
+	CANout(minor, frame.stdframe.canid1, (uint8)((id) >> 3) );
+	CANout(minor, frame.stdframe.canid2, (uint8)(id << 5 ) & 0xe0);
+    }
+
+
+    tx2reg &= 0x0f;		/* restore length only */
+    if(ext) {
+	for( i=0; i < tx2reg ; i++) {
+	    CANout(minor, frame.extframe.canxdata[R_OFF * i],
+		   (TxFifo->data[TxFifo->tail]).data[i]);
+	}
+    } else {
+	for( i=0; i < tx2reg ; i++) {
+	    CANout(minor, frame.stdframe.candata[R_OFF * i],
+		   (TxFifo->data[TxFifo->tail]).data[i]);
+	}
+    }
+
+    CANout (minor, cancmd, CAN_TRANSMISSION_REQUEST);
+
+    TxFifo->free[TxFifo->tail] = BUF_EMPTY; /* now this entry is EMPTY */
+    TxFifo->tail = ++(TxFifo->tail) % MAX_BUFSIZE;
+}
+
+
+
+/* tasklet for the delayed transmission of a message */
+static void
+delayed_send (unsigned long minor)
+{
+    unsigned long flags;
+
+    msg_fifo_t	 *TxFifo = &Tx_Buf[minor];
+
+    /* enter critical section */
+    save_flags(flags);cli();
+
+    if (TxFifo->data[TxFifo->tail].timestamp.tv_usec > 1000)
+	mdelay (TxFifo->data[TxFifo->tail].timestamp.tv_usec / 1000);
+    else
+	udelay (TxFifo->data[TxFifo->tail].timestamp.tv_usec);
+
+    send_tx_queue_msg (minor);
+
+    /* leave critical section */
+    restore_flags(flags);
+}
+
+
 
 
 /*
@@ -748,8 +840,6 @@ int first = 0;
 
     /*========== transmit interrupt */
     if( irqsrc & CAN_TRANSMIT_INT ) {
-	uint8 tx2reg;
-	unsigned int id;
 	if( TxFifo->free[TxFifo->tail] == BUF_EMPTY ) {
 	    /* printk("TXE\n"); */
 	    TxFifo->status = BUF_EMPTY;
@@ -766,44 +856,19 @@ int first = 0;
         /* enter critical section */
         save_flags(flags);cli();
 
-	tx2reg = (TxFifo->data[TxFifo->tail]).length;
-	if( (TxFifo->data[TxFifo->tail]).flags & MSG_RTR) {
-		tx2reg |= CAN_RTR;
+
+	/* if the user wants the current message to be delayed for
+	   some micro-seconds, a tasklet will be registered to handle
+	   the delayed sending */
+	if (TxFifo->data[TxFifo->tail].timestamp.tv_usec) {
+	    static struct tasklet_struct delayed_send_tasklet[MAX_CHANNELS];
+
+	    tasklet_init (&delayed_send_tasklet[minor], delayed_send, minor);
+
+	    tasklet_hi_schedule (&delayed_send_tasklet[minor]);
 	}
-        ext = (TxFifo->data[TxFifo->tail]).flags & MSG_EXT;
-        id = (TxFifo->data[TxFifo->tail]).id;
-        if(ext) {
-	    DBGprint(DBG_DATA, ("---> send ext message"));
-	    CANout(minor, frameinfo, CAN_EFF + tx2reg);
-	    CANout(minor, frame.extframe.canid1, (uint8)(id >> 21));
-	    CANout(minor, frame.extframe.canid2, (uint8)(id >> 13));
-	    CANout(minor, frame.extframe.canid3, (uint8)(id >> 5));
-	    CANout(minor, frame.extframe.canid4, (uint8)(id << 3) & 0xff);
-        } else {
-	    DBGprint(DBG_DATA, ("---> send std message"));
-	    CANout(minor, frameinfo, CAN_SFF + tx2reg);
-	    CANout(minor, frame.stdframe.canid1, (uint8)((id) >> 3) );
-	    CANout(minor, frame.stdframe.canid2, (uint8)(id << 5 ) & 0xe0);
-        }
-
-
-	tx2reg &= 0x0f;		/* restore length only */
-	if(ext) {
-	    for( i=0; i < tx2reg ; i++) {
-		CANout(minor, frame.extframe.canxdata[R_OFF * i],
-		    (TxFifo->data[TxFifo->tail]).data[i]);
-	    }
-        } else {
-	    for( i=0; i < tx2reg ; i++) {
-		CANout(minor, frame.stdframe.candata[R_OFF * i],
-		    (TxFifo->data[TxFifo->tail]).data[i]);
-	    }
-        }
-
-        CANout(minor, cancmd, CAN_TRANSMISSION_REQUEST );
-
-	TxFifo->free[TxFifo->tail] = BUF_EMPTY; /* now this entry is EMPTY */
-	TxFifo->tail = ++(TxFifo->tail) % MAX_BUFSIZE;
+	else /* no delay, send it immediately */
+	    send_tx_queue_msg (minor);
 
         /* leave critical section */
 	restore_flags(flags);
