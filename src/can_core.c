@@ -257,6 +257,39 @@ struct file_operations can_fops = {
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
+#ifdef ADNP1486
+
+/* Check whether we run on a ADNP1486 (0 if yes) */
+static int
+test_adnp1486 (void)
+{
+#define BIOSID_BASE  0x000fe100
+
+  char *biosid, rc = -1;
+
+  biosid = (char*) ioremap (BIOSID_BASE, 16);
+
+  if (biosid)
+    {
+      int count;
+      char mismatch;
+
+      char biosid[] = "ADNP1486";
+
+      for (count = 0, mismatch = 0; count < strlen (biosid); count++)
+        {
+          if (readb (biosid + count) != biosid[count])
+            mismatch = 1;
+        }
+
+      if (!mismatch) rc = 0;         /* else this is a ADNP/1486-3V */
+
+      iounmap ((void *) biosid);
+    }
+
+  return (rc);
+}
+#endif
 
 int init_module(void)
 {
@@ -294,6 +327,12 @@ int init_module(void)
     /* printk("CAN pci test loaded\n"); */
     /* dbgMask = 0; */
     pcimod_scan();
+#endif
+
+#ifdef ADNP1486
+    /* Do we run on a SSV ADNP1486? */
+    if (test_adnp1486 () == -1)
+      return -EINVAL;
 #endif
 
 #if LDDK_USE_PROCINFO
