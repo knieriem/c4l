@@ -473,11 +473,14 @@ extern  int Overrun[];
 extern unsigned int dbgMask;
 #define SYSCTL_DBGMASK 14
 
+
+#define SYSCTL_ARCH 15
+
  /* ------ Global Definitions for Test  */
 extern  int Cnt1[];
-#define SYSCTL_CNT1 15
+#define SYSCTL_CNT1 16
 extern  int Cnt2[];
-#define SYSCTL_CNT2 16
+#define SYSCTL_CNT2 17
  
  
 #endif

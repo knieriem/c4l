@@ -158,6 +158,9 @@ ctl_table Can_sysctl_table[] = {
 		 0444, NULL, &Can_dointvec , NULL  },
  { SYSCTL_DBGMASK, "dbgMask",(void *) &dbgMask, 1*sizeof(int), 
 		 0644, NULL, &Can_dointvec , NULL  },
+#include "gnu-arch.h"
+ { SYSCTL_ARCH, "gnu-arch", GNU_ARCH_REV_STRING, GNU_ARCH_REV_LENGTH,
+		 0444, NULL, &Can_dostring , &Can_sysctl_string },
 #ifdef DEBUG_COUNTER
 /* ---------------------------------------------------------------------- */
  { SYSCTL_CNT1, "cnt1",(void *) Cnt1, MAX_CHANNELS*sizeof(int), 

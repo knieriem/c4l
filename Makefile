@@ -304,13 +304,18 @@ $(OBJDIR)/can_sja1000funcs.o: can_sja1000funcs.c can4linux.h can_defs.h
 	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
 $(OBJDIR)/can_util.o: can_util.c can4linux.h can_defs.h
 	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
-$(OBJDIR)/can_sysctl.o: can_sysctl.c can4linux.h can_defs.h
-	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
+$(OBJDIR)/can_sysctl.o: can_sysctl.c can4linux.h can_defs.h $(OBJDIR)/gnu-arch.h
+	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -I obj -o $@ $<
 $(OBJDIR)/Can_error.o: Can_error.c can4linux.h can_defs.h
 	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
 $(OBJDIR)/Can_debug.o: Can_debug.c can4linux.h can_defs.h
 	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
 
+,,tmp-arch:
+	tla logs -Df | tail -n2| sed 's,^ *,,' > $@
+$(OBJDIR)/gnu-arch.h: ,,tmp-arch
+	sed 's,^,#define GNU_ARCH_REV_STRING ",;N;s,\n,\\n,;s, *$$,",' < $< > $@
+	wc -c < ,,tmp-arch | sed 's,^,#define GNU_ARCH_REV_LENGTH ,' >> $@
 
 # load host specific CAN configuration
 load:
