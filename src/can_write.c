@@ -122,8 +122,19 @@ DEBUG_TTY(1, "write: %d", count);
 	    DBGout();return -EINVAL;
     }
     while( written < count ) {
+        int check;
+
 	/* enter critical section */
 	save_flags(flags);cli();
+
+        /* check mode; mh 2003-11-18 */
+        check = CANin(minor,canmode);
+        if (check & CAN_RESET_REQUEST) {
+		CAN_StopChip(minor);
+		printk("CAN: ## check: force reset **\n");
+		CAN_StartChip(minor);
+        }
+
 	/* there are data to write to the network */
 	if(TxFifo->free[TxFifo->head] == BUF_FULL) {
 DEBUG_TTY(1, "ret buffer full");
