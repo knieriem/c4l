@@ -505,6 +505,67 @@ int i = 0;
     DBGout();
 }
 
+
+/* SSV ADNP1486 specific code */
+#ifdef ADNP1486
+
+#  define AMD_ELAN_INDEX_REG     0x22  /* (A)DNP Index-Reg. */
+#  define AMD_ELAN_DATA_REG      0x23  /* (A)DNP Daten-Reg. */
+
+/* write a value to index register on AMD Elan */
+static inline void
+write_port(unsigned char wi,unsigned char data)
+{
+   outb (wi, AMD_ELAN_INDEX_REG);
+   outb (data, AMD_ELAN_DATA_REG);
+}
+
+/* read a value from index register on AMD Elan */
+static inline char
+read_port(unsigned char ri)
+{
+   outb (ri, AMD_ELAN_INDEX_REG);
+   return (inb (AMD_ELAN_DATA_REG));
+}
+
+/* Initialize SJA1000 on ADNP1486 */
+static void
+adnp_map_sja1000 (int base, int irq)
+{
+   /* if IRQ6 is'nt mapped, map now ... */
+   if ((read_port (0xD7) & 0x0F) == 0)
+     {
+#ifdef DEBUG
+       printk ("Map INT4 PIRQS6 IRQ%d...\n", irq);
+#endif
+       write_port (0xD7, (read_port (0xD7) & 0xF0) | irq);
+     }
+
+   /* Init (A)DNP for CAN SJA1000  */
+   /* GPIO_CS1 disable             */
+   write_port (0xA6, read_port (0xA6) | 0x02);
+
+   /* GPIO_CS1 to output           */
+   write_port (0xA0, read_port (0xA0) | 0x0C);
+
+   /* Lo-Byte of Base Address (0x280) */
+   write_port (0xB6, base & 0x00FF);
+
+   /* CS1: Hi-Byte of Base Address        */
+   /* mask (0x280) and SA0 (280, 281)     */
+   write_port (0xB7, (base >> 8) | 0x38);
+
+   /* CS1: qualifyed with IOR & IOW */
+   write_port (0xB8, (read_port (0xB8) & 0x0F) | 0x30);
+
+   /* GP_CSPIO = GPIO_CS1               */
+   write_port (0xB2, (read_port (0xB2) & 0x0F) | 0x10);
+
+   /* GPIO_CS1 enable */
+   write_port (0xA6, 0x00);
+}
+#endif /* ADNP1486 */
+
 int CAN_VendorInit (int minor)
 {
     DBGin("CAN_VendorInit");
@@ -520,12 +581,13 @@ int CAN_VendorInit (int minor)
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,3,11)
 
     /* can also be a compile time decision CAN_PORT_IO */
-    if(IOModel[minor] == 'p') {
+    if(IOModel[minor] == 'p' || IOModel[minor] == 'i') {
 	/* It's port I/O */
 	if(NULL == request_region(Base[minor], can_range[minor], "CAN-IO" )) {
 	    return -EBUSY;
 	}
-    } else {
+    } else
+      {
 	/* It's Memory I/O */
 	if(NULL == request_mem_region(Base[minor], can_range[minor], "CAN-IO" )) {
 	    return -EBUSY;
@@ -564,6 +626,20 @@ int CAN_VendorInit (int minor)
 
 /* 2. Vendor specific part ------------------------------------------------ */
 
+#ifdef ADNP1486
+      if( VendOpt[minor] == 't' ) {    /* TRM/816 ADNP1486 */
+
+	if (minor == 0)
+	  {
+	    adnp_map_sja1000 (Base[minor], IRQ[minor]); /* make SJA visible at 
+							   Port Base[minor],
+							   map IRQ */
+	  }
+	else
+	  return -EINVAL;
+
+      }
+#endif
       if( VendOpt[minor] == 's' ) {    /* stpz board */
 	if( Base[minor] & 0x200 ) {
 		printk("Resetting STZP PC I-03 [contr 1]\n");
