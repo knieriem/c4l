@@ -196,7 +196,14 @@ int retval = 0;
 
 /* controller_available(curr + 0x400, 4); */
 	Can_WaitInit(minor);	/* initialize wait queue for select() */
-	Can_FifoInit(minor);
+
+	if (Can_FifoInit(minor) < 0)
+	{
+		MOD_DEC_USE_COUNT;
+		DBGout();
+		return -ENOMEM;
+	}
+
 #if CAN_USE_FILTER
 	Can_FilterInit(minor);
 #endif

@@ -156,7 +156,7 @@ TxFifo->head,
 TxFifo->tail
 );
 	    TxFifo->free[TxFifo->head] = BUF_FULL; /* now this entry is FULL */
-	    TxFifo->head = ++(TxFifo->head) % MAX_BUFSIZE;
+	    TxFifo->head = ++(TxFifo->head) % TxFifo->size;
 	} else {
 	    __lddk_copy_from_user(
 		    (canmsg_t *) &tx, 

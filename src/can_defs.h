@@ -330,9 +330,9 @@ extern __LDDK_CLOSE_TYPE can_close (__LDDK_CLOSE_PARAM);
 
 /* number of supported CAN channels */
 #define MAX_CHANNELS 4
-/* #define MAX_BUFSIZE 64 */
-#define MAX_BUFSIZE 200
-/* #define MAX_BUFSIZE 4 */
+
+#define MAX_RX_BUFSIZE 2048
+#define MAX_TX_BUFSIZE 128
 
 #define BUF_EMPTY    0
 #define BUF_OK       1
@@ -346,8 +346,11 @@ extern __LDDK_CLOSE_TYPE can_close (__LDDK_CLOSE_PARAM);
         int tail;
         int status;
 	int active;
-	char free[MAX_BUFSIZE];
-        canmsg_t data[MAX_BUFSIZE];
+
+        /* dynamically allocated buffer, see can_util.c:Can_FifoInit() */
+	int size;
+	char *free;
+        canmsg_t *data;
  } msg_fifo_t;
 
 
@@ -523,6 +526,7 @@ extern int CAN_ShowStat (int board);
 
 /* util.c */
 extern int Can_FifoInit(int minor);
+extern int Can_FifoCleanup(int minor);
 extern int Can_FilterCleanup(int minor);
 extern int Can_FilterInit(int minor);
 extern int Can_FilterMessage(int minor, unsigned message, unsigned enable);

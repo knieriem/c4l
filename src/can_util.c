@@ -147,21 +147,61 @@ int Can_WaitInit(int minor)
 /*
 initialize RX and TX Fifo's
 */
+static int
+create_msg_fifo (msg_fifo_t *fifo)
+{
+	int i;
+
+	fifo->free = kmalloc (sizeof (char) * fifo->size, GFP_KERNEL);
+	if (fifo->free == NULL)
+	  return -1;
+
+	fifo->data = kmalloc (sizeof (canmsg_t) * fifo->size, GFP_KERNEL);
+	if (fifo->data == NULL)	{
+		kfree (fifo->free);
+		return -1;
+	}
+
+	for (i = 0; i < fifo->size; i++) {
+		fifo->free[i]  = BUF_EMPTY;
+	}
+
+	return 0;
+}
+
 int Can_FifoInit(int minor)
 {
-int i;
-
     DBGin("Can_FifoInit");
        Tx_Buf[minor].head   = Rx_Buf[minor].head = 0;
        Tx_Buf[minor].tail   = Rx_Buf[minor].tail = 0;
        Tx_Buf[minor].status = Rx_Buf[minor].status = 0;
        Tx_Buf[minor].active = Rx_Buf[minor].active = 0;
-       for(i = 0; i < MAX_BUFSIZE; i++) {
-	   Tx_Buf[minor].free[i]  = BUF_EMPTY;
-       }
+
+	Rx_Buf[minor].size = MAX_RX_BUFSIZE;
+	Tx_Buf[minor].size = MAX_TX_BUFSIZE;
+
+	if (create_msg_fifo (&Rx_Buf[minor]) == -1 
+	    ||	create_msg_fifo (&Tx_Buf[minor]) == -1)
+	{
+		DBGout();
+		return -1;
+	}
+
     DBGout();
     return 0;
 }
+
+
+int Can_FifoCleanup(int minor)
+{
+	kfree (Tx_Buf[minor].data);
+	kfree (Tx_Buf[minor].free);
+
+	kfree (Rx_Buf[minor].data);
+	kfree (Rx_Buf[minor].free);
+	return 0;
+}
+
 
 #ifdef CAN_USE_FILTER
 int Can_FilterInit(int minor)
