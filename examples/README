@@ -1,5 +1,5 @@
 This are some simple examples to test the communication between two
-CAN boards.
+CAN channels.
 
 1) receive: polling mode receiving end
 2) transmit polling mode transmitter
@@ -32,8 +32,8 @@ CAN boards.
 7) ctest
     very simple and basic driver test
     I use it to see what the driver issues in /var/log/messages
-    when open and close the device
-    if full debug is enabled and all register access is logged
+    when open and close the device.
+    If full debug is enabled and all register access is logged
 
 Support and examples for Scripting Languages
 ==============================================

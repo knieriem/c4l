@@ -235,6 +235,7 @@ static char databuf[4096];
 char     *s;
 unsigned char     type;
 unsigned char     rtr;
+int i, j, got;
 
 
 	/* retrieve only one message */ 

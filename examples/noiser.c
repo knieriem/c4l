@@ -44,10 +44,15 @@ char device[40];
 
 #if USE_RTR 
         if(   tx[i].id == 500
+           || tx[i].id == 450
            || tx[i].id == 400
+           || tx[i].id == 350
            || tx[i].id == 300
+           || tx[i].id == 250
            || tx[i].id == 200
-           || tx[i].id == 100 )
+           || tx[i].id == 150 
+           || tx[i].id == 100 
+           || tx[i].id ==  50 )
 	  tx[i].flags |= MSG_RTR;
 #endif
 

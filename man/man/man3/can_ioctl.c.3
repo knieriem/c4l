@@ -1,4 +1,4 @@
-.TH "can_ioctl.c" 3 "1 Dec 2002" "can4linux" \" -*- nroff -*-
+.TH "can_ioctl.c" 3 "11 Sep 2003" "can4linux" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -9,21 +9,6 @@ can_ioctl.c \-
 .SS "Functions"
 
 .in +1c
-.ti -1c
-.RI "int \fBcan_Command\fP (struct inode *inode, int cmd)"
-.br
-.ti -1c
-.RI "int \fBcan_Send\fP (struct inode *inode, \fBcanmsg_t\fP *Tx)"
-.br
-.ti -1c
-.RI "int \fBcan_Receive\fP (struct inode *inode, \fBcanmsg_t\fP *Rx)"
-.br
-.ti -1c
-.RI "int \fBcan_GetStat\fP (struct inode *inode, CanSja1000Status_par_t *s)"
-.br
-.ti -1c
-.RI "int \fBcan_Config\fP (struct inode *inode, int target, unsigned long val1, unsigned long val2)"
-.br
 .ti -1c
 .RI "int \fBcan_ioctl\fP (__LDDK_IOCTL_PARAM)"
 .br
@@ -39,11 +24,11 @@ Heinz-Jürgen Oertel, port GmbH
 .PP
 \fBRevision: \fP
 .in +1c
- 1.5  
+ 1.8  
 .PP
 \fBDate: \fP
 .in +1c
- 2002/10/25 10:39:54 
+ 2003/08/27 17:49:38 
 .PP
 .SH "FUNCTION DOCUMENTATION"
 .PP 
@@ -85,7 +70,7 @@ The third argument is a parameter structure depending on the request. These are
 .nf
 struct Command_par
 struct Config_par
-struct CanSja1000Status_par
+struct CanStatus_par
 struct ConfigureRTR_par
 struct Receive_par
 struct Send_par
@@ -96,7 +81,7 @@ struct Send_par
 .in +1c
 \fBBasic\fP \fBCAN\fP. In the case of using standard identifiers in Basic CAN mode for receiving CAN messages only the low bytes are used to set acceptance code and mask for bits ID.10 ... ID.3
 .PP
-\fBPeliCAN\fP. For acceptance filtering the entries \fCAccCode\fP and \fCAccMask\fP are used like specified in the controllers manual for \fBSingle\fP \fBFilter\fP \fBConfiguration\fP . Both are 4 byte entries. In the case of using standard identifiers for receiving CAN messages also all 4 bytes can be used. In this case two bytes are used for acceptance code and mask for all 11 identifier bits plus additional the first two data bytes. The SJA1000 is working in the \fBSingle\fP \fBFilter\fP \\ Mode . 
+\fBPeliCAN\fP. For acceptance filtering the entries \fCAccCode\fP and \fCAccMask\fP are used like specified in the controllers manual for \fBSingle\fP \fBFilter\fP \fBConfiguration\fP . Both are 4 byte entries. In the case of using standard identifiers for receiving CAN messages also all 4 bytes can be used. In this case two bytes are used for acceptance code and mask for all 11 identifier bits plus additional the first two data bytes. The SJA1000 is working in the \fBSingle\fP \fBFilter\fP \\ Mode .Example for extended message format 
 .PP
 .nf
        Bits
@@ -106,8 +91,30 @@ struct Send_par
  ID    28 27 .....           1  0  R  +--+-> unused
                                    T
                                    R
+
+  acccode =  (id << 3) + (rtr << 2) 
 .fi
-\fBReturns :\fP
+.PP
+Example for base message format 
+.PP
+.nf
+       Bits
+ mask  31 30 .....           23 22 21 20 ... 0
+ code
+ -------------------------------------------
+ ID    11 10 .....           1  0  R  +--+-> unused
+                                   T
+                                   R
+.fi
+.PP
+You have to shift the CAN-ID by 5 bits and two bytes to shift them into ACR0 and ACR1 (acceptance code register) 
+.PP
+.nf
+  acccode =  (id << 21) + (rtr << 20) 
+.fi
+ In case of the base format match the content of bits 0...20 is of no interest, it can be 0x00000 or 0xFFFFF.
+.PP
+\fBReturns: \fP
 .in +1c
 On success, zero is returned. On error, -1 is returned, and errno is set appropriately.
 .PP

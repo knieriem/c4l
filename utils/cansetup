@@ -4,7 +4,7 @@ echo "Configuring CAN Subsystem"
 
 #default values
 debug=0
-Chipset_0=none
+
 Base_0=0
 Irq_0=0
 Baud_0=125
@@ -12,19 +12,15 @@ AccMask_0=0xffffffff
 AccCode_0=0xffffffff
 Timeout_0=100
 Outc_0=0
-VendOpt_0=n
 
-Chipset_1=none
 Base_1=0
-Irq_1=7
+Irq_1=0
 Baud_1=125
 AccMask_1=0xffffffff
 AccCode_1=0xffffffff
 Timeout_1=100
 Outc_1=0
-VendOpt_1=n
 
-Chipset_2=none
 Base_2=0
 Irq_2=0
 Baud_2=125
@@ -32,10 +28,8 @@ AccMask_2=0xffffffff
 AccCode_2=0xffffffff
 Timeout_2=100
 Outc_2=0
-VendOpt_2=n
 
 
-Chipset_3=none
 Base_3=0
 Irq_3=0
 Baud_3=125
@@ -43,18 +37,6 @@ AccMask_3=0xffffffff
 AccCode_3=0xffffffff
 Timeout_3=100
 Outc_3=0
-VendOpt_3=n
-
-
-IOModel_0=p
-IOModel_1=p
-IOModel_2=p
-IOModel_3=p
-
-TxSpeed_0=f
-TxSpeed_1=f
-TxSpeed_2=f
-TxSpeed_3=f
 
 if [ -r "$1" ]; then
 . $1
@@ -74,10 +56,7 @@ fi
 
 
 echo "$debug" > /proc/sys/Can/dbgMask
-echo "$IOModel_0$IOModel_1$IOModel_2$IOModel_3 " >/proc/sys/Can/IOModel
-echo "$TxSpeed_0$TxSpeed_1$TxSpeed_2$TxSpeed_3 " >/proc/sys/Can/TxSpeed
 
-#echo "$Chipset_0 $Chipset_1 $Chipset_2 $Chipset_3" > /proc/sys/Can/Chipset
 echo "$Base_0 $Base_1 $Base_2 $Base_3" > /proc/sys/Can/Base
 echo "$Irq_0 $Irq_1 $Irq_2 $Irq_3" > /proc/sys/Can/IRQ
 echo "$Baud_0 $Baud_1 $Baud_2 $Baud_3" > /proc/sys/Can/Baud
@@ -85,5 +64,4 @@ echo "$AccCode_0 $AccCode_1 $AccCode_2 $AccCode_3" > /proc/sys/Can/AccCode
 echo "$AccMask_0 $AccMask_1 $AccMask_2 $AccMask_3" > /proc/sys/Can/AccMask
 echo "$Timeout_0 $Timeout_1 $Timeout_2 $Timeout_3" > /proc/sys/Can/Timeout
 echo "$Outc_0 $Outc_1 $Outc_2 $Outc_3" > /proc/sys/Can/Outc
-echo "$VendOpt_0$VendOpt_1$VendOpt_2$VendOpt_3" > /proc/sys/Can/VendOpt
 

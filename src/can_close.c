@@ -10,7 +10,7 @@
  * derived from the the LDDK can4linux version
  *     (c) 1996,1997 Claus Schroeter (clausi@chemie.fu-berlin.de)
  *------------------------------------------------------------------
- * $Header: /z2/cvsroot/products/0530/software/can4linux/src/can_close.c,v 1.5 2002/08/08 17:57:24 oe Exp $
+ * $Header: /z2/cvsroot/products/0530/software/can4linux/src/can_close.c,v 1.7 2003/08/27 13:06:26 oe Exp $
  *
  *--------------------------------------------------------------------------
  *
@@ -18,6 +18,13 @@
  * modification history
  * --------------------
  * $Log: can_close.c,v $
+ * Revision 1.7  2003/08/27 13:06:26  oe
+ * - Version 3.0
+ *
+ * Revision 1.6  2003/07/05 14:28:55  oe
+ * - all changes for the new 3.0: try to eliminate hw depedencies at run-time.
+ *   configure for HW at compile time
+ *
  * Revision 1.5  2002/08/08 17:57:24  oe
  * - at close() use release_mem_region() release_region()
  *
@@ -47,8 +54,8 @@
 /**
 * \file can_close.c
 * \author Heinz-Jürgen Oertel, port GmbH
-* $Revision: 1.5 $
-* $Date: 2002/08/08 17:57:24 $
+* $Revision: 1.7 $
+* $Date: 2003/08/27 13:06:26 $
 *
 *
 */
@@ -89,11 +96,19 @@ __LDDK_CLOSE_TYPE can_close ( __LDDK_CLOSE_PARAM )
 
 	CAN_StopChip(minor);
 
-	if(IOModel[minor] == 'm') {
-	    release_mem_region(Base[minor], can_range[minor] );
-	} else {
-	    release_region(Base[minor], can_range[minor] );
-	}
+        /* since Vx.y (2.4?) macros defined in ioport.h,
+           called is  __release_region()  */
+#if defined(CAN_PORT_IO) 
+	release_region(Base[minor], can_range[minor] );
+#else
+#if defined(CAN_INDEXED_PORT_IO)
+	release_region(Base[minor],2);
+#else
+# ifndef CAN4LINUX_PCI
+	release_mem_region(Base[minor], can_range[minor] );
+# endif
+#endif
+#endif
 
 #ifdef CAN_USE_FILTER
 	Can_FilterCleanup(minor);

@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <signal.h>
 #include <sys/time.h>
@@ -157,7 +158,8 @@ struct timeval tval;		/* use time out in W32 server */
             if( FD_ISSET(can_fd, &rfds) ) {
             	/* it was the CAN fd */
 		got=read(can_fd, rx , SEQN * fac);
-		printf("received %d messages\n", got / fac);
+		/* printf("received %d messages\n", got / fac); */
+		printf("%d ", got / fac); fflush(stdout);
 		if(got > 0) {
 		    ;
 		} else break;

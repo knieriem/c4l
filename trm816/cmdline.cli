@@ -1,0 +1,14 @@
+Name dnpsetup
+
+Usage "write data value to given io port"        
+
+String -p base {portadress} -d 0x280
+
+Int -irq irq {Interrupt} -d 6
+
+String -d dnp {type of DIL-NET-PC} -d "1486"
+
+String -hw hw {type of Hardware} -d "trm816"
+
+
+

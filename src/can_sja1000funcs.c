@@ -1,21 +1,33 @@
-/* can_82c200funcs
+/* can_sja1000funcs
 *
 * can4linux -- LINUX CAN device driver source
 * 
-* Copyright (c) 2001 port GmbH Halle/Saale
+ * This file is subject to the terms and conditions of the GNU General Public
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
+ *
+ * 
+* Copyright (c) 2002 port GmbH Halle/Saale
 * (c) 2001 Heinz-Jürgen Oertel (oe@port.de)
-*          Claus Schroeter (clausi@chemie.fu-berlin.de)
-* derived from the the LDDK can4linux version
-*     (c) 1996,1997 Claus Schroeter (clausi@chemie.fu-berlin.de)
 *------------------------------------------------------------------
-* $Header: /z2/cvsroot/products/0530/software/can4linux/src/can_82c200funcs.c,v 1.8 2002/10/25 10:39:00 oe Exp $
+* $Header: /z2/cvsroot/products/0530/software/can4linux/src/can_sja1000funcs.c,v 1.3 2003/08/27 17:49:27 oe Exp $
 *
 *--------------------------------------------------------------------------
 *
 *
 * modification history
 * --------------------
-* $Log: can_82c200funcs.c,v $
+* $Log: can_sja1000funcs.c,v $
+* Revision 1.3  2003/08/27 17:49:27  oe
+* - New CanStatusPar structure
+*
+* Revision 1.2  2003/08/27 13:06:27  oe
+* - Version 3.0
+*
+* Revision 1.1  2003/07/05 14:28:55  oe
+* - all changes for the new 3.0: try to eliminate hw depedencies at run-time.
+*   configure for HW at compile time
+*
 * Revision 1.8  2002/10/25 10:39:00  oe
 * - vendor specific handling for Advantech board added by "R.R.Robotica" <rrrobot@tin.it>
 *
@@ -42,10 +54,9 @@
 /* int	CAN_Open = 0; */
 
 /* timing values */
-uint8 CanTiming[10][2]={
+u8 CanTiming[10][2]={
 	{CAN_TIM0_10K,  CAN_TIM1_10K},
 	{CAN_TIM0_20K,  CAN_TIM1_20K},
-	{CAN_TIM0_40K,  CAN_TIM1_40K},
 	{CAN_TIM0_50K,  CAN_TIM1_50K},
 	{CAN_TIM0_100K, CAN_TIM1_100K},
 	{CAN_TIM0_125K, CAN_TIM1_125K},
@@ -72,14 +83,9 @@ uint8 CanTiming[10][2]={
 int CAN_ShowStat (int board)
 {
     if (dbgMask && (dbgMask & DBG_DATA)) {
-#ifdef CAN_PELICANMODE
     printk(" MODE 0x%x,", CANin(board, canmode));
     printk(" STAT 0x%x,", CANin(board, canstat));
     printk(" IRQE 0x%x,", CANin(board, canirq_enable));
-#else
-    printk(" CTL 0x%x,", CANin(board, canctl));
-    printk(" STAT 0x%x,", CANin(board, canstat));
-#endif
     /* printk(" INT 0x%x\n", CANin(board, canirq)); */
     printk("\n");
     }
@@ -87,30 +93,47 @@ int CAN_ShowStat (int board)
 }
 #endif
 
+/* can_GetStat - read back as many status information as possible 
+*
+* Because the CAN protocol itself describes different kind of information
+* already, and the driver has some generic information
+* (e.g about it's buffers)
+* we can define a more or less hardware independent format.
+*
+*
+* exception:
+* ERROR WARNING LIMIT REGISTER (EWLR)
+* The SJA1000 defines a EWLR, reaching this Error Warning Level
+* an Error Warning interrupt can be generated.
+* The default value (after hardware reset) is 96. In reset
+* mode this register appears to the CPU as a read/write
+* memory. In operating mode it is read only.
+* Note, that a content change of the EWLR is only possible,
+* if the reset mode was entered previously. An error status
+* change (see status register; Table 14) and an error
+* warning interrupt forced by the new register content will not
+* occur until the reset mode is cancelled again.
+*/
+
 int can_GetStat(
 	struct inode *inode,
-	CanSja1000Status_par_t *stat
+	CanStatusPar_t *stat
 	)
 {
 unsigned int board = MINOR(inode->i_rdev);	
 msg_fifo_t *Fifo;
 unsigned long flags;
 
+    stat->type = CAN_TYPE_SJA1000;
+
     stat->baud = Baud[board];
     /* printk(" STAT ST %d\n", CANin(board, canstat)); */
     stat->status = CANin(board, canstat);
-#ifdef CAN_PELICANMODE
     /* printk(" STAT EWL %d\n", CANin(board, errorwarninglimit)); */
     stat->error_warning_limit = CANin(board, errorwarninglimit);
     stat->rx_errors = CANin(board, rxerror);
     stat->tx_errors = CANin(board, txerror);
     stat->error_code= CANin(board, errorcode);
-#else
-    stat->error_warning_limit = 0;
-    stat->rx_errors = 0;
-    stat->tx_errors = 0;
-    stat->error_code= 0;
-#endif
 
     /* Disable CAN Interrupts */
     /* !!!!!!!!!!!!!!!!!!!!! */
@@ -136,53 +159,38 @@ unsigned long flags;
 int CAN_ChipReset (int board)
 {
 uint8 status;
-int i;
+/* int i; */
 
     DBGin("CAN_ChipReset");
     DBGprint(DBG_DATA,(" INT 0x%x\n", CANin(board, canirq)));
 
-#ifdef CAN_PELICANMODE
     CANout(board, canmode, CAN_RESET_REQUEST);
-#else
-    CANout(board, canctl, CAN_RESET_REQUEST );
-#endif
 
 
 
-    for(i = 0; i < 100; i++) SLOW_DOWN_IO;
+    /* for(i = 0; i < 100; i++) SLOW_DOWN_IO; */
+    udelay(10);
 
     status = CANin(board, canstat);
 
-#ifdef CAN_PELICANMODE
     DBGprint(DBG_DATA,("status=0x%x mode=0x%x", status,
 	    CANin(board, canmode) ));
     if( ! (CANin(board, canmode) & CAN_RESET_REQUEST ) ){
-#else
-    DBGprint(DBG_DATA,("status=0x%x ctl=0x%x", status,
-	    CANin(board, canctl) ));
-    if( ! (CANin(board, canctl) & CAN_RESET_REQUEST ) ){
-#endif
 	    printk("ERROR: no board present!");
 	    MOD_DEC_USE_COUNT;
 	    DBGout();return -1;
     }
 
-#ifndef CAN_PELICANMODE
-# define canmode canctl
-#endif
-
     DBGprint(DBG_DATA, ("[%d] CAN_mode 0x%x\n", board, CANin(board, canmode)));
     /* select mode: Basic or PeliCAN */
-#ifdef CAN_PELICANMODE
     CANout(board, canclk, CAN_MODE_PELICAN + CAN_MODE_CLK);
     CANout(board, canmode, CAN_RESET_REQUEST + CAN_MODE_DEF);
-#else
-    /* set 82c200 mode for SJA 1000 */
-    CANout(board, canclk, CAN_MODE_BASICCAN + CAN_MODE_CLK);
-#endif
     DBGprint(DBG_DATA, ("[%d] CAN_mode 0x%x\n", board, CANin(board, canmode)));
     
     /* Board specific output control */
+    if (Outc[board] == 0) {
+	Outc[board] = CAN_OUTC_VAL; 
+    }
     CANout(board, canoutc, Outc[board]);
     DBGprint(DBG_DATA, ("[%d] CAN_mode 0x%x\n", board, CANin(board, canmode)));
 
@@ -207,24 +215,18 @@ int custom=0;
     {
 	case   10: i = 0; break;
 	case   20: i = 1; break;
-	case   40: i = 2; break;
-	case   50: i = 3; break;
-	case  100: i = 4; break;
-	case  125: i = 5; break;
-	case  250: i = 6; break;
-	case  500: i = 7; break;
-	case  800: i = 8; break;
-	case 1000: i = 9; break;
+	case   50: i = 2; break;
+	case  100: i = 3; break;
+	case  125: i = 4; break;
+	case  250: i = 5; break;
+	case  500: i = 6; break;
+	case  800: i = 7; break;
+	case 1000: i = 8; break;
 	default  : 
 		custom=1;
     }
     /* select mode: Basic or PeliCAN */
-#ifdef CAN_PELICANMODE
     CANout(board, canclk, CAN_MODE_PELICAN + CAN_MODE_CLK);
-#else
-    /* set 82c200 mode for SJA 1000 */
-    CANout(board, canclk, CAN_MODE_BASICCAN + CAN_MODE_CLK);
-#endif
     if( custom ) {
        CANout(board, cantim0, (uint8) (baud >> 8) & 0xff);
        CANout(board, cantim1, (uint8) (baud & 0xff ));
@@ -244,7 +246,7 @@ int custom=0;
 
 int CAN_StartChip (int board)
 {
-int i;
+/* int i; */
     RxErr[board] = TxErr[board] = 0L;
     DBGin("CAN_StartChip");
     DBGprint(DBG_DATA, ("[%d] CAN_mode 0x%x\n", board, CANin(board, canmode)));
@@ -252,11 +254,11 @@ int i;
     CANout( board,cancmd, (CAN_RELEASE_RECEIVE_BUFFER 
 			  | CAN_CLEAR_OVERRUN_STATUS) ); 
 */
-    for(i=0;i<100;i++) SLOW_DOWN_IO;
+    /* for(i=0;i<100;i++) SLOW_DOWN_IO; */
+    udelay(10);
     /* clear interrupts */
     CANin(board, canirq);
 
-#ifdef CAN_PELICANMODE
     /* Interrupts on Rx, TX, any Status change and data overrun */
     CANset(board, canirq_enable, (
 		  CAN_OVERRUN_INT_ENABLE
@@ -266,11 +268,6 @@ int i;
 
     CANreset( board, canmode, CAN_RESET_REQUEST );
     DBGprint(DBG_DATA,("start mode=0x%x", CANin(board, canmode)));
-#else
-    CANset(board, canctl, CAN_RECEIVE_INT_ENABLE );
-    CANreset( board, canctl, CAN_RESET_REQUEST );
-    DBGprint(DBG_DATA,("start ctl=0x%x", CANin(board, canctl)));
-#endif
 
     DBGout();
     return 0;
@@ -280,11 +277,7 @@ int i;
 int CAN_StopChip (int board)
 {
     DBGin("CAN_StopChip");
-#ifdef CAN_PELICANMODE
     CANset(board, canmode, CAN_RESET_REQUEST );
-#else
-    CANset(board, canctl, CAN_RESET_REQUEST );
-#endif
     DBGout();
     return 0;
 }
@@ -312,7 +305,6 @@ int CAN_SetMask (int board, unsigned int code, unsigned int mask)
 
     DBGin("CAN_SetMask");
     DBGprint(DBG_DATA,("[%d] acc=0x%x mask=0x%x",  board, code, mask));
-#ifdef CAN_PELICANMODE
     CANout(board, frameinfo,
 			(unsigned char)((unsigned int)(code >> 24) & 0xff));	
     CANout(board, frame.extframe.canid1,
@@ -331,37 +323,28 @@ int CAN_SetMask (int board, unsigned int code, unsigned int mask)
     CANout(board, frame.extframe.canxdata[2 * R_OFF],
 			(unsigned char)((unsigned int)(mask >>  0) & 0xff));
 
-#else
-    CANout(board, canacc,  (unsigned char)(code & 0xff));	
-    CANout(board, canmask, (unsigned char)(mask & 0xff));
-#endif
     DBGout();
     return 0;
 }
 
 
-int CAN_SendMessage (int board, canmsg_t *tx, int wait)
+int CAN_SendMessage (int board, canmsg_t *tx)
 {
-int i = 0, cycle = 0;
+int i = 0;
 int ext;			/* message format to send */
 uint8 tx2reg, stat;
 
     DBGin("CAN_SendMessage");
 
-  if(wait) {
-      LDDK_START_TIMER(Timeout[board]);
-  }
-  while ( ! (stat=CANin(board, canstat))
-  	& CAN_TRANSMIT_BUFFER_ACCESS 
-  	&& ! LDDK_TIMEDOUT ) {
+    while ( ! (stat=CANin(board, canstat))
+  	& CAN_TRANSMIT_BUFFER_ACCESS ) {
 	    #if LINUX_VERSION_CODE >= 131587
 	    if( current->need_resched ) schedule();
 	    #else
 	    if( need_resched ) schedule();
 	    #endif
-  }
+    }
 
-  if( ! LDDK_TIMEDOUT  ) {
     DBGprint(DBG_DATA,(
     		"CAN[%d]: tx.flags=%d tx.id=0x%lx tx.length=%d stat=0x%x",
 		board, tx->flags, tx->id, tx->length, stat));
@@ -370,7 +353,6 @@ uint8 tx2reg, stat;
     ext = (tx->flags & MSG_EXT);	/* read message format */
 
     /* fill the frame info and identifier fields */
-#ifdef CAN_PELICANMODE
     tx2reg = tx->length;
     if( tx->flags & MSG_RTR) {
 	    tx2reg |= CAN_RTR;
@@ -389,85 +371,38 @@ uint8 tx2reg, stat;
 	CANout(board, frame.stdframe.canid1, (uint8)((tx->id) >> 3) );
 	CANout(board, frame.stdframe.canid2, (uint8)(tx->id << 5 ) & 0xe0);
     }
-#else
-    CANout(board, cantxdes1, (uint8)((tx->id) >> 3) );
-    tx2reg =  ((tx->id << 5 ) & 0xe0) | ((uint8)(tx->length)) ;
-    if( tx->flags & MSG_RTR ) 
-	    tx2reg |= CAN_RTR;
-    CANout(board, cantxdes2, tx2reg );
-#endif
 
     /* - fill data ---------------------------------------------------- */
-#ifdef CAN_PELICANMODE
     if(ext) {
 	for( i=0; i < tx->length ; i++) {
-#ifdef CAN4LINUX_PCI
-	    CANout( board, frame.extframe.canxdata[4*i], tx->data[i]);
-#else
-	    CANout( board, frame.extframe.canxdata[i], tx->data[i]);
-#endif
-	    	SLOW_DOWN_IO; SLOW_DOWN_IO;
+	    CANout( board, frame.extframe.canxdata[R_OFF * i], tx->data[i]);
+	    	/* SLOW_DOWN_IO; SLOW_DOWN_IO; */
 	}
     } else {
 	for( i=0; i < tx->length ; i++) {
-#ifdef CAN4LINUX_PCI
-	    CANout( board, frame.stdframe.candata[4*i], tx->data[i]);
-#else
-	    CANout( board, frame.stdframe.candata[i], tx->data[i]);
-#endif
-	    	SLOW_DOWN_IO; SLOW_DOWN_IO;
+	    CANout( board, frame.stdframe.candata[R_OFF * i], tx->data[i]);
+	    	/* SLOW_DOWN_IO; SLOW_DOWN_IO; */
 	}
     }
-#else
-    for( i=0; i < tx->length ; i++) {
-	CANout( board, cantxdata[i], tx->data[i]); SLOW_DOWN_IO; SLOW_DOWN_IO;
-    }
-#endif
     /* - /end --------------------------------------------------------- */
     CANout(board, cancmd, CAN_TRANSMISSION_REQUEST );
-    if( wait ) {
-       while( ! (CANin(board, canstat) & CAN_TRANSMISSION_COMPLETE_STATUS) 
-           && ! LDDK_TIMEDOUT ) cycle++;
-       if( LDDK_TIMEDOUT ) {
-       DBGprint(DBG_DATA,("Timeout! stat=0x%x",CANin(board, canstat  )));	
-	/*CANout(board, cancmd, CAN_ABORT_TRANSMISSION );*/
-    
 
-/*CANout( board,cancmd, (CAN_RELEASE_RECEIVE_BUFFER 
-	                              | CAN_CLEAR_OVERRUN_STATUS) );*/
-       }
-    } else if( TxSpeed[board] == 'f' ) {
-      unsigned long flags;
-      /* enter critical section */
-      save_flags(flags); cli();
-      /* leave critical section */
-      restore_flags(flags);
-    }
-  }  else {
-    printk("CAN[%d] Tx: Timeout! stat=0x%x\n", board, stat);
-    i= -1;
-  }
-
-  if(wait) LDDK_STOP_TIMER();
   DBGout();return i;
-
-    DBGout();
 }
 
-
+#if 1
+/* CAN_GetMessage is used in Polling Mode with ioctl()
+ * !!!! curently not working for the PELICAN mode 
+ * and BASIC CAN mode code already removed !!!!
+ */
 int CAN_GetMessage (int board, canmsg_t *rx )
 {
 uint8 dummy = 0, stat;
 int i = 0;
   
     DBGin("CAN_GetMessage");
-    LDDK_START_TIMER(Timeout[board]);
     stat = CANin(board, canstat);
-#ifdef CAN_PELICANMODE
-#else
-    DBGprint(DBG_DATA,("0x%x:stat=0x%x ctl=0x%x",
-    			Base[board], stat, CANin(board, canctl)));
-#endif
+
     rx->flags  = 0;
     rx->length = 0;
 
@@ -477,59 +412,61 @@ int i = 0;
     }
 
     if( stat & CAN_RECEIVE_BUFFER_STATUS ) {
-#ifdef CAN_PELICANMODE
-#else
-      dummy  = CANin(board, canrxdes2);
-      rx->id = CANin(board, canrxdes1) << 3 | (dummy & 0xe0) >> 5 ;
-#endif
       dummy  &= 0x0f; /* strip length code */ 
       rx->length = dummy;
       DBGprint(DBG_DATA,("rx.id=0x%lx rx.length=0x%x", rx->id, dummy));
 
       dummy %= 9;
       for( i = 0; i < dummy; i++) {
-#ifdef CAN_PELICANMODE
-#else
-	rx->data[i] = CANin(board, canrxdata[i]);
-#endif
+      /* missing code here */
 	DBGprint(DBG_DATA,("rx[%d]: 0x%x ('%c')",i,rx->data[i],rx->data[i] ));
       }
       CANout(board, cancmd, CAN_RELEASE_RECEIVE_BUFFER | CAN_CLEAR_OVERRUN_STATUS );
     } else {
       i=0;
     }
-    LDDK_STOP_TIMER();
     DBGout();
     return i;
-
-    DBGout();
 }
+#endif
 
 int CAN_VendorInit (int minor)
 {
     DBGin("CAN_VendorInit");
 
 /* 1. Vendor specific part ------------------------------------------------ */
+#if defined(IXXAT_PCI03) || defined (PCM3680)
+    can_range[minor] = 0x200; /*stpz board or Advantech Pcm-3680 */
+#else
     can_range[minor] = CAN_RANGE;
-    if( (VendOpt[minor] == 's') || (VendOpt[minor] == 'a')) {   
-	can_range[minor] = 0x200; /*stpz board or Advantech Pcm-3680 */
-    }
+#endif
+    
 /* End: 1. Vendor specific part ------------------------------------------- */
 
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,3,11)
 
-    /* can also be a compile time decision CAN_PORT_IO */
-    if(IOModel[minor] == 'p') {
-	/* It's port I/O */
-	if(NULL == request_region(Base[minor], can_range[minor], "CAN-IO" )) {
-	    return -EBUSY;
-	}
-    } else {
-	/* It's Memory I/O */
-	if(NULL == request_mem_region(Base[minor], can_range[minor], "CAN-IO" )) {
-	    return -EBUSY;
-	}
+#if !defined(CAN4LINUX_PCI)
+    /* Request the controllers address space */
+#if defined(CAN_PORT_IO) 
+    /* It's port I/O */
+    if(NULL == request_region(Base[minor], can_range[minor], "CAN-IO")) {
+	return -EBUSY;
+    }
+#else
+#if defined(CAN_INDEXED_PORT_IO)
+    /* It's indexed port I/O */
+    if(NULL == request_region(Base[minor], 2, "CAN-IO")) {
+      return -EBUSY;
+    } 
+#else
+    /* It's Memory I/O */
+    if(NULL == request_mem_region(Base[minor], can_range[minor], "CAN-IO")) {
+	return -EBUSY;
+    }
+#endif
+#endif
+#endif 	/* !defined(CAN4LINUX_PCI) */
 
 #if CAN4LINUX_PCI
 	/* PCI scan has already remapped the address */
@@ -537,7 +474,6 @@ int CAN_VendorInit (int minor)
 #else
 	can_base[minor] = ioremap(Base[minor], 0x200);
 #endif
-    }
 #else 	  /*  LINUX_VERSION_CODE >= KERNEL_VERSION(2,3,11) */
     
 /* both drivers use high memory area */
@@ -564,19 +500,20 @@ int CAN_VendorInit (int minor)
 
 /* 2. Vendor specific part ------------------------------------------------ */
 
-      if( VendOpt[minor] == 's' ) {    /* stpz board */
+/* ixxat/stpz board */
+#if defined(IXXAT_PCI03)
 	if( Base[minor] & 0x200 ) {
-		printk("Resetting STZP PC I-03 [contr 1]\n");
+		printk("Resetting IXXAT PC I-03 [contr 1]\n");
 		/* perform HW reset 2. contr*/
 		writeb(0xff, can_base[minor] + 0x300);
 	} else {
-		printk("Resetting STZP PC I-03 [contr 0]\n");
+		printk("Resetting IXXAT PC I-03 [contr 0]\n");
 		/* perform HW reset 1. contr*/
 		writeb(0xff, can_base[minor] + 0x100);
 	}
-      }
-
-if( VendOpt[minor] == 'a' ) {    /* Advantech Pcm-3680 */
+#endif
+/* Advantech Pcm-3680 */
+#if defined (PCM3680)
 	if( Base[minor] & 0x200 ) {
 		printk("Resetting Advantech Pcm-3680 [contr 1]\n");
 		/* perform HW reset 2. contr*/
@@ -587,8 +524,7 @@ if( VendOpt[minor] == 'a' ) {    /* Advantech Pcm-3680 */
 		writeb(0xff, can_base[minor] + 0x100);
 	}
         mdelay(100);
-      }
-
+#endif
 
 
 /* End: 2. Vendor specific part ------------------------------------------- */
@@ -600,12 +536,12 @@ if( VendOpt[minor] == 'a' ) {    /* Advantech Pcm-3680 */
         }
     }
 
-    DBGout(); return 1;
+    DBGout(); return 0;
 }
 
 
 /*
- * The plain 82c200 interrupt
+ * The plain SJA1000 interrupt
  *
  *				RX ISR           TX ISR
  *                              8/0 byte
@@ -679,6 +615,8 @@ int first = 0;
     DBGprint(DBG_DATA, (" => got IRQ[%d]: 0x%0x\n", minor, irqsrc));
     /* Can_dump(minor); */
 
+    do_gettimeofday(&(RxFifo->data[RxFifo->head]).timestamp);
+
 #if 0
     /* how often do we lop through the ISR ? */
     if(first) printk("n = %d\n", first);
@@ -692,41 +630,12 @@ int first = 0;
     /*========== receive interrupt */
     if( irqsrc & CAN_RECEIVE_INT ) {
         /* fill timestamp as first action */
-	 do_gettimeofday(&(RxFifo->data[RxFifo->head]).timestamp);
 
-#ifdef CAN_PELICANMODE
 	dummy  = CANin(minor, frameinfo );
-#else
-	dummy  = CANin(minor, canrxdes2 );
-#endif
-#if CAN_USE_FILTER
-                                          /* don't need & 0xe0 */
-	id     = CANin(minor, canrxdes1 ) << 3 | (dummy & 0xe0) >> 5 ;
-
-       	/* got RTR */
-	if( dummy & CAN_RTR && RxPass->filter[id].rtr_response != NULL ) {
-	    canmsg_t *RTRR = RxPass->filter[id].rtr_response;
-
-#ifdef CAN_PELICANMODE
-#else
-	    CANout( minor, cantxdes1 ,(uint8) (RTRR->id >> 3));
-	    CANout( minor, cantxdes2 ,(uint8) ((RTRR->id << 5) & 0xe0) | RTRR->length );
-#endif
-	    for(i = 0; i < RTRR->length && i < 8 ; i++ ) {
-		CANout(minor, cantxdata[i], RTRR->data[i]); 
-	    }
-	    CANout(minor, cancmd, CAN_TRANSMISSION_REQUEST );
-	} else if( dummy & CAN_RTR ) {
-	    (RxFifo->data[RxFifo->head]).flags |= MSG_RTR;
-        }
-
-	(RxFifo->data[RxFifo->head]).id = id;
-#else
         if( dummy & CAN_RTR ) {
 	    (RxFifo->data[RxFifo->head]).flags |= MSG_RTR;
 	}
 
-#ifdef CAN_PELICANMODE
         if( dummy & CAN_EFF ) {
 	    (RxFifo->data[RxFifo->head]).flags |= MSG_EXT;
 	}
@@ -742,58 +651,28 @@ int first = 0;
         	  ((unsigned int)(CANin(minor, frame.stdframe.canid1 )) << 3) 
         	+ ((unsigned int)(CANin(minor, frame.stdframe.canid2 )) >> 5);
 	}
-#else
-        (RxFifo->data[RxFifo->head]).id =
-                                         /* don't need & 0xe0 */
-        	CANin(minor, canrxdes1 ) << 3 | (dummy & 0xe0) >> 5 ;
-#endif
-#endif
 	/* get message length */
         dummy  &= 0x0f;			/* strip length code */ 
         (RxFifo->data[RxFifo->head]).length = dummy;
 
         dummy %= 9;	/* limit count to 8 bytes */
         for( i = 0; i < dummy; i++) {
-            SLOW_DOWN_IO;SLOW_DOWN_IO;
-#ifdef CAN_PELICANMODE
+            /* SLOW_DOWN_IO;SLOW_DOWN_IO; */
 	    if(ext) {
 		(RxFifo->data[RxFifo->head]).data[i] =
-#ifdef CAN4LINUX_PCI
-			CANin(minor, frame.extframe.canxdata[4*i]);
-#else
-			CANin(minor, frame.extframe.canxdata[i]);
-#endif
+			CANin(minor, frame.extframe.canxdata[R_OFF * i]);
 	    } else {
 		(RxFifo->data[RxFifo->head]).data[i] =
-#ifdef CAN4LINUX_PCI
-			CANin(minor, frame.stdframe.candata[4*i]);
-#else
-			CANin(minor, frame.stdframe.candata[i]);
-#endif
+			CANin(minor, frame.stdframe.candata[R_OFF * i]);
 	    }
-#else
-	    (RxFifo->data[RxFifo->head]).data[i] = CANin(minor,canrxdata[i]);
-#endif
 	}
 	RxFifo->status = BUF_OK;
-#if CAN_USE_FILTER
-	if(RxPass->use && !RxPass->filter[id].enable){
-#if FDEBUG
-		printk("discarded %d \n",id);
-#endif
-		goto DiscardRX;
-        }
-	else
-#endif
         RxFifo->head = ++(RxFifo->head) % MAX_BUFSIZE;
 
 	if(RxFifo->head == RxFifo->tail) {
 		printk("CAN[%d] RX: FIFO overrun\n", minor);
 		RxFifo->status = BUF_OVERRUN;
         } 
-#if CAN_USE_FILTER
-DiscardRX:
-#endif
         /*---------- kick the select() call  -*/
         /* __wake_up(struct wait_queue ** p, unsigned int mode); */
         /* __wake_up(struct wait_queue_head_t *q, unsigned int mode); */
@@ -830,7 +709,6 @@ DiscardRX:
         /* enter critical section */
         save_flags(flags);cli();
 
-#ifdef CAN_PELICANMODE
 	tx2reg = (TxFifo->data[TxFifo->tail]).length;
 	if( (TxFifo->data[TxFifo->tail]).flags & MSG_RTR) {
 		tx2reg |= CAN_RTR;
@@ -850,47 +728,20 @@ DiscardRX:
 	    CANout(minor, frame.stdframe.canid1, (uint8)((id) >> 3) );
 	    CANout(minor, frame.stdframe.canid2, (uint8)(id << 5 ) & 0xe0);
         }
-#else
-        CANout(minor, cantxdes1,
-        		(uint8)(((TxFifo->data[TxFifo->tail]).id ) >> 3));
-        tx2reg = (((TxFifo->data[TxFifo->tail]).id << 5 ) & 0xe0) 
-                     | ((uint8) (TxFifo->data[TxFifo->tail]).length  ) ;
-        if( (TxFifo->data[TxFifo->tail]).flags & MSG_RTR ) {
-	    tx2reg |= CAN_RTR;
-	}
-        CANout(minor, cantxdes2, tx2reg );
-#endif
 
 
-#ifdef CAN_PELICANMODE
 	tx2reg &= 0x0f;		/* restore length only */
 	if(ext) {
 	    for( i=0; i < tx2reg ; i++) {
-#ifdef CAN4LINUX_PCI
-		CANout(minor, frame.extframe.canxdata[4*i],
+		CANout(minor, frame.extframe.canxdata[R_OFF * i],
 		    (TxFifo->data[TxFifo->tail]).data[i]);
-#else
-		CANout(minor, frame.extframe.canxdata[i],
-		    (TxFifo->data[TxFifo->tail]).data[i]);
-#endif
 	    }
         } else {
 	    for( i=0; i < tx2reg ; i++) {
-#ifdef CAN4LINUX_PCI
-		CANout(minor, frame.stdframe.candata[4*i],
+		CANout(minor, frame.stdframe.candata[R_OFF * i],
 		    (TxFifo->data[TxFifo->tail]).data[i]);
-#else
-		CANout(minor, frame.stdframe.candata[i],
-		    (TxFifo->data[TxFifo->tail]).data[i]);
-#endif
 	    }
         }
-#else	/* standard Basic CAN mode vvv */
-        for( i=0; i < (TxFifo->data[TxFifo->tail]).length && i < 8 ; i++){ 
-	    CANout(minor, cantxdata[i], (TxFifo->data[TxFifo->tail]).data[i]);
-            SLOW_DOWN_IO;
-	}
-#endif
 
         CANout(minor, cancmd, CAN_TRANSMISSION_REQUEST );
 

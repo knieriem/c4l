@@ -1,111 +1,166 @@
 .\" Konfiguration
 .\" :vi:source ex_for_this:
-.so /z2/0/0310/t0060
+.\" :vipdo:-mgspo.n -mwww:
+.\".so /z2/0/0310/t0060
+++.
+--.
+.br
 .RH $Short: "INSTALL can4linux.2.x" $
 .LF $Source: /z2/0/0530/software/can4linux/RCS/INSTALL.t2,v $
-.CF $State: Rel $
-.lF $Revision: 1.5 $
-.cF $Date: 2002/09/17 15:35:44 $
+.CF $State: Exp $
+.lF $Revision: 1.1 $
+.cF $Date: 2003/09/11 10:06:05 $
 .rF $of: 4 $
 .SH
 .ps +4
-can4linux 
+can4linux \(em
 .ps -4
-- CAN Treiber für passive Karten mit CAN 82c200/SJA1000 Controllern
+--CAN Treiber für passive Karten mit CAN 82c200/SJA1000 Controllern
+++CAN driver for passive CAN interface boards with SJA1000 controller
 .LP
 .NH 
 Installation
 .LP
-Entpacken sie den Treiber-Kode can4linux*tgz 
-in einem vorher eingerichteten Verzeichnis, z.B 
+--Entpacken sie den Treiber-Kode can4linux*tgz 
+--in einem vorher eingerichteten Verzeichnis, z.B 
+++Download can4linux, create a can4linux directory, e.g.
 .I can4linux
+++and unpack the archive:
 .LS
 $ mkdir can4linux
 $ cd can4linux
-$ tar zcvf ../can4linux*tgz
+$ tar zxvf ../can4linux*tgz
 .LE
-Der Treiber wird für jede dafür vorgesehene Hardware speziell übersetzt.
-Eine Liste der möglichen Interface-Boards enthält das Makefile,
-das auch den Übersetzungsvorgang steuert.
-Übersetzen sie den Treiber, z.B:
+--Der Treiber wird für jede dafür vorgesehene Hardware speziell übersetzt.
+--Eine Liste der möglichen Interface-Boards enthält das Makefile,
+--das auch den Übersetzungsvorgang steuert.
+--Übersetzen sie den Treiber, z.B:
+++The driver has to be compiled for each supported hardware.
+++A list of supported boards can be found in the Makefile.
+++It is displayed by typing
+.LS
+$ make help
+.LE
+++Compile the driver with specifying the hardware target:
 .LS
 $ make TARGET=ATCANMINI_PELICAN
 .LE
-Es entsteht im aktuellen Verzeichnis die Datei
-.I Can.o ,
-die Treiber-Objektdatei.
+--Es entsteht im aktuellen Verzeichnis die Datei
+--.I Can.o ,
+--die Treiber-Objektdatei.
+++The driver object file
+.I Can.o
+++is created in the actual working directory.
 .LP
-Erzeugen sie nun Einträge für Gerätedateien.
-Rufen sie dazu make auf:
+--Erzeugen sie nun Einträge für Gerätedateien.
+--Rufen sie dazu make auf:
+++Now create the necessary device entries by using make again:
 .LS
 $ make inodes
 .LE
-Die Voreinstellung für die major device number ist 91.
-Prüfen sie vorher, ob diese Nummer schon im \%System verwendet wird.
-(Sie ist jedoch offiziell für CAN reserviert.)
+--Die Voreinstellung für die major device number ist 91.
+--Prüfen sie vorher, ob diese Nummer schon im \%System verwendet wird.
+--(Sie ist jedoch offiziell für CAN reserviert.)
+++The default value for a CAN drivers major number is 91.
+++Please check before using it if the major number is already used.
+++(major 91 is a registered number for CAN drivers.)
+.LS
+$ cat /proc/devices
+.LE
+++lists all devices major numbers in use.
 .LP
-Gehen sie in das Verzeichnis
+--Gehen sie in das Verzeichnis
+++Next go into
 .I etc .
-Suchen sie sich eine geeignete Konfiguration aus
-und editieren diese.
+--Suchen sie sich eine geeignete Konfiguration aus
+--und editieren diese.
+++Look for a configuration that fits to your hardware.
 .LP
-In den meisten Fällen können sie die vorhandenen Dateien:
+--In den meisten Fällen können sie die vorhandenen Dateien:
+++In the most cases you can use one of the available:
 .I 2-at_can_mini.conf 
-oder
+--oder
+++or
 .I 1-cpcpci.conf 
-verwenden.
+--verwenden.
+++\&.
 .LP
-Finden sie keine vorkonfigurierten Einträge,
-welche auf ihre Hardware zutreffen,
-sollten sie sehr sorgfältig ihre Hardware studieren
-und einen neuen Eintrag anlegen.
+--Finden sie keine vorkonfigurierten Einträge,
+--welche auf ihre Hardware zutreffen,
+--sollten sie sehr sorgfältig ihre Hardware studieren
+--und einen neuen Eintrag anlegen.
+++If you don´t see any pre-configured settings
+++that match your hardware
+++read your hardware manuals carefully
+++and add a new entry.
 .LP
-Legen sie eine Konfigurationsdatei, benannt nach ihrem Rechner, an. 
-Den Rechnernamen können sie abfragen mit:
+--Legen sie eine Konfigurationsdatei, benannt nach ihrem Rechner, an. 
+--Den Rechnernamen können sie abfragen mit:
+++Create a configuration file named according to the name of your computer.
+++Your computers name is returned: 
 .LS
 $ uname -n 
 uschi
 $ cp 1-cpcpci.conf uschi.conf
 .LE
 .B
-Viele Einträge sind von der Hardware abhängig. -
-Vorsicht beim Einsatz selbstentwickelter Hardware.
+--Viele Einträge sind von der Hardware abhängig. -
+--Vorsicht beim Einsatz selbstentwickelter Hardware.
+++Some entries are hardware dependant.
+++Be carful when using your own hardware.
 .LP
-Die Einträge in der Konfigurationsdatei werden über 
-die entsprechenden Einträge
-des Treibers im
+--Die Einträge in der Konfigurationsdatei werden über 
+--die entsprechenden Einträge
+--des Treibers im
+++The content in the configuration file is used to overwrite
+++the appropriate entries in the
 .I /proc
-Dateisystem geschrieben
+--Dateisystem geschrieben
+++file system.
 .LS
 /proc/sys/Can/*
 .LE
-Führen sie nun
+--Führen sie nun
+++Now you can do a
 .LS
 $ make load
 .LE
-aus.
-Diese Anweisung lädt den Treiber Can.o
-mit dem Betriebssystemkommando
+--aus.
+--Diese Anweisung lädt den Treiber Can.o
+--mit dem Betriebssystemkommando
+++The driver
+++.B Can.o
+++is loaded using 
 .CW insmod (1)
-und überschreibt anschließend die Einträge in
+--und überschreibt anschließend die Einträge in
+++and entries in
 .I /proc/sys/Can/*
-mit den von ihnen gewählten Werten.
+--mit den von ihnen gewählten Werten.
+++are overwritten with the config file contents.
 .LP
-.B ACHTUNG !
-Beim Einsatz von PCI Karten
-verwendet der Treiber für Adressen und Interruptnummern sowie für die Art
-des Zugriffes
-Werte, welche er vom BIOS erhält.
-Diese Werte können dann nicht geändert
-bzw. überschrieben
-werden - ignorieren sie einfach
-diese Fehlermeldung beim Laden der Konfiguration.
+--.B ACHTUNG !
+++.B ATTENTION!
+--Beim Einsatz von PCI Karten
+--verwendet der Treiber für Adressen und Interruptnummern sowie für die Art
+--des Zugriffes
+--Werte, welche er vom BIOS erhält.
+--Diese Werte können dann nicht geändert
+--bzw. überschrieben
+--werden - ignorieren sie einfach
+--diese Fehlermeldung beim Laden der Konfiguration.
+++When using PCI boards,
+++the driver is using values obtained from the BIOS
+++for addresses, access type and IRQ numbers.
+++In this case these values are read-only and can not be overwritten.
+++Ignore the warnings given while loading a configuration.
 .NH 
 Test
 .LP
-Gehen sie nun in das Verzeichnis
+--Gehen sie nun in das Verzeichnis
+++Change into the directory
 .I examples.
-Übersetzen sie die Applikationen.
+--Übersetzen sie die Applikationen.
+++and compile the applications there
 .LS
 $ cd examples
 $ make
@@ -126,34 +181,46 @@ gcc   transmit.o   -o transmit
 gcc -Wall -I../src -DUSE_RT_SCHEDULING   -c -o can_verify.o can_verify.c
 gcc   can_verify.o   -o can_verify
 .LE
-Bevor sie nun
+--Bevor sie nun
+++Before calling
 .CW ctest
-aufrufen,
-beobachten sie die Ausschriften des Treibers
-in der Datei
+--aufrufen,
+--beobachten sie die Ausschriften des Treibers
+--in der Datei
+++watch the message log of the driver
+++in the file
 .I /var/log/messages.
-Dazu öffnen sie in einem seperatem
+--Dazu öffnen sie sie in einem separatem
+++Open a separate window
 .B xterm
 .LS
 $ tail -f /var/log/messages
 .LE
-(Superuser Rechte meist erforderlich.)
+--(Superuser Rechte meist erforderlich.)
+++(super user access rights are needed on most systems)
 .LP
-Um mehr Meldungen vom Treiber zu erhalten,
-erhöhen sie vorher den Debuglevel
-durch Schreiben auf den Eintrag
+--Um mehr Meldungen vom Treiber zu erhalten,
+--erhöhen sie vorher den Debuglevel
+--durch Schreiben auf den Eintrag
+++In order to see more messages
+++increase the debug level
+++by writing to the /proc filesystem
 .LS
 echo 7 > /proc/sys/Can/dbgMask
 .LE
-(Superuser Rechte meist erforderlich.)
+--(Superuser Rechte meist erforderlich.)
+++(super user access rights are needed on most systems)
 .LP
-oder sie benutzen das Script
+--oder sie benutzen das Skript
+++or use the shell script
 .LS
 \&./debug 7
 .LE
-Nach dem Start von 
+--Nach dem Start von 
+++After the start of
 .CW ctest
-sehen sie in der Log-Datei:
+--sehen sie in der Log-Datei:
+++you will see the following in the message log
 .LS no
 Sep 17 13:13:31 uschi kernel: Can: - :in  can_open
 Sep 17 13:13:31 uschi kernel: Can: - :in  CAN_VendorInit
@@ -195,97 +262,148 @@ Sep 17 13:13:31 uschi kernel: Can: - :out
 Sep 17 13:13:31 uschi kernel:  MODE 0x8, STAT 0x3c, IRQE 0xf,
 Sep 17 13:13:31 uschi kernel: Can: - :out  
 .LE
-Andere Ausschriften deuten auf fehlerhafte *.conf Konfigurationen 
-oder nicht unterstützte Hardware hin.
+--Andere Ausschriften deuten auf fehlerhafte *.conf Konfigurationen 
+--oder nicht unterstützte Hardware hin.
+++Other messages denote a corrupt or wrong *.conf configuration
+++or using a not supported hardware.
 .LP
-Starten sie nun
+--Starten sie nun
+++Please start
 .CW can_send
-zum Versenden einer Nachricht mit 8 Datenbyte mit dem Dateninhalt 0x55:
+--zum Versenden einer Nachricht mit 8 Datenbyte mit dem Dateninhalt 0x55:
+++to send a CAN message with 8 data byte with the contents of 0x55:
 .LS
 $ can_send -D can0 0x555 0x55 0x55 0x55 0x55 0x55 0x55 0x55 0x55
 .LE
-Nach Ausführen des Kommandos
+--Nach Ausführen des Kommandos
+++After execution of
 .CW can_send
-sollte auf dem CAN Bus eine Nachricht erscheinen.
-Ist der Bus nicht mit einer CAN Gegenstelle abgeschlossen,
-versucht der CAN Controller diese Message immer wieder abzusetzen,
-da er kein Acknowledge bekommt.
-Dies ist sehr gut mit einem Oszillographen zu beobachten.
-Durch den gewählten Identifier und das Muster der Datenbytes,
-sollte sehr einfach der kürzeste Signalwechsel erkennbar
-und ausmessbar sein.
-Bei 125 kBit/s beträgt die Zeit für den kürzesten Signalwechsel 8 µs.
+--sollte auf dem CAN Bus eine Nachricht erscheinen.
+--Ist der Bus nicht mit einer CAN Gegenstelle abgeschlossen,
+--versucht der CAN Controller diese Message immer wieder abzusetzen,
+--da er kein Acknowledge bekommt.
+++there should be a CAN message on the bus.
+++When the bus is not connected with a receiving device
+++the CAN controller will continue to send the message
+++because it doesn´t receive an acknowledge.
+--Dies ist sehr gut mit einem Oszillographen zu beobachten.
+--Durch den gewählten Identifier und das Muster der Datenbytes,
+--sollte sehr einfach der kürzeste Signalwechsel erkennbar
+--und ausmessbar sein.
+--Bei 125 kBit/s beträgt die Zeit für den kürzesten Signalwechsel 8 µs.
+++This behaviour is easy to trace with an oscilloscope.
+++The chosen CAN identifier and the pattern of the data
+++is quite easy to recognise and to measure.
+++With a baud rate of 125 kBit/s the measurement of the
+++shortest signal change should be 8 µs.
 .LP
-Setzen sie den Debuglevel des Treibers zurück:
+--Setzen sie den Debuglevel des Treibers zurück:
+++Reset the debug level of the driver:
 .LS
 \&./debug 0
 .LE
 .NH
-Einträge in /proc/sys/Can
+--Einträge in
+++Entries in 
+/proc/sys/Can
 .LP
-Siehe dazu auch die Beispiele in den Konfigurationsdateien
+--Siehe dazu auch die Beispiele in den Konfigurationsdateien
+++Please see also the example in the configuration files
 .I etc/*.conf .
 .TS
 l | c | l.
-Eintrag	pro Kanal	Bedeutung
+--Eintrag	pro Kanal	Bedeutung
+++Entry	per channel	meaning
 _
 AccCode	*	CAN Controller Acceptance Code Register
 AccMask	*	CAN Controller Acceptance Maske
-Base	*	CAN Controller Adresse
-Baud	*	Bitrate in kBit/s
-ExtId	-	ohne Belang 
-IOModel		Ein Buchstabe pro Kanal für IO-Model
-IRQ	*	IRQ Nummer
+--Base	*	CAN Controller Adresse
+++Base	*	CAN Controller Address
+--Baud	*	Bitrate in kBit/s
+--IOModel		Ein Buchstabe pro Kanal für IO-Model
+++IOModel		One letter per channel for the IO-Model
+--IRQ	*	IRQ Nummer
+++IRQ	*	IRQ Number
 Outc	*	Output Control Register
-Overrun	*	Overrun Flag des Kanals
-RxErr	*	Anzahl der Rx Fehler
-Timeout	*	Timeout Wert
-TxErr	*	Anzahl der TX Fehler
-TxSpeed		Ein Buchstabe pro Kanal f|s; s - wird nicht mehr unterstützt
-VendOpt		Ein Buchstabe pro Kanal
-dbgMask		globaler DebugLevel
-version		Versionsstring
+--Overrun	*	Overrun Flag des Kanals
+++Overrun	*	Overrun Flag of the channel
+--RxErr	*	Anzahl der Rx Fehler
+++RxErr	*	number of Rx errors
+--Timeout	*	Timeout Wert
+++Timeout	*	Timeout value
+--TxErr	*	Anzahl der TX Fehler
+++TxErr	*	Number of TX errors
+--dbgMask		globaler DebugLevel
+++dbgMask		global debug level
+--version		Versionsstring
+++version		versions string
+--Chipset		vom Treiber unterstützter CAN controller
+++Chipset		CAN controller supported by the driver
 .TE
 .LP
-Für die CAN Bitraten 
-10,20,40,50,125,250,500,800 und 1000 kBit/s
-werden die Werte für die Bit-Timing Register
-des CAN Controllers
-aus internen Tabellen geladen.
-Diese Tabellen gelten jedoch nur für eine Takt\%versorgung des 
-CAN Controllers mit 8 MHz (externer 16 MHz Quartz).
-Bei abweichenden Werten
-wird der Inhalt der Bit-Timing Register wie folgt berechnet:
+--Für die CAN Bitraten 
+++The values for the bit timing registers of the CAN controller
+++for the bit-rates
+10,20,40,50,125,250,500,800 
+--und
+++and
+1000 kBit/s
+--werden die Werte für die Bit-Timing Register
+--des CAN Controllers
+--aus internen Tabellen geladen.
+++are taken from internal tables.
+--Diese Tabellen gelten jedoch nur für eine Takt\%versorgung des 
+--CAN Controllers mit 8 MHz (externer 16 MHz Quartz).
+--Bei abweichenden Werten
+--wird der Inhalt der Bit-Timing Register wie folgt berechnet:
+++These tables are only valid 
+++if the clock cycle of the CAN controller
+++is 8 MHz (external 16 MHz quartz).
+++When using a different clock cycle
+++the bit timing registers are calculated as follows:
 .LS
 BTR0 = (Baud >> 8) && 0xFF
 BTR1 =  Baud       && 0xFF
 .LE
-Beispiel für die Einstellung von 125 kBit/s für einen SJA1000 
-Controller mit einer Taktfrequenz von 10 MHz (20MHz),
-16 Quanten und einer Abtastrate (Sampling Point) von 87.5%:
+--Beispiel für die Einstellung von 125 kBit/s für einen SJA1000 
+--Controller mit einer Taktfrequenz von 10 MHz (20MHz),
+--16 Quanten und einem Abtastpunkt (Sampling Point) bei 87.5%:
+++Example for setting the bit rate to 125 kBit/s for a
+++SJA1000 with a clock cycle of 10 MHz (20MHz),
+++16 time quanta and the sampling point at 87.5%
 .LS
-Berechnete Werte für die Bit-Timing Register: BTR0 = 0x04
+--Berechnete Werte für die Bit-Timing Register: 
+++Calculated values for the bit timing register:
+                                              BTR0 = 0x04
                                               BTR1 = 0x1c
 .LE
 .LS
-Daraus folgt: Baud = (0x04 << 8) + 0x1c = 0x041c = 1052 
+--Daraus folgt:
+++From this it follows that:
+                 Baud = (0x04 << 8) + 0x1c = 0x041c = 1052 
 .LE
 .LP
-Die Werte der Bit-Timing Register kann man sich durch
-Angabe der Taktfrequenz am CAN Controller und der
-geforderten Abtastrate mit dem Formular auf
+--Die Internet-Seite
+++The site
 http://www.port.de/deutsch/canprod/sv_req_form.html
-berechnen.
+--bietet ein Formular
+--zur Berechnung der Werte für die Bit-Timing Register.
+++provides a input form for bit timing calculation
+++of the bit timing register.
 .LP
 .IP dbgMask
-globaler DebugLevel
+--globaler DebugLevel
+++global debug level
 .br
-Standard 0 - keine Debugausgaben;
+--Standard 0 - keine Debugausgaben;
+++default 0 - no debug messages
 .br
-Jedes Bit dieser Maske hat eine bestimmte Bedeutung:
+--Jedes Bit dieser Maske hat eine bestimmte Bedeutung:
+++every bit of this mask has a specified meaning.
 .TS
 l l.
-Bit	Bedeutung
+--Bit	Bedeutung
+++Bit	meaning
 _
 0	Flag for setting all options=on
 1	log function entries
@@ -297,36 +415,51 @@ _
 7	reserved
 .TE
 .IP Outc
-Das Output Control Register beim Philips 82C200/SJA1000
-.IP TxSpeed
-Der Buchstabe 'f' ('fast') bedeutet interruptgesteuertes Senden
-aus dem TX Puffer -
-.B Vorzugsvariante .
-Der Buchstabe 's' ('slow') bedeutet,
-es wird auf das Freiwerden des Sendepuffer im Controller gewartet.
-.B ACHTUNG !
-Die Option
-.B s 
-wird nicht länger unterstützt.
-.IP VendOpt
-Ein Buchstabe pro Kanal legt hersteller-spezifisches Verhalten fest.
-.br
-.ne 5
-.TS
-l | l.
-Buchstabe	Bedeutung
-_
-s	STZP Board
-.TE
+--Das Output Control Register beim
+++The output control register of the
+Philips 82C200/SJA1000
+
 .NH
-Vorgehen im Fehlerfall
+DIL-NET-PC TRM/816 Hardware by SSV embedded Systems
 .LP
-Bei allen Fehlfunktionen des Treibers,
-z.B.
+++The code was provided by
+--Der Kode wurde von 
+.MTO geggus@iitb.fraunhofer.de "Sven Geggus" .
+++Please read his
+++.I README.trm816
+++and the
+++.I trm816/README .
+--bereitgestellt.
+--Bitte lesen Sie dazu 
+--.I README.trm816
+--und auch
+--.I trm816/README .
+
+
+.NH
+PC104 board PC104-200 from EDS
+.LP
+.B can4linux was modified
+and extended to support the
+.URL http://www.esd-electronics.com/ "esd elctronic system design gmbh"
+PC/104-CAN Card
+by
+.MTO tchouto@fokus.fraunhofer.de "Jean-Jacques Tchouto" . 
+
+
+.NH
+--Vorgehen im Fehlerfall
+++In the case of ...
+.LP
+--Bei allen Fehlfunktionen des Treibers,
+--z.B.
+++In the case of any malfunction of the driver, e.g.
 .B open ()
 returns
 EINVAL - invalid argument -,
-dbgMask Einschalten
-und
+++set the debugmask
+.B dbgMask
+++to a higher level, and watch the system log at
+--Einschalten und
 .I /var/log/messages
-ansehen.
+--ansehen.

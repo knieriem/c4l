@@ -8,7 +8,7 @@
 * derived from the the LDDK can4linux version
 *     (c) 1996,1997 Claus Schroeter (clausi@chemie.fu-berlin.de)
 *------------------------------------------------------------------
-* $Header: /z2/cvsroot/products/0530/software/can4linux/src/can_select.c,v 1.5 2002/01/10 19:13:19 oe Exp $
+* $Header: /z2/cvsroot/products/0530/software/can4linux/src/can_select.c,v 1.6 2003/08/27 13:06:27 oe Exp $
 *
 *--------------------------------------------------------------------------
 *
@@ -16,6 +16,9 @@
 * modification history
 * --------------------
 * $Log: can_select.c,v $
+* Revision 1.6  2003/08/27 13:06:27  oe
+* - Version 3.0
+*
 * Revision 1.5  2002/01/10 19:13:19  oe
 * - application header file changed name can.h -> can4linux.h
 *
@@ -37,26 +40,6 @@ unsigned int minor = __LDDK_MINOR;
 msg_fifo_t *RxFifo = &Rx_Buf[minor];
     DBGin("can_select");
 	    DBGprint(DBG_DATA,("minor = %d", minor));
-#if 0
-	    DBGprint(DBG_DATA,("file = %p", file));
-	    ;
-	    DBGprint(DBG_DATA,("s(CanWait[]) = %2d", sizeof(CanWait[0])));
-	    ;
-	    /* DBGprint(DBG_DATA,("s(CanWait)   = %2d", sizeof(CanWait))); */
-	    ;
-	    DBGprint(DBG_DATA,("&CanWait[] = %p", &CanWait[0]));
-	    DBGprint(DBG_DATA,("CanWait[minor].task_list.n = %p", CanWait[minor].task_list.next));
-	    DBGprint(DBG_DATA,("CanWait[minor].task_list.p = %p", CanWait[minor].task_list.prev));
-	    DBGprint(DBG_DATA,("&CanWait[minor]->task_list.p = %p", (&CanWait[minor])->task_list.prev));
-
-	    DBGprint(DBG_DATA,("wait = %p", wait));
-	    if(wait) {
-	    DBGprint(DBG_DATA,("wait->error = %d", wait->error));
-	    DBGprint(DBG_DATA,("wait->table = %p", wait->table));
-	    } else {
-	    DBGprint(DBG_DATA,("can not dereference wait components"));
-	    }
-#endif
 #ifdef DEBUG
     CAN_ShowStat(minor);
 #endif

@@ -2,24 +2,39 @@
 #
 # can4linux -- LINUX CAN device driver Makefile
 # 
-# Copyright (c) 2001/2 port GmbH Halle/Saale
-# (c) 2001/2 Heinz-Jürgen Oertel (oe@port.de)
+# Copyright (c) 2001/2/3 port GmbH Halle/Saale
+# (c) 2001/2/3 Heinz-Jürgen Oertel (oe@port.de)
 #
 # to compile the can4linux device driver,
 # please select some configuration variables.
 # eg. the target hardware                       TARGET=
 # with or without compiled debug-support        DEBUG= 
 #
+# Modified and extended to support the esd elctronic system
+# design gmbh PC/104-CAN Card (www.esd-electronics.com)
+# by Jean-Jacques Tchouto (tchouto@fokus.fraunhofer.de) 
+#
+# SSV TRM/816 support by Sven Geggus <geggus@iitb.fraunhofer.de>
+#
+# $Id: Makefile,v 1.1.1.1 2003/02/17 17:44:45 jjt Exp $ 
+# 
+#
 
 # Used release tag for this software version
-VERSION=2
-REL=6
+VERSION=3
+REL=1
 RELEASE=CAN4LINUX-$(VERSION)_$(REL)
 DVERSION=$(VERSION).$(REL)
 
+# be prepared for RTLinux
+LINUXTARGET=LINUXOS
+#LINUXTARGET=RTLinux
 
 KVERSION= $(shell uname -r)
 CONFIG := $(shell uname -n)
+
+CTAGS =	ctags --c-types=dtvf 
+CTAGS =	elvtags -tsevl
 
 TITLE = CAN driver can4linux
 
@@ -36,12 +51,19 @@ CAN_MAJOR=	91
 # Only AT-CAN-MINI can be compiled for 82c200 or PeliCAN mode.
 # All other Targets are assuming to have an SJA1000
 # CPC_PCI  implies PeliCAN
-#
-TARGET=IXXAT_PCI03
-TARGET=ATCANMINI_BASIC
-TARGET=IME_SLIMLINE
+## 
+## Supported TARGETS= IME_SLIMLINE ATCANMINI_PELICAN CPC_PCI IXXAT_PCI03 
+##        PCM3680 PC104_200
+## 
+## compile DigiTec FC-CAN as ATCANMINI_PELICAN
+##
+#TARGET=IXXAT_PCI03
+#TARGET=IME_SLIMLINE
+#TARGET=PCM3680
+#TARGET=PC104_200
 TARGET=ATCANMINI_PELICAN
-TARGET=CPC_PCI
+#TARGET=CPC_PCI
+#TARGET=TRM816
 
 
 TARGET_MATCHED = false
@@ -60,8 +82,10 @@ DEBUG=NODEBUG
 DEBUG=DEBUG=1
 
 # all definitions for compiling the sources
-# CAN_PELICANMODE       - use the SJA1000 PeliCAN mode instead 82c200 mode
-# CAN_PORT_IO		- use port I/O instead of memeory I/O
+# CAN_PORT_IO		- use port I/O instead of memory I/O
+# CAN_INDEXED_PORT_IO   - CAN registers adressed by a pair of registers
+#			  one is selcting the register the other one does i/O
+#			  used eg. on Elan CPUs
 # CAN4LINUX_PCI
 # IODEBUG               - all register write accesses are logged
 # CONFIG_TIME_MEASURE=1 - enable Time measurement at parallel port
@@ -70,10 +94,10 @@ DEBUG=DEBUG=1
 
 
 ifeq "$(TARGET)" "CPC_PCI"
-# CPC-PCI PeliCAN  PCI (only with SJA1000)
+# CPC-PCI PeliCAN  PCI (only with SJA1000) ------------------------------------
 DEFS =  -D$(TARGET) -D$(DEBUG) -DDEFAULT_DEBUG -DCan_MAJOR=$(CAN_MAJOR)\
-	-DCAN_PELICANMODE \
-	-DCAN4LINUX_PCI
+	-DCAN4LINUX_PCI \
+	-DCAN_SYSCLK=8
 
 	#-DIODEBUG
 
@@ -81,43 +105,64 @@ TARGET_MATCHED = true
 endif
 
 ifeq "$(TARGET)" "ATCANMINI_PELICAN"
-# AT-CAN-MINI PeliCAN ISA (only with SJA1000)
-DEFS =  -D$(TARGET) -D$(DEBUG) -DDEFAULT_DEBUG -DCan_MAJOR=$(CAN_MAJOR) \
-	-DCAN_PORT_IO -DCAN_PELICANMODE \
-	-DCONFIG_TIME_MEASURE=1
-
-TARGET_MATCHED = true
-endif
-
-ifeq "$(TARGET)" "ATCANMINI_BASIC"
-# AT-CAN-MINI  Basic CAN ISA (with 82C200 or SJA1000)
+# AT-CAN-MINI PeliCAN ISA (only with SJA1000) --------------------------------
 DEFS =  -D$(TARGET) -D$(DEBUG) -DDEFAULT_DEBUG -DCan_MAJOR=$(CAN_MAJOR) \
 	-DCAN_PORT_IO \
+	-DCAN_SYSCLK=8
+	#-DCONFIG_TIME_MEASURE=1
 
 TARGET_MATCHED = true
 endif
 
 ifeq "$(TARGET)" "IXXAT_PCI03"
-# IXXAT PC-I 03 board ISA (only with SJA1000)
+# IXXAT PC-I 03 board ISA (only with SJA1000) ---------------------------------
 DEFS =  -D$(TARGET) -D$(DEBUG) -DDEFAULT_DEBUG -DCan_MAJOR=$(CAN_MAJOR) \
-	-DCAN_PELICANMODE \
+	-DCAN_SYSCLK=8
+
+TARGET_MATCHED = true
+endif
+
+ifeq "$(TARGET)" "PCM3680"
+# Advantech PCM3680 board ISA (only with SJA1000) ----------------------------
+DEFS =  -D$(TARGET) -D$(DEBUG) -DDEFAULT_DEBUG -DCan_MAJOR=$(CAN_MAJOR) \
+	-DCAN_SYSCLK=8
+
+TARGET_MATCHED = true
+endif
+
+ifeq "$(TARGET)" "TRM816"
+# TRM816 Onboard CAN-Controller (only with SJA1000) --------------------------
+DEFS =  -D$(TARGET) -D$(DEBUG) -DDEFAULT_DEBUG -DCan_MAJOR=$(CAN_MAJOR) \
+	-DCAN_INDEXED_PORT_IO \
+	-DCAN_SYSCLK=10
+
+TARGET_MATCHED = true
+endif
+
+ifeq "$(TARGET)" "PC104_200"
+# ESD PC104-200 PC104 board (with SJA1000) ----------------------------
+DEFS =  -D$(TARGET) -D$(DEBUG) -DDEFAULT_DEBUG -DCan_MAJOR=$(CAN_MAJOR) \
+	-DCAN_PORT_IO -DPC104 \
+	-DCAN_SYSCLK=8
 
 TARGET_MATCHED = true
 endif
 
 ifeq "$(TARGET)" "IME_SLIMLINE"
-# I+ME  PcSlimline ISA (only with SJA1000)
+# I+ME  PcSlimline ISA (only with SJA1000) -----------------------------------
 DEFS =  -D$(TARGET) -D$(DEBUG) -DDEFAULT_DEBUG -DCan_MAJOR=$(CAN_MAJOR) \
-	-DCAN_PELICANMODE \
+	-DCAN_SYSCLK=8
 
 TARGET_MATCHED = true
 endif
 
-
+ifeq "$(LINUXTARGET)" "LINUXOS"
+#use normal Linux OS
 LIBS   =
 CAN_MODULE = Can.o
 PROJECTHOME=$(shell pwd)
 INSTALLHOME=/usr/src
+endif
  
 
 
@@ -143,7 +188,7 @@ ifneq "$(TARGET_MATCHED)" "true"
 .DEFAULT: all ; @$(MAKE) all
 all:	
 	@echo "You didn't select a supported TARGET"
-	@echo "select one of: ATCANMINI_BASIC, ATCANMINI_PELICAN, CPC_PCI, IME_SLIMLINE, IXXAT_PCI03"
+	@echo "select one of: ATCANMINI_PELICAN, CPC_PCI, IME_SLIMLINE, IXXAT_PCI03, PCM3680, PC104_200, TRM816"
 else
 ###########################################################################
 # select the compiler toolchain
@@ -154,11 +199,12 @@ TOOLS=/usr/local/armtools_glibc/bin/arm-uclinux-
 TOOLS=
 
 BOLD		= "\033[1m"
+BOLD		= "\033[0;31m"
 NBOLD		= "\033[0m"
 
 ECHO		= /bin/echo -e
 
-COMPILE	= $(ECHO) "--- Compiling "$(BOLD)$<$(NBOLD)" for $(TARGET) ..." ; \
+COMPILE	= $(ECHO) "--- Compiling "$(BOLD)$<$(NBOLD)" for $(TARGET) on $(LINUXTARGET) ..." ; \
 	  $(TOOLS)gcc
 DEPEND	= $(ECHO) "--- Checking dependencies..." ; $(TOOLS)$(CPP)
 RLINK	= $(ECHO) "--- Linking (relocatable) "$(BOLD)$@$(NBOLD)"..." ;\
@@ -167,7 +213,7 @@ LINK	= $(ECHO) "--- Linking "$(BOLD)$@$(NBOLD)"..." ; $(TOOLS)gcc
 YACC	= $(ECHO) --- Running bison on $(BOLD)$<$(NBOLD)...; bison -d -y
 LEX	= $(ECHO) --- Running flex on $(BOLD)$<$(NBOLD)...; flex 
 
-CC	= @$(COMPILE)
+CC	= $(COMPILE)
 
 all: $(CAN_MODULE) #examples 
 
@@ -176,16 +222,27 @@ all: $(CAN_MODULE) #examples
 # for each kernel ther is a set of kernel specific headers in 
 # /lib/modules/`uname -r`/build/include
 #
+ifeq "$(LINUXTARGET)" "LINUXOS"
 ifeq "$(findstring 2.4., $(KVERSION))" ""
  INCLUDES = -Isrc
  TEST = Nein
 else
  INCLUDES = -Isrc -I/lib/modules/`uname -r`/build/include
+ #INCLUDES = -Isrc -I/home/geg/kernel/linux-2.4.22-586/include
  TEST = Ja
 endif
+endif
 
+ifeq "$(LINUXTARGET)" "LINUXOS"
 # That are the finally used flags for compiling the sources
 CFLAGS = -Wall -D__KERNEL__ -DLINUX -O2 -Wstrict-prototypes -fomit-frame-pointer $(DEFS) $(OPTIONS) $(INCLUDES) -DVERSION=\"$(DVERSION)_$(TARGET)\"
+
+else
+#define for RTlLinux
+MYCFLAGS = -O2	 -Wall
+include rtl.mk	
+
+endif
 
 VPATH=src
 # all the files to be compiled into object code
@@ -197,13 +254,33 @@ OBJS	=	\
 	    can_ioctl.o		\
 	    can_select.o	\
 	    can_close.o		\
-	    can_82c200funcs.o	\
 	    Can_debug.o		\
 	    Can_error.o		\
 	    can_util.o		\
 	    can_sysctl.o	\
 
-
+# include Chip specific object files
+ifeq "$(TARGET)" "CPC_PCI"
+OBJS += can_sja1000funcs.o
+endif
+ifeq "$(TARGET)" "ATCANMINI_PELICAN"
+OBJS += can_sja1000funcs.o
+endif
+ifeq "$(TARGET)" "IXXAT_PCI03"
+OBJS += can_sja1000funcs.o
+endif
+ifeq "$(TARGET)" "PCM3680"
+OBJS += can_sja1000funcs.o
+endif
+ifeq "$(TARGET)" "TRM816"
+OBJS += can_sja1000funcs.o
+endif
+ifeq "$(TARGET)" "PC104_200"
+OBJS += can_mcf5282funcs.o
+endif
+ifeq "$(TARGET)" "IME_SLIMLINE"
+OBJS += can_sja1000funcs.o
+endif
 
 
 $(CAN_MODULE):  $(addprefix $(OBJDIR)/,$(OBJS)) $(OBJDIR)
@@ -223,7 +300,7 @@ $(OBJDIR)/can_select.o: can_select.c can4linux.h can_defs.h
 	@$(COMPILE) -c $(CFLAGS)  $(INCLUDES) -o $@ $<
 $(OBJDIR)/can_close.o: can_close.c can4linux.h can_defs.h
 	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
-$(OBJDIR)/can_82c200funcs.o: can_82c200funcs.c can4linux.h can_defs.h
+$(OBJDIR)/can_sja1000funcs.o: can_sja1000funcs.c can4linux.h can_defs.h
 	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
 $(OBJDIR)/can_util.o: can_util.c can4linux.h can_defs.h
 	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
@@ -264,13 +341,14 @@ examples:
 	(cd examples;make)
 
 clean:
-	-rm tags
-	-rm obj/*.o
-	-rm Can.o
+	-rm -f tags
+	-rm -f obj/*.o
+	-rm -f Can.o
 	(cd examples;make clean)
 
 distclean: clean
 	cd examples; make clean
+	cd trm816; make clean
 
 
 inodes:
@@ -278,12 +356,16 @@ inodes:
 	-mknod /dev/can1 c $(CAN_MAJOR) 1
 	-mknod /dev/can2 c $(CAN_MAJOR) 2
 	-mknod /dev/can3 c $(CAN_MAJOR) 3
-	chmod 666 /dev/can[0-3]
+	-mknod /dev/can4 c $(CAN_MAJOR) 4
+	-mknod /dev/can5 c $(CAN_MAJOR) 5
+	-mknod /dev/can6 c $(CAN_MAJOR) 6
+	-mknod /dev/can7 c $(CAN_MAJOR) 7
+	chmod 666 /dev/can[0-7]
 
 
 
 ctags:
-	ctags --c-types=dtvf src/*.[ch]
+	$(CTAGS)  src/*.[ch] /usr/include/linux/pci.h
 
 ############################################################################
 #              V e r s i o n  C o n t r o l
@@ -315,8 +397,9 @@ port_footer.html:       Makefile
 
 
 archive:	distclean
-	tar zcvf can4linux.$(VERSION).$(REL).tgz Makefile Doxyfile README \
-	        INSTALL.t2 INSTALL.pdf CHANGELOG \
+	tar  zcvf can4linux.$(VERSION).$(REL).tgz -h\
+		Makefile Doxyfile README* \
+	        INSTALL.t2 INSTALL.pdf INSTALL-g.pdf CHANGELOG \
 		etc \
 		man \
 		src \
@@ -324,7 +407,8 @@ archive:	distclean
 		examples \
 		utils \
 		ft.html \
-		debug
+		debug \
+		trm816
 
 
 install:
@@ -352,7 +436,7 @@ endif
 ##  dload      - load with debugMask set to "debug"
 ##  unload     - unload the CAN driver module
 ## 
-##  istall     - install the driver in /usr/src with references to
+##  install    - install the driver in /usr/src with references to
 ##               this actual source tree
 
 

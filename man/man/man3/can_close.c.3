@@ -1,4 +1,4 @@
-.TH "can_close.c" 3 "1 Dec 2002" "can4linux" \" -*- nroff -*-
+.TH "can_close.c" 3 "11 Sep 2003" "can4linux" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -14,13 +14,6 @@ can_close.c \-
 .br
 .RI "\fIint close(int fd); close a file descriptor\fP"
 .in -1c
-.SS "Variables"
-
-.in +1c
-.ti -1c
-.RI "int \fBCan_isopen\fP []"
-.br
-.in -1c
 .SH "DETAILED DESCRIPTION"
 .PP 
  
@@ -31,11 +24,11 @@ Heinz-Jürgen Oertel, port GmbH
 .PP
 \fBRevision: \fP
 .in +1c
- 1.5  
+ 1.7  
 .PP
 \fBDate: \fP
 .in +1c
- 2002/08/08 17:57:24 
+ 2003/08/27 13:06:26 
 .PP
 .SH "FUNCTION DOCUMENTATION"
 .PP 
@@ -49,7 +42,7 @@ int close(int fd); close a file descriptor
 \fB\fIfd\fP\fP
 The descriptor to close.\fBclose\fP closes a file descriptor, so that it no longer refers to any device and may be reused. 
 .PP
-\fBReturns :\fP
+\fBReturns: \fP
 .in +1c
  close returns zero on success, or -1 if an error occurred. 
 .PP

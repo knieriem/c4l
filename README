@@ -1,9 +1,13 @@
-can4linux
+can4linux 3.0
+
+MODULE_LICENSE("GPL");
 
 
+read INSTALL*pdf
 select your hardware in the makefile and call make
 
 see also src/Readme
+and man/html/index.html
 
 
 Memory mapped I/O

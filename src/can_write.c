@@ -10,7 +10,7 @@
  * derived from the the LDDK can4linux version
  *     (c) 1996,1997 Claus Schroeter (clausi@chemie.fu-berlin.de)
  *------------------------------------------------------------------
- * $Header: /z2/cvsroot/products/0530/software/can4linux/src/can_write.c,v 1.6 2002/08/20 05:57:22 oe Exp $
+ * $Header: /z2/cvsroot/products/0530/software/can4linux/src/can_write.c,v 1.7 2003/07/05 14:28:55 oe Exp $
  *
  *--------------------------------------------------------------------------
  *
@@ -18,6 +18,10 @@
  * modification history
  * --------------------
  * $Log: can_write.c,v $
+ * Revision 1.7  2003/07/05 14:28:55  oe
+ * - all changes for the new 3.0: try to eliminate hw depedencies at run-time.
+ *   configure for HW at compile time
+ *
  * Revision 1.6  2002/08/20 05:57:22  oe
  * - new write() handling, now not ovrwriting buffer content if buffer fill
  * - ioctl() get status returns buffer information
@@ -47,8 +51,8 @@
 /**
 * \file can_write.c
 * \author Heinz-Jürgen Oertel, port GmbH
-* $Revision: 1.6 $
-* $Date: 2002/08/20 05:57:22 $
+* $Revision: 1.7 $
+* $Date: 2003/07/05 14:28:55 $
 *
 */
 
@@ -153,16 +157,12 @@ TxFifo->head,
 TxFifo->tail
 
 );
-	    if( TxSpeed[minor] == 'f' ) {
-	      /* f - fast -- use interrupts */
-	      if( count >= 1 ) {
-		/* !!! CHIP abh. !!! */
-		TxFifo->active = 1;
-	      }
-	      CAN_SendMessage( minor, &tx, 0);  /* Send, no wait */
-	    } else {
-	      CAN_SendMessage( minor, &tx, 1);	/* Send and wait */
-	    }
+	  /* f - fast -- use interrupts */
+	  if( count >= 1 ) {
+	    /* !!! CHIP abh. !!! */
+	    TxFifo->active = 1;
+	  }
+	  CAN_SendMessage( minor, &tx);  /* Send, no wait */
 	}
         written++;
 	/* leave critical section */

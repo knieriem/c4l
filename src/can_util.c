@@ -7,7 +7,7 @@
 * (c) 2001 Heinz-Jürgen Oertel (oe@port.de)
 *          Claus Schroeter (clausi@chemie.fu-berlin.de)
 *------------------------------------------------------------------
-* $Header: /z2/cvsroot/products/0530/software/can4linux/src/can_util.c,v 1.7 2002/10/11 16:58:06 oe Exp $
+* $Header: /z2/cvsroot/products/0530/software/can4linux/src/can_util.c,v 1.9 2003/08/27 13:07:06 oe Exp $
 *
 *--------------------------------------------------------------------------
 *
@@ -15,6 +15,13 @@
 * modification history
 * --------------------
 * $Log: can_util.c,v $
+* Revision 1.9  2003/08/27 13:07:06  oe
+* - Version 3.0, PCI code new according linux > 2.4.0
+*
+* Revision 1.8  2003/07/05 14:28:55  oe
+* - all changes for the new 3.0: try to eliminate hw depedencies at run-time.
+*   configure for HW at compile time
+*
 * Revision 1.7  2002/10/11 16:58:06  oe
 * - IOModel, Outc, VendOpt are now set at compile time
 * - deleted one misleading printk()
@@ -52,25 +59,23 @@
  /* each CAN channel has one wait_queue for read() */
  /* #define wait_queue_head_t     struct wait_queue * */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,3,1)
- wait_queue_head_t CanWait[MAX_BUFS];
- /* wait_queue_head_t *CanWait[MAX_BUFS]; */
+ wait_queue_head_t CanWait[MAX_CHANNELS];
+ /* wait_queue_head_t *CanWait[MAX_CHANNELS]; */
 #else
- struct wait_queue *CanWait[MAX_BUFS];
+ struct wait_queue *CanWait[MAX_CHANNELS];
 #endif
 
 
 
-msg_fifo_t   Tx_Buf[MAX_BUFS];
-msg_fifo_t   Rx_Buf[MAX_BUFS];
+msg_fifo_t   Tx_Buf[MAX_CHANNELS];
+msg_fifo_t   Rx_Buf[MAX_CHANNELS];
 #ifdef CAN_USE_FILTER
-    msg_filter_t Rx_Filter[MAX_BUFS]; 
+    msg_filter_t Rx_Filter[MAX_CHANNELS]; 
 #endif
 
-unsigned char *can_base[4];			/* ioremapped adresses */
-unsigned int can_range[4];			/* ioremapped adresses */
+unsigned char *can_base[MAX_CHANNELS];		/* ioremapped adresses */
+unsigned int can_range[MAX_CHANNELS];		/* ioremapped adresses */
 
-int IRQ_requested[] = {0, 0, 0, 0};
-int Can_minors[4]   = {0, 1, 2, 3};		/* used as IRQ dev_id */
 
 int Can_RequestIrq(int minor, int irq, irq_handler_t handler)
 {
@@ -340,13 +345,30 @@ void reset_CPC_PCI(unsigned long address)
 {
 unsigned long ptr = (unsigned long)ioremap(address, 32);
     DBGin("reset_CPC_PCI");
-    /* printk("reset_CPC_PCI\n"); */
     writeb(0x01, ptr);
-    writeb(0x00, ptr);
+    /* writeb(0x00, ptr); */
 }
 
 /* check memory region if there is a CAN controller
 *  assume the controller was resetted before testing 
+*
+*  The check for an avaliable controller is difficult !
+*  After an Hardware Reset (or power on) the Conroller 
+*  is in the so-called 'BasicCAN' mode.
+*     we can check for: 
+*         adress  name      value
+*	    0x00  mode       0x21
+*           0x02  status     0xc0
+*           0x03  interrupt  0xe0
+* Once loaded thr driver switches into 'PelCAN' mode and things are getting
+* difficult, because we now have only a 'soft reset' with not so  unique
+* values. The have to be masked before comparing.
+*         adress  name       mask   value
+*	    0x00  mode               
+*           0x01  command    0xff    0x00
+*           0x02  status     0x37    0x34
+*           0x03  interrupt  0xfb    0x00
+*
 */
 int controller_available(unsigned long address, int offset)
 {
@@ -359,254 +381,142 @@ unsigned long ptr = (unsigned long)ioremap(address, 32 * offset);
     /* printk("0x%0x, ", readb(ptr + (2 * offset)) ); */
     /* printk("0x%0x\n", readb(ptr + (3 * offset)) ); */
 
-    if(   0x0c == readb(ptr + (2 * offset))
-       && 0xe0 == readb(ptr + (3 * offset)) ) {
-	return 1;
+    if ( 0x21 == readb(ptr))  {
+	/* compare rest values of status and interrupt register */
+	if(   0x0c == readb(ptr + (2 * offset))
+	   && 0xe0 == readb(ptr + (3 * offset)) ) {
+	    return 1;
+	} else {
+	    return 0;
+	}
     } else {
-	return 0;
+	/* may be called after a 'soft reset' in 'PeliCAN' mode */
+	/*   value     address                     mask    */
+	if(   0x00 ==  readb(ptr + (1 * offset))
+	   && 0x34 == (readb(ptr + (2 * offset))    & 0x37)
+	   && 0x00 == (readb(ptr + (3 * offset))    & 0xfb)
+	  ) {
+	    return 1;
+	} else {
+	    return 0;
+	}
+
     }
 }
 #endif
-
-/*
-*
-*/
-
-int Can_Timeout = 0;
-struct timer_list Can_Timer;
-
-/* For time-out handling
-*  a so-called dynamic timer is created.
-*  The timevalue is given in jiffies.
-* to convert in seconds e.g. say:  v = s * HZ;
-*/
-
-
-void Can_TimerInterrupt(unsigned long unused)
-{
-#if DEBUG
-	if (dbgMask & DBG_INTR)
-		printk("TIMER INTERRUPT!\n");
-#endif
-        Can_Timeout = 1;
-
-}
-
-void Can_StartTimer(unsigned long v)
-{
-	DBGin("Can_StartTimer");
-	Can_Timeout = 0;
-	Can_Timer.expires = jiffies + v;
-	/* this function is called when the timer expires */
-	Can_Timer.function = Can_TimerInterrupt;
-	add_timer( &Can_Timer);
-
-	DBGout();
-}
-
-void Can_StopTimer(void)
-{
-        DBGin("Can_StopTimer");
-          del_timer( &Can_Timer );
-
-	DBGout();
-}
-
 
 
 #ifdef CAN4LINUX_PCI
-static u32 addresses[] = {
-    PCI_BASE_ADDRESS_0,
-    PCI_BASE_ADDRESS_1,
-    PCI_BASE_ADDRESS_2,
-    PCI_BASE_ADDRESS_3,
-    PCI_BASE_ADDRESS_4,
-    PCI_BASE_ADDRESS_5,
-    0
-};
+#ifndef CONFIG_PCI
+#error "trying to compile a PCI driver for a kernel without CONFIG_PCI"
+#endif
+
+#define PCI_BASE_ADDRESS0(dev) (dev->resource[0].start)
+#define PCI_BASE_ADDRESS1(dev) (dev->resource[1].start)
 
 /* used for storing the global pci register address */
-u32 Can_pitapci_control[4];
+u32 Can_pitapci_control[MAX_CHANNELS];
 
-
-/*
-scan the pci bus
- look for vendor/device Id == Siemens PITA
- if found
-    look for  subvendor id
-    if found
-      write to pita register 1c in the first address range the value 0x04000000
-*/
 int pcimod_scan(void)
 {
-    int i, pos = 0;
-    int bus, fun;
-    unsigned char headertype = 0;
-    u32 id;
-    u32 vdid;				/* vendor/device id */
-    int candev = 0;				/* number of found devices */
+struct	pci_dev *pdev = NULL;
+int	candev = 0;				/* number of found devices */
+unsigned long ptr;				/* ptr to PITA control */
 
-    if (!pcibios_present()) {
-        printk("CAN: No PCI bios present\n");
-        return ENODEV;
-    }
-    /* printk("CAN: PCI bios present!\n"); */
+    if (pci_present ()) {
+	    while ((pdev = pci_find_device (PCI_VENDOR, PCI_DEVICE, pdev))) {
+	    printk("  found CPC-PCI: %s\n", pdev->name);
+	    if (pci_enable_device(pdev)) {
+		continue;
+	    }
+	    /* printk("        using IRQ %d\n", pdev->irq); */
 
-    /*
-     * This code is derived from "drivers/pci/pci.c". This means that
-     * the GPL applies to this source file and credit is due to the
-     * original authors (Drew Eckhardt, Frederic Potter, David
-     * Mosberger-Tang)
-     */
-    for (bus = 0; !bus; bus++) { /* only bus 0 :-) */
-        for (fun=0; fun < 0x100 && pos < PAGE_SIZE; fun++) {
-            if (!PCI_FUNC(fun)) /* first function */
-                pcibios_read_config_byte(bus,fun,PCI_HEADER_TYPE, &headertype);
-            else if (!(headertype & 0x80))
-                continue;
-            /* the following call gets vendor AND device ID */
-            pcibios_read_config_dword(bus, fun, PCI_VENDOR_ID, &id);
-            if (!id || id == ~0) {
-                headertype = 0; continue;
-            }
-            /* v-endor and d-evice id */
-            vdid = id;
-#if 0
-            printk(" -- found pci device, vendor id = %u/0x%x , device 0x%x\n",
-            	(id & 0xffff), (id & 0xffff), (id >> 16));
-#endif
-            pcibios_read_config_dword(bus, fun, PCI_CLASS_REVISION, &id);
-#if 0
-            printk("    class 0x%x, Revision %d\n",
-            	(id >> 8), (id & 0x0ff));
-#endif
-            if(vdid == (PCI_VENDOR + (PCI_DEVICE << 16))) {
-		unsigned char irq;
-		u16 cmd;
-		u32 svdid;			/* subsystem vendor/device id */
-		    /* found EMS CAN CPC-PCI */
-		    vdid = 0;	/* reset it */
-		    printk("    found Siemens PITA PCI-Chip\n");
-		    pcibios_read_config_byte(bus, fun, PCI_INTERRUPT_LINE, &irq);
-		    printk("        using IRQ %d\n", irq);
-		    pcibios_read_config_word(bus, fun, PCI_COMMAND, &cmd);
-		    /* printk("        cmd: 0x%x\n", cmd); */
+	    ptr = (unsigned long)ioremap(PCI_BASE_ADDRESS0(pdev), 256);
+	    /* enable memory access */
+	    /* printk("write to pita\n"); */
+	    writel(0x04000000, ptr + 0x1c);
+	    Can_pitapci_control[candev] = ptr;
 
-                    /* PCI_COMMAND should be at least PCI_COMMAND_MEMORY */
-		    pcibios_write_config_word(bus, fun,
-		    		/* PCI_COMMAND, PCI_COMMAND_MEMORY); */
-		    		PCI_COMMAND, PCI_COMMAND_MEMORY + PCI_COMMAND_MASTER	);
-		    pcibios_read_config_word(bus, fun, PCI_COMMAND, &cmd);
-		    /* printk("        cmd: 0x%x\n", cmd); */
+	    /* printk("        pita ptr %lx\n", ptr); */
+	    /* printk("---------------\n"); */
+	    /* dump_CAN(PCI_BASE_ADDRESS1(pdev)+0x400, 4); */
+	    /* printk("---------------\n"); */
+	    /* dump_CAN(PCI_BASE_ADDRESS1(pdev)+0x600, 4); */
 
+	    /* PCI_BASE_ADDRESS1:
+	     * at address 0 are some EMS control registers
+	     * at address 0x400 the first controller area 
+	     * at address 0x600 the second controller area 
+	     * registers are read as 32bit
+	     *
+	     * at adress 0 we can verify the card
+	     * 0x55 0xaa 0x01 0xcb
+	     */
+	    {
+		unsigned long sigptr; /* ptr to EMS signature  */
+		unsigned long signature = 0;
+	        sigptr = (unsigned long)ioremap(PCI_BASE_ADDRESS1(pdev), 256);
+	        signature =
+	        	  (readb(sigptr)      << 24)
+	        	+ (readb(sigptr +  4) << 16)
+	        	+ (readb(sigptr +  8) <<  8)
+	        	+  readb(sigptr + 12);
+	    	/* printk("        signature  %lx\n", signature); */
+	    	if( 0x55aa01cb != signature) {
+	    	    printk(" wrong signature -- no EMS CPC-PCI board\n");
+		    return -ENODEV;
+	    	}
+	    }
+	    /* we are now sure to have the right board,
+	       reset the CAN controller(s) */
+	    reset_CPC_PCI(PCI_BASE_ADDRESS1(pdev) + 0x400);
+	    reset_CPC_PCI(PCI_BASE_ADDRESS1(pdev) + 0x600);
 
+	    /* enable interrupts Int_0 */
+	    /* write to PITAs ICR register */
+	    writel(0x00020000, Can_pitapci_control[candev] + 0x0);
 
-
-		    pcibios_read_config_dword(bus, fun, PCI_SUBSYSTEM_VENDOR_ID, &svdid);
-		    /* printk("        s_vendor 0x%x, s_device 0x%x\n", */
-					/* (svdid & 0xffff), (svdid >> 16)); */
-
-		/* How can we be sure that that is an EMS CAN card ?? */
-
-
-		for (i = 0; addresses[i]; i++) {
-		    u32 curr, mask;
-		    char *type;
-
-		    pcibios_read_config_dword(bus, fun, addresses[i], &curr);
-		    cli();
-		    pcibios_write_config_dword(bus, fun, addresses[i], ~0);
-		    pcibios_read_config_dword(bus, fun, addresses[i], &mask);
-		    pcibios_write_config_dword(bus, fun, addresses[i], curr);
-		    sti();
-
-		    /* printk("    region %i: mask 0x%08lx, now at 0x%08lx\n", i, */
-				   /* (unsigned long)mask, */
-				   /* (unsigned long)curr); */
-#if 0 /* we don't need this message, so we don't need this code */
-		    if (!mask) {
-			printk("    region %i not existent\n", i);
-			break;
-		    }
-#endif
-		    /* extract the type, and the programmable bits */
-		    if (mask & PCI_BASE_ADDRESS_SPACE) {
-		    type = "I/O"; mask &= PCI_BASE_ADDRESS_IO_MASK;
-		    } else {
-			type = "mem"; mask &= PCI_BASE_ADDRESS_MEM_MASK;
-		    }
-		/* printk("    region %i: type %s, size %i\n", i, */
-			      /* type, ~mask+1); */
-
-		    if(i == 0) {
-		    	/* BAR0 internal PITA registers */
-			unsigned long ptr = (unsigned long)ioremap(curr, 256);
-			/* enable memory access */
-		    	/* printk("write to pita\n"); */
-			writel(0x04000000, ptr + 0x1c);
-			Can_pitapci_control[candev] = ptr;
-
-		    }
-		    if(i == 1) {
-		    	/* BAR1 parallel I/O
-		    	 * at address 0 are some EMS control registers
-		    	 * at address 0x400 the first controller area 
-		    	 * at address 0x600 the second controller area 
-			 * registers are read as 32bit
-			 *
-			 * at adress 0 we can verify the card
-			 * 0x55 0xaa 0x01 0xcb
-			 */
-			/* dump_CAN(curr, 4); */
-
-			reset_CPC_PCI(curr);
-
-			/* enable interrupts Int_0 */
-			/* write to PITAs ICR register */
-    			writel(0x00020000, Can_pitapci_control[candev] + 0x0);
-
-			/* dump_CAN(curr + 0x400, 4); */
-			if(controller_available(curr + 0x400, 4)) {
-			    printk("CAN: at pos 1\n");
-			    if(candev > 4) {
-				printk("CAN: only 4 devices supported\n");
-				break; /* the devices scan loop */
-			    }
-			    Base[candev]
-			    = (unsigned long)ioremap(curr + 0x400, 32*4);
-			    IOModel[candev] = 'm';
-			    IRQ[candev] = irq;
-			    candev++;
-			} else {
-			    printk("CAN: NO at pos 1\n");
-			}
-			/* dump_CAN(curr + 0x600, 4); */
-
-			if(controller_available(curr + 0x600, 4)) {
-			    printk("CAN: at pos 2\n");
-			    if(candev > 4) {
-				printk("CAN: only 4 devices supported\n");
-				break; /* the devices scan loop */
-			    }
-			    /* share the board control register with prev ch */
-    			    Can_pitapci_control[candev] = 
-				Can_pitapci_control[candev - 1];
-			    Base[candev]
-			    = (unsigned long)ioremap(curr + 0x600, 32*4);
-			    IOModel[candev] = 'm';
-			    IRQ[candev] = irq;
-			    candev++;
-			} else {
-			    printk("CAN: NO at pos 2\n");
-			}
-		    }
-
+	    /* look for a CAN controller at 0x400 */
+	    if(controller_available(PCI_BASE_ADDRESS1(pdev) + 0x400, 4)) {
+		printk(" CAN: %d. at pos 1\n", candev + 1);
+		if(candev > MAX_CHANNELS) {
+		    printk("CAN: only %d devices supported\n", MAX_CHANNELS);
+		    break; /* the devices scan loop */
 		}
-            } /* EMS CPC-PCI */
-        } /* for all devices */
-    } /* for all busses */
+		Base[candev]
+		= (unsigned long)ioremap(PCI_BASE_ADDRESS1(pdev) + 0x400, 32*4);
+		IOModel[candev] = 'm';
+		IRQ[candev] = pdev->irq;
+		candev++;
+	    } else {
+		/* printk(" CAN: NO at pos 1\n"); */
+		;
+	    }
+	    /* look for a CAN controller at 0x400 */
+	    if(controller_available(PCI_BASE_ADDRESS1(pdev) + 0x600, 4)) {
+		printk(" CAN: %d. at pos 2\n", candev + 1);
+		if(candev > MAX_CHANNELS) {
+		    printk("CAN: only %d devices supported\n", MAX_CHANNELS);
+		    break; /* the devices scan loop */
+		}
+		/* share the board control register with prev ch */
+		Can_pitapci_control[candev] = 
+		    Can_pitapci_control[candev - 1];
+		Base[candev]
+		= (unsigned long)ioremap(PCI_BASE_ADDRESS1(pdev) + 0x600, 32*4);
+		IOModel[candev] = 'm';
+		IRQ[candev] = pdev->irq;
+		candev++;
+	    } else {
+		/* printk(" CAN: NO at pos 2\n"); */
+		;
+	    }
+	}
+    } else {
+        printk("CAN: No PCI bios present\n");
+        return -ENODEV;
+    }
+
     return 0;
 }
 #endif
-
-

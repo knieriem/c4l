@@ -8,7 +8,7 @@
 * derived from the the LDDK can4linux version
 *     (c) 1996,1997 Claus Schroeter (clausi@chemie.fu-berlin.de)
 *------------------------------------------------------------------
-* $Header: /z2/cvsroot/products/0530/software/can4linux/src/can_sysctl.c,v 1.7 2002/10/11 16:58:06 oe Exp $
+* $Header: /z2/cvsroot/products/0530/software/can4linux/src/can_sysctl.c,v 1.9 2003/08/27 13:06:27 oe Exp $
 *
 *--------------------------------------------------------------------------
 *
@@ -16,6 +16,13 @@
 * modification history
 * --------------------
 * $Log: can_sysctl.c,v $
+* Revision 1.9  2003/08/27 13:06:27  oe
+* - Version 3.0
+*
+* Revision 1.8  2003/07/05 14:28:55  oe
+* - all changes for the new 3.0: try to eliminate hw depedencies at run-time.
+*   configure for HW at compile time
+*
 * Revision 1.7  2002/10/11 16:58:06  oe
 * - IOModel, Outc, VendOpt are now set at compile time
 * - deleted one misleading printk()
@@ -83,29 +90,41 @@ extern int Can_sysctl_string(ctl_table *table, int *name, int nlen,
 /* ----- global variables accessible through /proc/sys/Can */
 
 char version[] = VERSION;
-char IOModel[] = IO_MODEL;
-char TxSpeed[] = "ffff ";
-char VendOpt[] = VEND_OPT;
+char IOModel[MAX_CHANNELS];
+char Chipset[] =
+#if defined(ATCANMINI_PELICAN)
+	"SJA1000"
+#elif defined(CPC_PCI)
+	"SJA1000"
+#elif defined(IME_SLIMLINE)
+	"SJA1000"
+#elif defined(PCM3680)
+	"SJA1000"
+#elif defined(IXXAT_PCI03)
+	"SJA1000"
+#else
+	""
+#endif
+;
 
-/* char ExtID[] = "nnnn "; */
-int IRQ[4] = { 0x0 ,0x0 ,0x0 ,0x0 };
+int IRQ[MAX_CHANNELS] = { 0x0 };
 /* dont assume a standard address, always configure,
  * address == 0 means no board available */
-int Base[4] = { 0, 0, 0, 0 };
-int Baud[4] = { 125, 125, 125, 125 };
-unsigned int AccCode[4] = { 0xffffffff ,0xffffffff ,0xffffffff ,0xffffffff };
-unsigned int AccMask[4] = { 0xffffffff ,0xffffffff ,0xffffffff ,0xffffffff };
-int Timeout[4] = { 0x64 ,0x64 ,0x64 ,0x64 };
+int Base[MAX_CHANNELS] = { 0x0 };
+int Baud[MAX_CHANNELS];
+unsigned int AccCode[MAX_CHANNELS];
+unsigned int AccMask[MAX_CHANNELS];
+int Timeout[MAX_CHANNELS];
 /* predefined value of the output control register,
 * depends of TARGET set by Makefile */
-int Outc[4] =    { CAN_OUTC_VAL, CAN_OUTC_VAL, CAN_OUTC_VAL, CAN_OUTC_VAL };
-int TxErr[4] =   { 0x0, 0x0, 0x0, 0x0 };
-int RxErr[4] =   { 0x0, 0x0, 0x0, 0x0 };
-int Overrun[4] = { 0x0 ,0x0, 0x0, 0x0 };
+int Outc[MAX_CHANNELS];
+int TxErr[MAX_CHANNELS]   = { 0x0 };
+int RxErr[MAX_CHANNELS]   = { 0x0 };
+int Overrun[MAX_CHANNELS] = { 0x0 };
 
 #ifdef DEBUG_COUNTER
-int Cnt1[4] = { 0x0, 0x0, 0x0, 0x0 };
-int Cnt2[4] = { 0x0, 0x0, 0x0, 0x0 };
+int Cnt1[MAX_CHANNELS]    = { 0x0 };
+int Cnt2[MAX_CHANNELS]    = { 0x0 };
 #endif /* DEBUG_COUNTER */
 
 /* ----- the sysctl table */
@@ -113,39 +132,37 @@ int Cnt2[4] = { 0x0, 0x0, 0x0, 0x0 };
 ctl_table Can_sysctl_table[] = {
  { SYSCTL_VERSION, "version", &version, PROC_VER_LENGTH, 
 		 0444, NULL, &Can_dostring , &Can_sysctl_string },
- { SYSCTL_IOMODEL, "IOModel", &IOModel, 5, 
-		 0644, NULL, &Can_dostring , &Can_sysctl_string },
- { SYSCTL_TXSPEED, "TxSpeed", &TxSpeed, 5, 
-		 0644, NULL, &Can_dostring , &Can_sysctl_string },
- { SYSCTL_VENDOPT, "VendOpt", &VendOpt, 5, 
-		 0644, NULL, &Can_dostring , &Can_sysctl_string },
- { SYSCTL_IRQ, "IRQ",(void *) IRQ, 4*sizeof(int), 
+ { SYSCTL_CHIPSET, "Chipset", &Chipset, PROC_CHIPSET_LENGTH, 
+		 0444, NULL, &Can_dostring , &Can_sysctl_string },
+ { SYSCTL_IOMODEL, "IOModel", &IOModel, MAX_CHANNELS + 1, 
+		 0444, NULL, &Can_dostring , &Can_sysctl_string },
+ { SYSCTL_IRQ, "IRQ",(void *) IRQ, MAX_CHANNELS*sizeof(int), 
 		 0644, NULL, &Can_dointvec , NULL  },
- { SYSCTL_BASE, "Base",(void *) Base, 4*sizeof(int), 
+ { SYSCTL_BASE, "Base",(void *) Base, MAX_CHANNELS*sizeof(int), 
 		 0644, NULL, &Can_dointvec , NULL  },
- { SYSCTL_BAUD, "Baud",(void *) Baud, 4*sizeof(int), 
+ { SYSCTL_BAUD, "Baud",(void *) Baud, MAX_CHANNELS*sizeof(int), 
 		 0666, NULL, &Can_dointvec , NULL  },
- { SYSCTL_ACCCODE, "AccCode",(void *) AccCode, 4*sizeof(unsigned int), 
+ { SYSCTL_ACCCODE, "AccCode",(void *) AccCode, MAX_CHANNELS*sizeof(unsigned int), 
 		 0644, NULL, &Can_dointvec , NULL  },
- { SYSCTL_ACCMASK, "AccMask",(void *) AccMask, 4*sizeof(unsigned int), 
+ { SYSCTL_ACCMASK, "AccMask",(void *) AccMask, MAX_CHANNELS*sizeof(unsigned int), 
 		 0644, NULL, &Can_dointvec , NULL  },
- { SYSCTL_TIMEOUT, "Timeout",(void *) Timeout, 4*sizeof(int), 
+ { SYSCTL_TIMEOUT, "Timeout",(void *) Timeout, MAX_CHANNELS*sizeof(int), 
 		 0644, NULL, &Can_dointvec , NULL  },
- { SYSCTL_OUTC, "Outc",(void *) Outc, 4*sizeof(int), 
+ { SYSCTL_OUTC, "Outc",(void *) Outc, MAX_CHANNELS*sizeof(int), 
 		 0644, NULL, &Can_dointvec , NULL  },
- { SYSCTL_TXERR, "TxErr",(void *) TxErr, 4*sizeof(int), 
+ { SYSCTL_TXERR, "TxErr",(void *) TxErr, MAX_CHANNELS*sizeof(int), 
 		 0444, NULL, &Can_dointvec , NULL  },
- { SYSCTL_RXERR, "RxErr",(void *) RxErr, 4*sizeof(int), 
+ { SYSCTL_RXERR, "RxErr",(void *) RxErr, MAX_CHANNELS*sizeof(int), 
 		 0444, NULL, &Can_dointvec , NULL  },
- { SYSCTL_OVERRUN, "Overrun",(void *) Overrun, 4*sizeof(int), 
+ { SYSCTL_OVERRUN, "Overrun",(void *) Overrun, MAX_CHANNELS*sizeof(int), 
 		 0444, NULL, &Can_dointvec , NULL  },
  { SYSCTL_DBGMASK, "dbgMask",(void *) &dbgMask, 1*sizeof(int), 
 		 0644, NULL, &Can_dointvec , NULL  },
 #ifdef DEBUG_COUNTER
 /* ---------------------------------------------------------------------- */
- { SYSCTL_CNT1, "cnt1",(void *) Cnt1, 4*sizeof(int), 
+ { SYSCTL_CNT1, "cnt1",(void *) Cnt1, MAX_CHANNELS*sizeof(int), 
 		 0444, NULL, &Can_dointvec , NULL  },
- { SYSCTL_CNT2, "cnt2",(void *) Cnt2, 4*sizeof(int), 
+ { SYSCTL_CNT2, "cnt2",(void *) Cnt2, MAX_CHANNELS*sizeof(int), 
 		 0444, NULL, &Can_dointvec , NULL  },
 /* ---------------------------------------------------------------------- */
 #endif /* DEBUG_COUNTER */
@@ -382,14 +399,3 @@ int l, len;
 }
 
 #endif /*version*/
-
-
-
-
-
-
-
-
-
-
-

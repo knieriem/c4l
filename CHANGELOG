@@ -1,3 +1,18 @@
+3.1 - Added support for SSV TRM/816 by Sven Geggus <geggus@iitb.fraunhofer.de>
+      new hardware configuration CAN_INDEXED_PORT_IO used on Elan
+    - updated examples (esp. can_send.c to new 3.0 CanStatusPar_truct.
+
+3.0 - going further into compiling the driver directly for the hardware
+      specified in Makefile
+      Removing old code
+        - the old 82cC200 is not longer supported
+          only sja1000 in PeliCAN mode
+        - begin canceling support for OS < 2.4.0
+      new pci detection code, using improved linux pci bios features
+      PCI cards should be detected in other PCI busses as 0 as well
+      - Changed the CanSja1000Status_par_t to a more generic one 
+        CanStatusPar_t
+
 2.6 - 2.5 had a very serious bug. Because of wrong index definitions into
       the Sysctl array, it was possible to set the Base address and IRQ
       to 0 when using the CPC-PCI board

@@ -1,4 +1,4 @@
-.TH "can_open.c" 3 "1 Dec 2002" "can4linux" \" -*- nroff -*-
+.TH "can_open.c" 3 "11 Sep 2003" "can4linux" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -14,13 +14,6 @@ can_open.c \-
 .br
 .RI "\fIint open(const char *pathname, int flags); opens the CAN device for following operations\fP"
 .in -1c
-.SS "Variables"
-
-.in +1c
-.ti -1c
-.RI "int \fBCan_isopen\fP [4] = { 0, 0, 0, 0}"
-.br
-.in -1c
 .SH "DETAILED DESCRIPTION"
 .PP 
  
@@ -31,11 +24,11 @@ Heinz-Jürgen Oertel, port GmbH
 .PP
 \fBRevision: \fP
 .in +1c
- 1.5  
+ 1.7  
 .PP
 \fBDate: \fP
 .in +1c
- 2002/08/08 18:03:41 
+ 2003/08/27 13:06:27 
 .PP
 .SH "FUNCTION DOCUMENTATION"
 .PP 
@@ -56,7 +49,7 @@ The CLK OUT pin is configured for creating the same frequency like the chips inp
 .PP
 If Vendor Option \fIVendOpt\fP is set to 's' the driver performs an hardware reset befor initializing the chip.
 .PP
-\fBReturns :\fP
+\fBReturns: \fP
 .in +1c
  open return the new file descriptor, or -1 if an error occurred (in which case, errno is set appropriately).
 .PP

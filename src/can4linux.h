@@ -1,9 +1,13 @@
 /*
- * can.h - can4linux CAN driver module
+ * can4linux.h - can4linux CAN driver module
+ *
+ * This file is subject to the terms and conditions of the GNU General Public
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (c) 2001 port GmbH Halle/Saale
  *------------------------------------------------------------------
- * $Header: /z2/cvsroot/products/0530/software/can4linux/src/can4linux.h,v 1.3 2002/08/20 05:57:22 oe Exp $
+ * $Header: /z2/cvsroot/products/0530/software/can4linux/src/can4linux.h,v 1.4 2003/08/27 17:49:04 oe Exp $
  *
  *--------------------------------------------------------------------------
  *
@@ -11,6 +15,9 @@
  * modification history
  * --------------------
  * $Log: can4linux.h,v $
+ * Revision 1.4  2003/08/27 17:49:04  oe
+ * - New CanStatusPar structure
+ *
  * Revision 1.3  2002/08/20 05:57:22  oe
  * - new write() handling, now not ovrwriting buffer content if buffer fill
  * - ioctl() get status returns buffer information
@@ -37,8 +44,8 @@
 /**
 * \file can.h
 * \author Heinz-Jürgen Oertel, port GmbH
-* $Revision: 1.3 $
-* $Date: 2002/08/20 05:57:22 $
+* $Revision: 1.4 $
+* $Date: 2003/08/27 17:49:04 $
 *
 * can4linux interface definitions
 *
@@ -120,10 +127,10 @@ typedef struct Config_par {
 } Config_par_t ;
 
 /**
- IOCTL CAN controller status request parameter structure */
-typedef struct CanSja1000Status_par { 
+ IOCTL generic CAN controller status request parameter structure */
+typedef struct CanStatusPar { 
     unsigned int baud;			/**< actual bit rate */
-    unsigned char status;		/**< CAN controller status register */
+    unsigned int status;		/**< CAN controller status register */
     unsigned int error_warning_limit;	/**< the error warning limit */
     unsigned int rx_errors;		/**< content of RX error counter */
     unsigned int tx_errors;		/**< content of TX error counter */
@@ -133,7 +140,18 @@ typedef struct CanSja1000Status_par {
     unsigned int tx_buffer_size;	/**< size of tx buffer  */
     unsigned int tx_buffer_used;	/**< number of messages */
     unsigned long retval;		/**< return value */
-} CanSja1000Status_par_t;
+    unsigned int type;			/**< CAN controller / driver type */
+} CanStatusPar_t;
+
+/**
+ IOCTL  CanStatusPar.type CAN controller hardware chips */
+#define CAN_TYPE_UNSPEC		0
+#define CAN_TYPE_SJA1000	1
+#define CAN_TYPE_FlexCAN	2
+#define CAN_TYPE_TouCAN		3
+#define CAN_TYPE_82527		4
+#define CAN_TYPE_TwinCAN	5
+
 
 /**
  IOCTL Send request parameter structure */

@@ -1,12 +1,13 @@
-/* simple driver test: just open and close the device
+/* simple driver test: just opens and closes the device
 * 
 * open is called with starting the application
 * close is called after pressing ^C - SIGKILL or after a very long time 
 *
 * first argument can be the device name -- else it uses can0
 *
-* if a second arg is given, the programm loops every second with e read()
-* call
+* if a second arg is given, the programm loops with e read()
+* call (so the `application' is a bit more advanced)
+* The application sleeps <second argument> ms  between two read() calls.
 */
 
 #include <stdio.h>
@@ -15,6 +16,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <string.h>
 
 #include <can4linux.h>
 
@@ -27,6 +29,12 @@ int main(int argc,char **argv)
 int fd;
 canmsg_t rx;
 char device[40];
+    if((argc > 1) && !strcmp(argv[1], "-h")) {
+    	printf("%s: [dev] [sleep]]\ndev is \"can0\" .... \"canX\"\n"
+    	"sleep in ms between read() calls\n",
+    	argv[0]);
+    	exit(1);
+    }
 
     if(argc > 1) {
 	sprintf(device, "/dev/%s", argv[1]);
@@ -55,7 +63,8 @@ char device[40];
 		else if(n == 0) {
 		    fprintf(stderr, "read returned 0\n");
 		} else {
-		    fprintf(stderr, "read: 0x%08lx : %d bytes",
+		    fprintf(stderr, "read: %c 0x%08lx : %d bytes:",
+		    			   rx.flags & MSG_EXT ? 'X' : 'S',
 		    			   rx.id,   rx.length);
 		    if(rx.length > 0) {
 			fprintf(stderr, "\t");

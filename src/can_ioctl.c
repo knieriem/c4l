@@ -1,16 +1,17 @@
 /*
  * can_ioctl - can4linux CAN driver module
  *
- *
  * can4linux -- LINUX CAN device driver source
+ * 
+ * This file is subject to the terms and conditions of the GNU General Public
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  * 
  * Copyright (c) 2001 port GmbH Halle/Saale
  * (c) 2001 Heinz-Jürgen Oertel (oe@port.de)
  *          Claus Schroeter (clausi@chemie.fu-berlin.de)
- * derived from the the LDDK can4linux version
- *     (c) 1996,1997 Claus Schroeter (clausi@chemie.fu-berlin.de)
  *------------------------------------------------------------------
- * $Header: /z2/cvsroot/products/0530/software/can4linux/src/can_ioctl.c,v 1.5 2002/10/25 10:39:54 oe Exp $
+ * $Header: /z2/cvsroot/products/0530/software/can4linux/src/can_ioctl.c,v 1.8 2003/08/27 17:49:38 oe Exp $
  *
  *--------------------------------------------------------------------------
  *
@@ -18,6 +19,16 @@
  * modification history
  * --------------------
  * $Log: can_ioctl.c,v $
+ * Revision 1.8  2003/08/27 17:49:38  oe
+ * - New CanStatusPar structure
+ *
+ * Revision 1.7  2003/08/27 13:06:26  oe
+ * - Version 3.0
+ *
+ * Revision 1.6  2003/07/05 14:28:55  oe
+ * - all changes for the new 3.0: try to eliminate hw depedencies at run-time.
+ *   configure for HW at compile time
+ *
  * Revision 1.5  2002/10/25 10:39:54  oe
  * - removed bug with freeing memory
  *
@@ -43,8 +54,8 @@
 /**
 * \file can_ioctl.c
 * \author Heinz-Jürgen Oertel, port GmbH
-* $Revision: 1.5 $
-* $Date: 2002/10/25 10:39:54 $
+* $Revision: 1.8 $
+* $Date: 2003/08/27 17:49:38 $
 *
 *
 */
@@ -54,7 +65,7 @@
 int can_Command(struct inode *inode, int cmd);
 int can_Send(struct inode *inode, canmsg_t *Tx);
 int can_Receive(struct inode *inode, canmsg_t *Rx);
-int can_GetStat(struct inode *inode, CanSja1000Status_par_t *s);
+int can_GetStat(struct inode *inode, CanStatusPar_t *s);
 int can_Config(struct inode *inode, int target, unsigned long val1,
 					       unsigned long val2);
 
@@ -96,7 +107,7 @@ These are
 \code
 struct Command_par
 struct Config_par
-struct CanSja1000Status_par
+struct CanStatus_par
 struct ConfigureRTR_par
 struct Receive_par
 struct Send_par
@@ -122,6 +133,8 @@ also all 4 bytes can be used.
 In this case two bytes are used for acceptance code and mask
 for all 11 identifier bits plus additional the first two data bytes.
 The SJA1000 is working in the \b Single \b Filter \ Mode .
+
+Example for extended message format
 \code
        Bits
  mask  31 30 .....           4  3  2  1  0
@@ -130,7 +143,28 @@ The SJA1000 is working in the \b Single \b Filter \ Mode .
  ID    28 27 .....           1  0  R  +--+-> unused
                                    T
                                    R
+
+  acccode =  (id << 3) + (rtr << 2) 
 \endcode
+
+Example for base message format
+\code
+       Bits
+ mask  31 30 .....           23 22 21 20 ... 0
+ code
+ -------------------------------------------
+ ID    11 10 .....           1  0  R  +--+-> unused
+                                   T
+                                   R
+\endcode
+
+You have to shift the CAN-ID by 5 bits and two bytes to shift them
+into ACR0 and ACR1 (acceptance code register)
+\code
+  acccode =  (id << 21) + (rtr << 20) 
+\endcode
+In case of the base format match the content of bits 0...20
+is of no interest, it can be 0x00000 or 0xFFFFF.
 
 \returns
 On success, zero is returned.
@@ -241,18 +275,18 @@ int retval = -EIO;
 	  break;
       case STATUS:
 	  if( verify_area(VERIFY_READ, (void *) arg,
-	  				sizeof(CanSja1000Status_par_t))) {
+	  				sizeof(CanStatusPar_t))) {
 	     DBGout(); return(retval); 
 	  }
 	  if( verify_area(VERIFY_WRITE, (void *) arg,
-	  			sizeof(CanSja1000Status_par_t))) {
+	  			sizeof(CanStatusPar_t))) {
 	     DBGout(); return(retval); 
 	  }
-	  argp = (void *)kmalloc( sizeof(CanSja1000Status_par_t) +1 ,GFP_KERNEL );
-	  ((CanSja1000Status_par_t *) argp)->retval =
-	  		can_GetStat(inode, ((CanSja1000Status_par_t *)argp));
-	  __lddk_copy_to_user( (CanSja1000Status_par_t *)arg, (void *) argp,
-	  				sizeof(CanSja1000Status_par_t));
+	  argp = (void *)kmalloc( sizeof(CanStatusPar_t) +1 ,GFP_KERNEL );
+	  ((CanStatusPar_t *) argp)->retval =
+	  		can_GetStat(inode, ((CanStatusPar_t *)argp));
+	  __lddk_copy_to_user( (CanStatusPar_t *)arg, (void *) argp,
+	  				sizeof(CanStatusPar_t));
 	  kfree(argp);
 	  break;
 
@@ -321,7 +355,7 @@ unsigned int minor = MINOR(inode->i_rdev);
     return 0;
 }
 
-
+/* is not very useful! use it if you are sure the tx queu is empty */
 int can_Send(struct inode *inode, canmsg_t *Tx)
 {
 unsigned int minor = MINOR(inode->i_rdev);	
@@ -331,7 +365,7 @@ canmsg_t tx;
 	    return -EINVAL;
     }
     __lddk_copy_from_user((canmsg_t *) &tx, (canmsg_t *) Tx,sizeof(canmsg_t));
-    return CAN_SendMessage(minor, &tx, 1);
+    return CAN_SendMessage(minor, &tx);
 }
 
 

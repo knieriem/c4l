@@ -10,7 +10,7 @@
  * derived from the the LDDK can4linux version
  *     (c) 1996,1997 Claus Schroeter (clausi@chemie.fu-berlin.de)
  *------------------------------------------------------------------
- * $Header: /z2/cvsroot/products/0530/software/can4linux/src/can_read.c,v 1.4 2001/09/14 14:58:09 oe Exp $
+ * $Header: /z2/cvsroot/products/0530/software/can4linux/src/can_read.c,v 1.5 2003/08/27 13:06:27 oe Exp $
  *
  *--------------------------------------------------------------------------
  *
@@ -18,6 +18,9 @@
  * modification history
  * --------------------
  * $Log: can_read.c,v $
+ * Revision 1.5  2003/08/27 13:06:27  oe
+ * - Version 3.0
+ *
  * Revision 1.4  2001/09/14 14:58:09  oe
  * first free release
  *
@@ -40,8 +43,8 @@
 /**
 * \file can_read.c
 * \author Heinz-Jürgen Oertel, port GmbH
-* $Revision: 1.4 $
-* $Date: 2001/09/14 14:58:09 $
+* $Revision: 1.5 $
+* $Date: 2003/08/27 13:06:27 $
 *
 * Module Description 
 * see Doxygen Doc for all possibilities
@@ -87,7 +90,7 @@
 
 /* local defined variables
 ---------------------------------------------------------------------------*/
-/* static char _rcsid[] = "$Id: can_read.c,v 1.4 2001/09/14 14:58:09 oe Exp $"; */
+/* static char _rcsid[] = "$Id: can_read.c,v 1.5 2003/08/27 13:06:27 oe Exp $"; */
 
 
 
@@ -163,7 +166,7 @@ int can_read( __LDDK_READ_PARAM )
 		break;
 	    }	
 
-	    __lddk_copy_to_user( (canmsg_t *) &addr[written], 
+	    __lddk_copy_to_user( (canmsg_t *) &(addr[written]), 
 			(canmsg_t *) &(RxFifo->data[RxFifo->tail]),
 			sizeof(canmsg_t) );
 	    written++;
@@ -176,4 +179,3 @@ int can_read( __LDDK_READ_PARAM )
     DBGout();
     return retval;
 }
-

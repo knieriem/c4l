@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2001 port GmbH Halle/Saale
  *------------------------------------------------------------------
- * $Header: /z2/cvsroot/products/0530/software/can4linux/src/can_defs.h,v 1.10 2002/12/01 17:24:22 oe Exp $
+ * $Header: /z2/cvsroot/products/0530/software/can4linux/src/can_defs.h,v 1.11 2003/07/05 14:28:55 oe Exp $
  *
  *--------------------------------------------------------------------------
  *
@@ -11,6 +11,10 @@
  * modification history
  * --------------------
  * $Log: can_defs.h,v $
+ * Revision 1.11  2003/07/05 14:28:55  oe
+ * - all changes for the new 3.0: try to eliminate hw depedencies at run-time.
+ *   configure for HW at compile time
+ *
  * Revision 1.10  2002/12/01 17:24:22  oe
  * - data type of Can_timeout
  *
@@ -54,8 +58,8 @@
 /**
 * \file can_defs.h
 * \author Name, port GmbH
-* $Revision: 1.10 $
-* $Date: 2002/12/01 17:24:22 $
+* $Revision: 1.11 $
+* $Date: 2003/07/05 14:28:55 $
 *
 * Module Desription 
 * see Doxygen Doc for all possibilites
@@ -108,6 +112,9 @@
 #include <linux/signal.h>
 #include <linux/timer.h>
 
+#ifdef CONFIG_DEVFS_FS /* only if enabled, to avoid errors in 2.0 */
+#include <linux/devfs_fs_kernel.h>
+#endif
 
 #if LINUX_VERSION_CODE > KERNEL_VERSION(2,1,0)
 #include <asm/uaccess.h>
@@ -143,28 +150,21 @@
 # define _BUS_TYPE "ISA-"
 #endif
 
-#if 1 
-#ifdef CAN_PELICANMODE
-
 # ifdef  CAN_PORT_IO
 #  define __CAN_TYPE__ _BUS_TYPE "PeliCAN-port I/O "
 # else
+# ifdef  CAN_INDEXED_PORT_IO
+#  define __CAN_TYPE__ _BUS_TYPE "PeliCAN-indexed port I/O "
+# else
 #  define __CAN_TYPE__ _BUS_TYPE "PeliCAN-memory mapped "
 # endif
-
-#else
-
-# ifdef  CAN_PORT_IO
-#  define __CAN_TYPE__ _BUS_TYPE "Philips-Basic-CAN port I/O "
-# else
-#  define __CAN_TYPE__ _BUS_TYPE "Philips-Basic-CAN memory mapped "
 # endif
 
-#endif
-#endif
 
-/* Length of the "version" strin entry in /proc/.../version */
+/* Length of the "version" string entry in /proc/.../version */
 #define PROC_VER_LENGTH 30 
+/* Length of the "Chipset" string entry in /proc/.../version */
+#define PROC_CHIPSET_LENGTH 30 
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,3,0)
 /* kernels higher 2.3.x have a f****** new kernel interface ******************/
@@ -192,6 +192,7 @@
 
 #define __LDDK_MINOR MINOR(file->f_dentry->d_inode->i_rdev)
 #define __LDDK_INO_MINOR MINOR(inode->i_rdev)
+
 
 #ifndef SLOW_DOWN_IO
 # define SLOW_DOWN_IO __SLOW_DOWN_IO
@@ -284,30 +285,28 @@ extern __LDDK_CLOSE_TYPE can_close (__LDDK_CLOSE_PARAM);
 
 #if   defined(ATCANMINI_BASIC) || defined(ATCANMINI_PELICAN)
 # define CAN_OUTC_VAL           0xfa
-# define IO_MODEL		"pppp "
-# define VEND_OPT		"nnnn "
+# define IO_MODEL		'p'
 #elif defined(IME_SLIMLINE)
 # define CAN_OUTC_VAL           0xda
-# define IO_MODEL		"mmmm "
-# define VEND_OPT		"nnnn "
+# define IO_MODEL		'm'
 #elif defined(CPC_PCI)
 # define CAN_OUTC_VAL           0xda
-# define IO_MODEL		"mmmm "
-# define VEND_OPT		"nnnn "
+# define IO_MODEL		'm'
 #elif defined(IXXAT_PCI03)
 # define CAN_OUTC_VAL           0x5e
-# define IO_MODEL		"mmmm "
-# define VEND_OPT		"ssss "
+# define IO_MODEL		'm'
+#elif defined(PCM3680)
+# define CAN_OUTC_VAL           0x5e
+# define IO_MODEL		'm'
 #else 
 # define CAN_OUTC_VAL           0x00
-# define IO_MODEL		"mmmm "
-# define VEND_OPT		"nnnn "
+# define IO_MODEL		'm'
 /* #error no CAN_OUTC_VAL */
 #endif
 
 
 /************************************************************************/
-#include <can_82c200.h>
+#include <can_sja1000.h>
 /************************************************************************/
 /************************************************************************/
 #include <can4linux.h>
@@ -316,16 +315,18 @@ extern __LDDK_CLOSE_TYPE can_close (__LDDK_CLOSE_PARAM);
  extern volatile int irq2pidmap[];
  extern u32 Can_pitapci_control[];
 
- #define MAX_BUFS 4
- /* #define MAX_BUFSIZE 64 */
- #define MAX_BUFSIZE 200
- /* #define MAX_BUFSIZE 4 */
 
- #define BUF_EMPTY    0
- #define BUF_OK       1
- #define BUF_FULL     BUF_OK
- #define BUF_OVERRUN  2
- #define BUF_UNDERRUN 3
+/* number of supported CAN channels */
+#define MAX_CHANNELS 4
+/* #define MAX_BUFSIZE 64 */
+#define MAX_BUFSIZE 200
+/* #define MAX_BUFSIZE 4 */
+
+#define BUF_EMPTY    0
+#define BUF_OK       1
+#define BUF_FULL     BUF_OK
+#define BUF_OVERRUN  2
+#define BUF_UNDERRUN 3
 
 
  typedef struct {
@@ -376,17 +377,8 @@ extern __LDDK_CLOSE_TYPE can_close (__LDDK_CLOSE_PARAM);
  extern unsigned int   can_range[];
 #endif
 
-
-/************************************************************************/
-
-
-
-/************************************************************************/
-#define LDDK_START_TIMER Can_StartTimer
-#define LDDK_STOP_TIMER  Can_StopTimer
-#define LDDK_TIMEDOUT    Can_Timeout
-
-extern int Can_Timeout;
+extern int IRQ_requested[];
+extern int Can_minors[];			/* used as IRQ dev_id */
 
 
 /************************************************************************/
@@ -404,83 +396,76 @@ extern ctl_table Can_sys_table[];
 extern char version[];
 #define SYSCTL_VERSION 1
  
+ /* ------ Global Definitions for Chpset */
+
+extern char Chipset[];
+#define SYSCTL_CHIPSET 2
+ 
  /* ------ Global Definitions for IOModel */
 
 extern char IOModel[];
-#define SYSCTL_IOMODEL 2
- 
- /* ------ Global Definitions for TxSpeed */
-
-extern char TxSpeed[];
-#define SYSCTL_TXSPEED 3
- 
- /* ------ Global Definitions for VendOpt */
-
-extern char VendOpt[];
-#define SYSCTL_VENDOPT 4
+#define SYSCTL_IOMODEL 3
  
  /* ------ Global Definitions for IRQ */
 
 extern  int IRQ[];
-#define SYSCTL_IRQ 5
+#define SYSCTL_IRQ 4
  
  /* ------ Global Definitions for Base */
 
 extern  int Base[];
-#define SYSCTL_BASE 6
+#define SYSCTL_BASE 5
  
  /* ------ Global Definitions for Baud */
 
 extern  int Baud[];
-#define SYSCTL_BAUD 7
+#define SYSCTL_BAUD 6
  
  /* ------ Global Definitions for AccCode */
 
 extern  unsigned int AccCode[];
-#define SYSCTL_ACCCODE 8
+#define SYSCTL_ACCCODE 7
  
  /* ------ Global Definitions for AccMask */
 
 extern  unsigned int AccMask[];
-#define SYSCTL_ACCMASK 9
+#define SYSCTL_ACCMASK 8
  
  /* ------ Global Definitions for Timeout */
 
 extern  int Timeout[];
-#define SYSCTL_TIMEOUT 10
+#define SYSCTL_TIMEOUT 9
  
  /* ------ Global Definitions for Outc */
 
 extern  int Outc[];
-#define SYSCTL_OUTC 11
+#define SYSCTL_OUTC 10
  
  /* ------ Global Definitions for TxErr */
 
 extern  int TxErr[];
-#define SYSCTL_TXERR 12
+#define SYSCTL_TXERR 11
  
  /* ------ Global Definitions for RxErr */
 
 extern  int RxErr[];
-#define SYSCTL_RXERR 13
+#define SYSCTL_RXERR 12
  
  /* ------ Global Definitions for Overrun */
 
 extern  int Overrun[];
-#define SYSCTL_OVERRUN 14
+#define SYSCTL_OVERRUN 13
  
- /* ------ Global Definitions for Chipset */
-
  /* ------ Global Definitions for dbgMask */
 
 extern unsigned int dbgMask;
-#define SYSCTL_DBGMASK 15
+#define SYSCTL_DBGMASK 14
 
  /* ------ Global Definitions for Test  */
 extern  int Cnt1[];
-#define SYSCTL_CNT1 16
+#define SYSCTL_CNT1 15
 extern  int Cnt2[];
-#define SYSCTL_CNT2 17
+#define SYSCTL_CNT2 16
  
  
 #endif
@@ -489,7 +474,7 @@ extern  int Cnt2[];
 
 
 #ifndef Can_MAJOR
-#define Can_MAJOR 63
+#define Can_MAJOR 91
 #endif
 
 extern int Can_errno;
@@ -510,7 +495,7 @@ extern int CAN_StartChip(int);
 extern int CAN_StopChip(int);
 extern int CAN_SetMask(int, unsigned int, unsigned int);
 extern int CAN_SetOMode(int,int);
-extern int CAN_SendMessage(int, canmsg_t *, int );
+extern int CAN_SendMessage(int, canmsg_t *);
 extern int CAN_GetMessage(int , canmsg_t *);
 extern void CAN_Interrupt(int irq, void *unused, struct pt_regs *ptregs );
 extern int CAN_VendorInit(int);
@@ -541,6 +526,19 @@ extern void print_tty(const char *fmt, ...);
 /* PCI support */
 extern int pcimod_scan(void);
 
+#ifdef CAN_INDEXED_PORT_IO
+extern canregs_t* regbase;
+static inline unsigned Indexed_Inb(unsigned base,unsigned adr) {
+  unsigned val;
+  outb(adr,base);
+  val=inb(base+1);
+#ifdef IODEBUG
+  printk("CANin: base: %x adr: %x, got: %x\n",base,adr,val);
+#endif
+  return val;
+}
+#endif
+
 /************************************************************************/
 /* hardware access functions or macros */
 /************************************************************************/
@@ -568,15 +566,53 @@ extern int pcimod_scan(void);
 #define CANtest(bd,adr,m)	\
 	(inb((int) &((canregs_t *)Base[bd])->adr  ) & m )
 
-#else 	/* CAN_PORT_IO */
+#endif 	/* CAN_PORT_IO */
+#if ! defined CAN_PORT_IO
+#ifdef CAN_INDEXED_PORT_IO
+/* #error Indexed Intel port I/O access */
+/* using port I/O with indexed inb()/outb() for Intel architectures like 
+   SSV TRM/816 DIL-NET-PC */
+
+#ifdef IODEBUG
+#define CANout(bd,adr,v) {\
+        printk("CANout bd:%x base:%x reg:%x val:%x\n", \
+                bd, (u32) Base[bd], \
+		(u32) &regbase->adr,v); \
+        outb((u32) &regbase->adr,(u32) Base[bd]);\
+        outb(v,((u32) Base[bd])+1);\
+  }
+#else
+#define CANout(bd,adr,v) {\
+        outb((u32) &regbase->adr,(u32) Base[bd]);\
+        outb(v,((u32) Base[bd])+1);\
+}
+#endif
+#define CANin(bd,adr) \
+        Indexed_Inb((u32) Base[bd],(u32) &regbase->adr)
+
+#define CANset(bd,adr,m) {\
+        unsigned val; \
+        val=Indexed_Inb((u32) Base[bd],(u32) &regbase->adr);\
+        outb((u32) &regbase->adr,(u32) Base[bd]);\
+        outb(val | m,((u32) Base[bd])+1);\
+}
+#define CANreset(bd,adr,m) {\
+        unsigned val; \
+        val=Indexed_Inb((u32) Base[bd],(u32) &regbase->adr);\
+        outb((u32) &regbase->adr,(u32) Base[bd]);\
+        outb(val & ~m,((u32) Base[bd])+1);\
+}
+#define CANtest(bd,adr,m) \
+        (Indexed_Inb((u32) Base[bd],(u32) &regbase->adr) & m)
+#else
+
 /* using memory acces with readb(), writeb() */
 /* #error  memory I/O access */
 /* #define can_base Base */
 #ifdef IODEBUG
 #  define CANout(bd,adr,v)	\
-	(printk("Cout: (%x)=%x\n", (u32)&((canregs_t *)can_base[bd])->adr, v), \
+	(printk("Cout (%x)=%x\n", (u32)&((canregs_t *)can_base[bd])->adr, v), \
 		writeb(v, (u32) &((canregs_t *)can_base[bd])->adr ))
-
 #define CANset(bd,adr,m)     do	{\
 	unsigned char v;	\
         v = (readb((u32) &((canregs_t *)can_base[bd])->adr)); \
@@ -606,8 +642,8 @@ extern int pcimod_scan(void);
 #define CANtest(bd,adr,m)	\
 	(readb((u32) &((canregs_t *)can_base[bd])->adr  ) & (m) )
 
-
-#endif 		/* CAN_PORT_IO */
+#endif  	/* ! CAN_INDEXED_PORT_IO */
+#endif 		/* ! CAN_PORT_IO */
 
 /*________________________E_O_F_____________________________________________*/
 

@@ -1,0 +1,18 @@
+Setup IO-ports and IRQ of DIL-Net-PC1486 and
+DIL-Net-PC1520!
+
+This Software uses clig (http://wsd.iitb.fhg.de/~kir/clighome)
+as Commandline Parser.
+
+clig does not need to be installed if you do not intend to change the
+commandline Options, as the generated cmdline.c and cmdline.h Sources are
+available in this directory.
+
+SJA1000-custom.pdf shows a Schematic for connecting an SJA-1000 chip
+directly to a DIL-NET-PC.
+
+This Setup-Tool also supports this schematic! Just set the CAN-Driver to
+trm816 Mode.
+
+(c) 2003 Sven Geggus <geggus@iitb.fraunhofer.de>
+

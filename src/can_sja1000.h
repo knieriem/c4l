@@ -4,11 +4,12 @@ extern uint8 CanTiming[10][2];
 
 /*----------*/
 
-#ifdef CAN_PELICANMODE
-
 
 #ifdef CAN4LINUX_PCI
-
+  /* this isn't really e define for a PCI board
+   * but some special define for acessing the memory mapped 
+   * registers with 4 byte offset 
+   */
 /* Definition with offset 4, EMS CPC-PCI */
 union frame {
 	struct {
@@ -173,32 +174,8 @@ typedef struct canregs {
 } canregs_t;
 #endif
 
-#else
-typedef struct canregs {
-	uint8    canctl;
-	uint8    cancmd;
-	uint8    canstat;
-	uint8	 canirq;
-	uint8	 canacc;
-	uint8	 canmask;
-	uint8	 cantim0;
-	uint8	 cantim1;
-	uint8	 canoutc;
-	uint8	 cantest;
-	uint8	 cantxdes1;
-	uint8	 cantxdes2;
-	uint8    cantxdata[8];
-	uint8	 canrxdes1;
-	uint8    canrxdes2;
-	uint8    canrxdata[8];
-	uint8    unused;
-	uint8	 canclk; 	 
-} canregs_t;
-#endif
-
 #define CAN_RANGE 0x20
 
-#ifdef CAN_PELICANMODE
 /*--- Mode Register -------- PeliCAN -------------------*/
 
 #  define CAN_SLEEP_MODE		0x10    /* Sleep Mode */
@@ -230,18 +207,6 @@ typedef struct canregs {
 #define CAN_EFF				0x80	/* extended frame */
 #define CAN_SFF				0x00	/* standard fame format */
 
-
-#else
-/*--- Control Register ----- Basic CAN -----------------*/
- 
-#define CAN_TEST_MODE				(1<<7)
-#define CAN_SPEED_MODE				(1<<6)
-#define CAN_OVERRUN_INT_ENABLE			(1<<4)
-#define CAN_ERROR_INT_ENABLE			(1<<3)
-#define CAN_TRANSMIT_INT_ENABLE			(1<<2)
-#define CAN_RECEIVE_INT_ENABLE			(1<<1)
-#define CAN_RESET_REQUEST			(1<<0)
-#endif
 
 /*--- Command Register ------------------------------------*/
  
@@ -332,38 +297,72 @@ typedef struct canregs {
  *    Basic CAN: RTR is Bit 4 in TXDES1.
  *    Peli  CAN: RTR is Bit 6 in frameinfo.
  */
-#ifdef CAN_PELICANMODE
 # define CAN_RTR				(1<<6)
-#else
-# define CAN_RTR				(1<<4)
-#endif
 
 
 /* the base address register array */
 extern int Base[];
+
 /*---------- Timing values */
+/* generated bit rate table by
+ * http://www.port.de/engl/canprod/sv_req_form.html
+ */
 
-/* the timings are valid for clock 8Mhz */
-#define CAN_TIM0_10K		  49
-#define CAN_TIM1_10K		0x1c
-#define CAN_TIM0_20K		  24	
-#define CAN_TIM1_20K		0x1c
-#define CAN_TIM0_40K		0x89	/* Old Bit Timing Standard of port */
-#define CAN_TIM1_40K		0xEB	/* Old Bit Timing Standard of port */
-#define CAN_TIM0_50K		   9
-#define CAN_TIM1_50K		0x1c
-#define CAN_TIM0_100K              4    /* sp 87%, 16 abtastungen, sjw 1 */
-#define CAN_TIM1_100K           0x1c
-#define CAN_TIM0_125K		   3
-#define CAN_TIM1_125K		0x1c
-#define CAN_TIM0_250K		   1
-#define CAN_TIM1_250K		0x1c
-#define CAN_TIM0_500K		   0
-#define CAN_TIM1_500K		0x1c
-#define CAN_TIM0_800K		   0
-#define CAN_TIM1_800K		0x16
-#define CAN_TIM0_1000K		   0
-#define CAN_TIM1_1000K		0x14
+#if CAN_SYSCLK == 8
+/* these timings are valid for clock 8Mhz */
+#  define CAN_TIM0_10K		  49
+#  define CAN_TIM1_10K		0x1c
+#  define CAN_TIM0_20K		  24	
+#  define CAN_TIM1_20K		0x1c
+#  define CAN_TIM0_40K		0x89	/* Old Bit Timing Standard of port */
+#  define CAN_TIM1_40K		0xEB	/* Old Bit Timing Standard of port */
+#  define CAN_TIM0_50K		   9
+#  define CAN_TIM1_50K		0x1c
+#  define CAN_TIM0_100K              4    /* sp 87%, 16 abtastungen, sjw 1 */
+#  define CAN_TIM1_100K           0x1c
+#  define CAN_TIM0_125K		   3
+#  define CAN_TIM1_125K		0x1c
+#  define CAN_TIM0_250K		   1
+#  define CAN_TIM1_250K		0x1c
+#  define CAN_TIM0_500K		   0
+#  define CAN_TIM1_500K		0x1c
+#  define CAN_TIM0_800K		   0
+#  define CAN_TIM1_800K		0x16
+#  define CAN_TIM0_1000K	   0
+#  define CAN_TIM1_1000K	0x14
 
+#define CAN_SYSCLK_is_ok            1
+#endif
+
+
+#if CAN_SYSCLK == 10
+/* these timings are valid for clock 10Mhz */
+/* 20 Mhz cristal */
+#  define CAN_TIM0_10K		0x31
+#  define CAN_TIM1_10K		0x2f
+#  define CAN_TIM0_20K		0x18
+#  define CAN_TIM1_20K		0x2f
+#  define CAN_TIM0_50K		0x18
+#  define CAN_TIM1_50K		0x05
+#  define CAN_TIM0_100K		0x04
+#  define CAN_TIM1_100K		0x2f
+#  define CAN_TIM0_125K		0x04
+#  define CAN_TIM1_125K		0x1c
+#  define CAN_TIM0_250K		0x04
+#  define CAN_TIM1_250K		0x05
+#  define CAN_TIM0_500K		0x00
+#  define CAN_TIM1_500K		0x2f
+#  define CAN_TIM0_800K		0x00
+#  define CAN_TIM1_800K		0x00
+#  define CAN_TIM0_1000K  	0x00
+#  define CAN_TIM1_1000K  	0x07
+
+#define CAN_SYSCLK_is_ok            1
+#endif
+
+#ifndef CAN_SYSCLK_is_ok
+#  error Please specify a valid CAN_SYSCLK value (i.e. 8, 10) or define new p
+arameters
+#endif
 
 

@@ -1,4 +1,4 @@
-.TH "can_read.c" 3 "1 Dec 2002" "can4linux" \" -*- nroff -*-
+.TH "can_read.c" 3 "11 Sep 2003" "can4linux" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -24,11 +24,11 @@ Heinz-Jürgen Oertel, port GmbH
 .PP
 \fBRevision: \fP
 .in +1c
- 1.4  
+ 1.5  
 .PP
 \fBDate: \fP
 .in +1c
- 2001/09/14 14:58:09 
+ 2003/08/27 13:06:27 
 .PP
 Module Description  see Doxygen Doc for all possibilities
 .PP
@@ -69,7 +69,7 @@ canmsg_t rx[80];                        // receive buffer for read()
 .TP
  \fCEINVAL\fP \fBbuf\fP points not to an large enough area,
 .PP
-\fBReturns :\fP
+\fBReturns: \fP
 .in +1c
  On success, the number of bytes read is returned (zero indicates end of file). It is not an error if this number is smaller than the number of bytes requested; this may happen for example because fewer bytes are actually available right now, or because read() was interrupted by a signal. On error, -1 is returned, and errno is set appropriately. 
 .SH "AUTHOR"

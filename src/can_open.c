@@ -10,7 +10,7 @@
  * derived from the the LDDK can4linux version
  *     (c) 1996,1997 Claus Schroeter (clausi@chemie.fu-berlin.de)
  *------------------------------------------------------------------
- * $Header: /z2/cvsroot/products/0530/software/can4linux/src/can_open.c,v 1.5 2002/08/08 18:03:41 oe Exp $
+ * $Header: /z2/cvsroot/products/0530/software/can4linux/src/can_open.c,v 1.7 2003/08/27 13:06:27 oe Exp $
  *
  *--------------------------------------------------------------------------
  *
@@ -18,6 +18,13 @@
  * modification history
  * --------------------
  * $Log: can_open.c,v $
+ * Revision 1.7  2003/08/27 13:06:27  oe
+ * - Version 3.0
+ *
+ * Revision 1.6  2003/07/05 14:28:55  oe
+ * - all changes for the new 3.0: try to eliminate hw depedencies at run-time.
+ *   configure for HW at compile time
+ *
  * Revision 1.5  2002/08/08 18:03:41  oe
  * *** empty log message ***
  *
@@ -46,8 +53,8 @@
 /**
 * \file can_open.c
 * \author Heinz-Jürgen Oertel, port GmbH
-* $Revision: 1.5 $
-* $Date: 2002/08/08 18:03:41 $
+* $Revision: 1.7 $
+* $Date: 2003/08/27 13:06:27 $
 *
 *
 */
@@ -87,11 +94,11 @@
 
 /* global variables
 ---------------------------------------------------------------------------*/
-int Can_isopen[4] = { 0, 0, 0, 0};   /* device minor already opened */
+int Can_isopen[MAX_CHANNELS] = { 0 };   /* device minor already opened */
 
 /* local defined variables
 ---------------------------------------------------------------------------*/
-/* static char _rcsid[] = "$Id: can_open.c,v 1.5 2002/08/08 18:03:41 oe Exp $"; */
+/* static char _rcsid[] = "$Id: can_open.c,v 1.7 2003/08/27 13:06:27 oe Exp $"; */
 
 
 /***************************************************************************/
@@ -177,12 +184,6 @@ int retval = 0;
 	    return -ENXIO;
 	}
 
-	if( strlen(IOModel) < 4 ) {
-	    printk("Can[%d]: Misconfigured IO Model ",minor);
-	    MOD_DEC_USE_COUNT;
-	    DBGout();return -EINVAL;			
-	}
-
 	/* the following does all the board specific things
 	   also memory remapping if necessary */
 	if( (lasterr = CAN_VendorInit(minor)) < 0 ){
@@ -198,9 +199,6 @@ int retval = 0;
 	Can_FifoInit(minor);
 #if CAN_USE_FILTER
 	Can_FilterInit(minor);
-#endif
-
-#ifndef CAN4LINUX_PCI
 #endif
 
 	if( CAN_ChipReset(minor) < 0 ) {
