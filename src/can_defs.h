@@ -87,6 +87,7 @@
 #include <linux/tty.h>
 #include <linux/errno.h>
 #include <linux/major.h>
+#include <linux/interrupt.h>         /* tasklets */
 
 #include <linux/version.h>
 
