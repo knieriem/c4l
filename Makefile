@@ -347,6 +347,7 @@ examples:
 
 clean:
 	-rm -f tags
+	-rm -f ,,tmp-arch obj/gnu-arch.h
 	-rm -f obj/*.o
 	-rm -f Can.o
 	(cd examples;make clean)
