@@ -362,7 +362,9 @@ int i;
 
 void cleanup_module(void)
 {
+#ifdef CONFIG_DEVFS_FS
   int i;
+#endif
   DBGin("cleanup_module");
   if (MOD_IN_USE) {
     printk("Can : device busy, remove delayed\n");
