@@ -20,6 +20,12 @@
 # 
 #
 
+# if available, call this script to get values for KVERSION and INCLUDE
+ifeq ($(wildcard linux-info.sh),linux-info.sh)
+LINUX_INFO := 1
+li_dummy   := $(shell $(SHELL) linux-info.sh)
+endif
+
 # Used release tag for this software version
 VERSION=3
 REL=1
@@ -30,7 +36,11 @@ DVERSION=$(VERSION).$(REL)
 LINUXTARGET=LINUXOS
 #LINUXTARGET=RTLinux
 
+ifndef LINUX_INFO
 KVERSION= $(shell uname -r)
+else
+KVERSION= $(shell $(SHELL) linux-info.sh --kversion)
+endif
 CONFIG := $(shell uname -n)
 
 CTAGS =	ctags --c-types=dtvf 
@@ -227,7 +237,11 @@ ifeq "$(findstring 2.4., $(KVERSION))" ""
  INCLUDES = -Isrc
  TEST = Nein
 else
+  ifndef LINUX_INFO
  INCLUDES = -Isrc -I/lib/modules/`uname -r`/build/include
+  else
+ INCLUDES = -Isrc -I$(shell $(SHELL) linux-info.sh -I)
+  endif
  #INCLUDES = -Isrc -I/home/geg/kernel/linux-2.4.22-586/include
  TEST = Ja
 endif
