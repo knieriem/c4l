@@ -50,8 +50,6 @@
 */
 #include <can_defs.h>
 
-#define USE_ERR_WARN_INT
-
 
 /* int	CAN_Open = 0; */
 
@@ -262,20 +260,11 @@ int CAN_StartChip (int board)
     CANin(board, canirq);
 
     /* Interrupts on Rx, TX, any Status change and data overrun */
-#ifdef USE_ERR_WARN_INT
-    CANset(board, canirq_enable, (
+    CANout(board, canirq_enable, (
 		  CAN_OVERRUN_INT_ENABLE
-		+ CAN_ERROR_BUSOFF_INT_ENABLE
 		+ CAN_ERROR_WARN_INT_ENABLE
 		+ CAN_TRANSMIT_INT_ENABLE
 		+ CAN_RECEIVE_INT_ENABLE ));
-#else
-    CANset(board, canirq_enable, (
-		  CAN_OVERRUN_INT_ENABLE
-		+ CAN_ERROR_BUSOFF_INT_ENABLE
-		+ CAN_TRANSMIT_INT_ENABLE
-		+ CAN_RECEIVE_INT_ENABLE ));
-#endif
 
     CANreset( board, canmode, CAN_RESET_REQUEST );
     DBGprint(DBG_DATA,("start mode=0x%x", CANin(board, canmode)));
@@ -682,7 +671,6 @@ int minor;
 int i;
 unsigned long flags;
 int ext;			/* flag for extended message format */
-int txerrentry;
 int irqsrc, dummy;
 msg_fifo_t   *RxFifo; 
 msg_fifo_t   *TxFifo;
@@ -708,8 +696,6 @@ int first = 0;
 
     /* Disable PITA Interrupt */
     /* writel(0x00000000, Can_pitapci_control[minor] + 0x0); */
-
-    txerrentry = CANin(minor, txerror);
 
     irqsrc = CANin(minor, canirq);
     if(irqsrc == 0) {
@@ -800,29 +786,48 @@ int first = 0;
    }
 
     if( irqsrc & CAN_ERROR_WARN_INT ) {
-	if (TxFifo->active) {
-	    printk("CAN[%d]: ErrWarn! (txerr=%d,%d) TX_active\n",
-		   minor,
-		   txerrentry,
-		   CANin(minor, txerror));
-	} else {
-	    printk("CAN[%d]: ErrWarn! (txerr=%d,%d)\n",
-		   minor,
-		   txerrentry,
-		   CANin(minor, txerror));
+	int s;
+	int err = 0;
+	printk("CAN[%d]: ErrWarn!", minor);
+	if (CANin(minor,canmode) & CAN_RESET_REQUEST) {
+	    printk (" RES");
+
+	    /* undo reset request */
+	    CANreset(minor, canmode, CAN_RESET_REQUEST);
 	}
 
-	if ((TxFifo->active)
-	    && (CANin(minor, txerror) < 96)  /* back from bus_off */
-		) {
-	    if (CANin(minor, canstat) & CAN_TRANSMIT_BUFFER_ACCESS) {
-		/* fake tx int */
-		irqsrc |= CAN_TRANSMIT_INT;
-		printk("CAN[%d]: ### fake tx int\n", minor);
-	    } else {
-		printk("CAN[%d]: ### Argh! Could not fake! **************\n", minor);
-            }
+	/* insert error */
+	s = CANin(minor,canstat);
+	if (s & CAN_ERROR_STATUS) {
+	    printk(" ERR");
+	    err = + MSG_PASSIVE;
 	}
+	if (s & CAN_BUS_STATUS) {
+	    printk(" BUS");
+	    err = + MSG_BUSOFF;
+	}
+
+
+	if (!err) {
+	    printk (" ACT");
+	    if (TxFifo->active
+		&& !(irqsrc & CAN_TRANSMIT_INT)
+		&& (CANin(minor, canstat) & CAN_TRANSMIT_BUFFER_ACCESS)) {
+
+		/* If there has been a bus-off before, followed by a
+		 * reset request, there is the possibility of a
+		 * writable transmit buffer without SJA telling us by
+		 * an interrupt. Since this would lock the tx queue,
+		 * simulate a transmit interrupt now, if the queue is
+		 * non-empty. */
+		irqsrc |= CAN_TRANSMIT_INT;
+		printk(" fake-tx-int");
+	    }
+	}
+	else
+	    (RxFifo->data[RxFifo->head]).flags += err;
+
+	printk ("\n");
 
 	/* do nothing, but check FIFO */
 	(RxFifo->data[RxFifo->head]).id = 0xFFFFFFFF;
@@ -897,51 +902,6 @@ Tx_done:
 
 	CANout(minor, cancmd, CAN_CLEAR_OVERRUN_STATUS );
     }
-
-    if( irqsrc & CAN_ERROR_PASSIVE_INT ) {
-    int s;
-       printk("CAN[%d]: ErrPassive!\n", minor);
-       TxErr[minor]++;
-
-        /* insert error */
-        s = CANin(minor,canstat);
-        if(s & CAN_ERROR_STATUS)
-	    (RxFifo->data[RxFifo->head]).flags += MSG_PASSIVE; 
-
-	(RxFifo->data[RxFifo->head]).id = 0xFFFFFFFF;
-        /* (RxFifo->data[RxFifo->head]).length = 0; */
-	/* (RxFifo->data[RxFifo->head]).data[i] = 0; */
-	RxFifo->status = BUF_OK;
-        RxFifo->head = ++(RxFifo->head) % MAX_BUFSIZE;
-	if(RxFifo->head == RxFifo->tail) {
-		printk("CAN[%d] RX: FIFO overrun\n", minor);
-		RxFifo->status = BUF_OVERRUN;
-        } 
-	
-   }
-   if( irqsrc & CAN_ERROR_BUSOFF_INT ) {
-   int s;
-        printk("CAN[%d]: ErrBUSOFF!\n", minor);
-        TxErr[minor]++;
-
-        /* insert error */
-        s = CANin(minor,canstat);
-        if(s & CAN_BUS_STATUS)
-	    (RxFifo->data[RxFifo->head]).flags += MSG_BUSOFF;
-
-	(RxFifo->data[RxFifo->head]).id = 0xFFFFFFFF;
-        /* (RxFifo->data[RxFifo->head]).length = 0; */
-	/* (RxFifo->data[RxFifo->head]).data[i] = 0; */
-	RxFifo->status = BUF_OK;
-        RxFifo->head = ++(RxFifo->head) % MAX_BUFSIZE;
-	if(RxFifo->head == RxFifo->tail) {
-		printk("CAN[%d] RX: FIFO overrun\n", minor);
-		RxFifo->status = BUF_OVERRUN;
-        } 
-
-	/* undo reset request */
-	CANreset(minor, canmode, CAN_RESET_REQUEST);
-   } 
    } while( (irqsrc = CANin(minor, canirq)) != 0);
 
 /* IRQdone: */
