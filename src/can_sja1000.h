@@ -199,7 +199,7 @@ typedef struct canregs {
 #define CAN_ERROR_PASSIVE_INT_ENABLE		(1<<5)
 #define CAN_WAKEUP_INT_ENABLE			(1<<4)
 #define CAN_OVERRUN_INT_ENABLE			(1<<3)
-#define CAN_ERROR_INT_ENABLE			(1<<2)
+#define CAN_ERROR_WARN_INT_ENABLE		(1<<2)
 #define CAN_TRANSMIT_INT_ENABLE			(1<<1)
 #define CAN_RECEIVE_INT_ENABLE			(1<<0)
 
@@ -240,9 +240,12 @@ typedef struct canregs {
 
 /*--- Interrupt Register -----------------------------------*/
  
+#define CAN_ERROR_BUSOFF_INT                    (1<<7)
+#define CAN_ARBITR_LOST_INT                     (1<<6)
+#define CAN_ERROR_PASSIVE_INT                   (1<<5)
 #define CAN_WAKEUP_INT				(1<<4)
 #define CAN_OVERRUN_INT				(1<<3)
-#define CAN_ERROR_INT				(1<<2)
+#define CAN_ERROR_WARN_INT			(1<<2)
 #define CAN_TRANSMIT_INT			(1<<1)
 #define CAN_RECEIVE_INT 			(1<<0)
 
