@@ -325,12 +325,19 @@ int index = 0;
 
 	for(i = 0; i < 2; i++) {
 	    for(j = 0; j < 16; j++) {
-		printk("%02x ",
-#ifdef  CAN_PORT_IO
-		inb((int) (Base[minor] + index)) );
+		if (j == 3 && i == 0)
+		    /* don't print canirq, since this could reset interrupts */
+		    printk("## ");
+		else {
+		    printk("%02x ",
+#ifdef	CAN_PORT_IO
+		    inb((int) (Base[minor] + index)) );
+#elif	CAN_INDEXED_PORT_IO
+		    ({outb (index, Base[minor]); inb (Base[minor] + 1);}) );
 #else
-		readb((u32) (can_base[minor] + index)) );
+		    readb((u32) (can_base[minor] + index)) );
 #endif
+		}
 		index += REG_OFFSET;
 	    }
 	    printk("\n");
