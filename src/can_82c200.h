@@ -347,6 +347,65 @@ typedef struct canregs {
 extern int Base[];
 /*---------- Timing values */
 
+#ifdef ADNP1486
+
+/*
+  Timing values calculated for 10 Mhz clock rate using
+  http://www.port.de/cgi-bin/tq.cgi?ctype=Philips&CLK=10&sample_point=87.5 
+
+  It has been tried to get values matching CANopen bit timings (see
+  http://www.can-cia.org/canopen/protocol/bittiming.html).
+
+  Values enclosed in CAN_TIM_LQ are alternatives with a smaller number
+  of time quanta. Per default this macro is undefined.
+*/
+
+#  define CAN_TIM0_10K		0x31    /* 17/20, 85% */
+#  define CAN_TIM1_10K		0x2f
+
+#  define CAN_TIM0_20K		0x18    /* 17/20, 85% */
+#  define CAN_TIM1_20K		0x2f
+
+#  define CAN_TIM0_40K		0x89	/* Old Bit Timing Standard of port */
+#  define CAN_TIM1_40K		0xEB	/* Old Bit Timing Standard of port */
+
+#ifndef CAN_TIM_LQ
+#  define CAN_TIM0_50K		0x09    /* 17/20, 85% */
+#  define CAN_TIM1_50K		0x2f
+#else
+#  define CAN_TIM0_50K		0x18    /* 7/8, 87.5% */
+#  define CAN_TIM1_50K		0x05
+#endif
+
+#  define CAN_TIM0_100K            4    /* 17/20, 85% */
+#  define CAN_TIM1_100K         0x2f
+
+#  define CAN_TIM0_125K		   4    /* 14/16, 87.5% */
+#  define CAN_TIM1_125K		0x1c
+
+#ifndef CAN_TIM_LQ
+#  define CAN_TIM0_250K		   1    /* 17/20, 85% */
+#  define CAN_TIM1_250K		0x2f
+#else
+#  define CAN_TIM0_250K		   4    /* 7/8, 87.5% */
+#  define CAN_TIM1_250K		   5
+#endif
+
+#  define CAN_TIM0_500K		   0    /* 17/20, 85% */
+#  define CAN_TIM1_500K		0x2f
+
+#  define CAN_TIM0_800K		   0    /* not configured */
+#  define CAN_TIM1_800K		0x16
+
+#ifndef CAN_TIM_LQ
+#  define CAN_TIM0_1000K	   0    /* 8/10, 80% */
+#  define CAN_TIM1_1000K	0x16
+#else
+#  define CAN_TIM0_1000K	   0    /* 7/10, 70% */
+#  define CAN_TIM1_1000K	0x25
+#endif
+
+#else
 /* the timings are valid for clock 8Mhz */
 #define CAN_TIM0_10K		  49
 #define CAN_TIM1_10K		0x1c
@@ -368,6 +427,6 @@ extern int Base[];
 #define CAN_TIM1_800K		0x16
 #define CAN_TIM0_1000K		   0
 #define CAN_TIM1_1000K		0x14
-
+#endif
 
 
