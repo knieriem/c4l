@@ -302,6 +302,18 @@ extern __LDDK_CLOSE_TYPE can_close (__LDDK_CLOSE_PARAM);
 # define CAN_OUTC_VAL           0x5e
 # define IO_MODEL		"mmmm "
 # define VEND_OPT		"ssss "
+#elif defined(ADNP1486)
+# define CAN_OUTC_VAL           0x1a
+
+    /* 0x0100 0010
+       normal mode    : 0x02
+       Tx1: float     : 0x00
+       Tx0: push/pull : 0x18
+       ---------------------
+       OR ==>           0x1A */
+
+# define IO_MODEL		"iiii "
+# define VEND_OPT		"tttt "
 #else 
 # define CAN_OUTC_VAL           0x00
 # define IO_MODEL		"mmmm "
