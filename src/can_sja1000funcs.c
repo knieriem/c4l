@@ -754,6 +754,10 @@ int first = 0;
 	    /* printk("TXE\n"); */
 	    TxFifo->status = BUF_EMPTY;
             TxFifo->active = 0;
+
+	    /* wake up the user sleeping in select call; tx-queue is
+	       empty, user may fill the tx-queue again */
+	    wake_up_interruptible (&CanWait[minor]);
             goto Tx_done;
 	} else {
 	    /* printk("TX\n"); */

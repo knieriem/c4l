@@ -55,26 +55,56 @@ msg_fifo_t *RxFifo = &Rx_Buf[minor];
 /* X */		poll_wait(file, &CanWait[minor] , wait);
 
     DBGprint(DBG_BRANCH,("POLL: wait returned \n"));
-    if( RxFifo->head != RxFifo->tail ) {
-	/* fifo has some telegrams */
-	/* Return a bit mask
-	 * describing operations that could be immediately performed
-	 * without blocking.
-	 */
-	DBGout();
-	/*
-	 * POLLIN This bit must be set
-	 *        if the device can be read without blocking. 
-	 * POLLRDNORM This bit must be set
-	 * if "normal'' data is available for reading.
-	 * A readable device returns (POLLIN | POLLRDNORM)
-	 *
-	 *
-	 *
-	 */
-	return POLLIN | POLLRDNORM;
+    {
+      int ret_mask = 0;
+
+      msg_fifo_t   *TxFifo = &Tx_Buf[minor];
+
+
+      if( RxFifo->head != RxFifo->tail ) {
+	  /* fifo has some telegrams */
+	  /* Return a bit mask
+	   * describing operations that could be immediately performed
+	   * without blocking.
+	   */
+	  /*
+	   * POLLIN This bit must be set
+	   *        if the device can be read without blocking. 
+	   * POLLRDNORM This bit must be set
+	   * if "normal'' data is available for reading.
+	   * A readable device returns (POLLIN | POLLRDNORM)
+	   *
+	   *
+	   *
+	   */
+	  ret_mask |= POLLIN | POLLRDNORM;
+      }
+      if(!TxFifo->active) {
+	  /* Tx-queue is empty, the user may fill it again.
+	   *
+	   * The condition above has been used in favor of
+	   *   (TxFifo->free[TxFifo->head] != BUF_FULL)
+	   * to allow the process using this driver to sleep larger
+	   * amounts of time in a select call. The user will be waken
+	   * up in CAN_Interrupt if a transmit interrupt has occured and
+	   * the tx_queue has become empty.
+	   *
+	   */
+	  /*
+	   * POLLOUT This bit is set in the return value if the device
+	   * can be written to without blocking.
+	   *
+	   * POLLWRNORM This bit has the same meaning as POLLOUT, and
+	   * sometimes it actually is the same number. A writable
+	   * device returns (POLLOUT | POLLWRNORM).
+	   *
+	   */
+	  ret_mask |= POLLOUT | POLLWRNORM;
+      }
+
+      DBGout();
+      return ret_mask;
     }
-    DBGout();return 0;
 
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(2,2,3)
     DBGprint(DBG_BRANCH,("POLL: fifo empty,poll waiting...\n"));
