@@ -114,7 +114,7 @@ int written        = 0;
 #endif /* DEBUG_COUNTER */
 
 DEBUG_TTY(1, "write: %d", count);
-    DBGprint(DBG_DATA,(" -- write %d msg\n", count));
+    DBGprint(DBG_DATA,(" -- write %d msg", count));
     /* printk("w[%d/%d]", minor, TxFifo->active); */
     addr = (canmsg_t *)buffer;
 

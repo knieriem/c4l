@@ -164,7 +164,7 @@ uint8 status;
 /* int i; */
 
     DBGin("CAN_ChipReset");
-    DBGprint(DBG_DATA,(" INT 0x%x\n", CANin(board, canirq)));
+    DBGprint(DBG_DATA,(" INT 0x%x", CANin(board, canirq)));
 
     CANout(board, canmode, CAN_RESET_REQUEST);
 
@@ -183,23 +183,23 @@ uint8 status;
 	    DBGout();return -1;
     }
 
-    DBGprint(DBG_DATA, ("[%d] CAN_mode 0x%x\n", board, CANin(board, canmode)));
+    DBGprint(DBG_DATA, ("[%d] CAN_mode 0x%x", board, CANin(board, canmode)));
     /* select mode: Basic or PeliCAN */
     CANout(board, canclk, CAN_MODE_PELICAN + CAN_MODE_CLK);
     CANout(board, canmode, CAN_RESET_REQUEST + CAN_MODE_DEF);
-    DBGprint(DBG_DATA, ("[%d] CAN_mode 0x%x\n", board, CANin(board, canmode)));
+    DBGprint(DBG_DATA, ("[%d] CAN_mode 0x%x", board, CANin(board, canmode)));
     
     /* Board specific output control */
     if (Outc[board] == 0) {
 	Outc[board] = CAN_OUTC_VAL; 
     }
     CANout(board, canoutc, Outc[board]);
-    DBGprint(DBG_DATA, ("[%d] CAN_mode 0x%x\n", board, CANin(board, canmode)));
+    DBGprint(DBG_DATA, ("[%d] CAN_mode 0x%x", board, CANin(board, canmode)));
 
     CAN_SetTiming(board, Baud[board]    );
-    DBGprint(DBG_DATA, ("[%d] CAN_mode 0x%x\n", board, CANin(board, canmode)));
+    DBGprint(DBG_DATA, ("[%d] CAN_mode 0x%x", board, CANin(board, canmode)));
     CAN_SetMask  (board, AccCode[board], AccMask[board] );
-    DBGprint(DBG_DATA, ("[%d] CAN_mode 0x%x\n", board, CANin(board, canmode)));
+    DBGprint(DBG_DATA, ("[%d] CAN_mode 0x%x", board, CANin(board, canmode)));
 
     /* Can_dump(board); */
     DBGout();
@@ -251,7 +251,7 @@ int CAN_StartChip (int board)
 /* int i; */
     RxErr[board] = TxErr[board] = 0L;
     DBGin("CAN_StartChip");
-    DBGprint(DBG_DATA, ("[%d] CAN_mode 0x%x\n", board, CANin(board, canmode)));
+    DBGprint(DBG_DATA, ("[%d] CAN_mode 0x%x", board, CANin(board, canmode)));
 /*
     CANout( board,cancmd, (CAN_RELEASE_RECEIVE_BUFFER 
 			  | CAN_CLEAR_OVERRUN_STATUS) ); 
@@ -369,7 +369,7 @@ uint8 tx2reg, stat;
 	    tx2reg |= CAN_RTR;
     }
     if(ext) {
-    DBGprint(DBG_DATA, ("---> send ext message \n"));
+    DBGprint(DBG_DATA, ("---> send ext message"));
 	CANout(board, frameinfo, CAN_EFF + tx2reg);
 	CANout(board, frame.extframe.canid1, (uint8)(tx->id >> 21));
 	CANout(board, frame.extframe.canid2, (uint8)(tx->id >> 13));
@@ -377,7 +377,7 @@ uint8 tx2reg, stat;
 	CANout(board, frame.extframe.canid4, (uint8)(tx->id << 3) & 0xff);
 
     } else {
-	DBGprint(DBG_DATA, ("---> send std message \n"));
+	DBGprint(DBG_DATA, ("---> send std message"));
 	CANout(board, frameinfo, CAN_SFF + tx2reg);
 	CANout(board, frame.stdframe.canid1, (uint8)((tx->id) >> 3) );
 	CANout(board, frame.stdframe.canid2, (uint8)(tx->id << 5 ) & 0xe0);
@@ -418,7 +418,7 @@ int i = 0;
     rx->length = 0;
 
     if( stat & CAN_DATA_OVERRUN ) {
-    DBGprint(DBG_DATA,("Rx: overrun!\n"));
+    DBGprint(DBG_DATA,("Rx: overrun!"));
     Overrun[board]++;
     }
 
@@ -626,14 +626,14 @@ int first = 0;
     }
     do {
     /* loop as long as the CAN controller shows interrupts */
-    DBGprint(DBG_DATA, (" => got IRQ[%d]: 0x%0x\n", minor, irqsrc));
+    DBGprint(DBG_DATA, (" => got IRQ[%d]: 0x%0x", minor, irqsrc));
     /* Can_dump(minor); */
 
     do_gettimeofday(&(RxFifo->data[RxFifo->head]).timestamp);
 
 #if 0
     /* how often do we lop through the ISR ? */
-    if(first) printk("n = %d\n", first);
+    if(first) printk("n = %d", first);
     first++;
 #endif
 
@@ -684,7 +684,7 @@ int first = 0;
         RxFifo->head = ++(RxFifo->head) % MAX_BUFSIZE;
 
 	if(RxFifo->head == RxFifo->tail) {
-		printk("CAN[%d] RX: FIFO overrun\n", minor);
+		printk("CAN[%d] RX: FIFO overrun", minor);
 		RxFifo->status = BUF_OVERRUN;
         } 
         /*---------- kick the select() call  -*/
@@ -769,14 +769,14 @@ int first = 0;
         ext = (TxFifo->data[TxFifo->tail]).flags & MSG_EXT;
         id = (TxFifo->data[TxFifo->tail]).id;
         if(ext) {
-	    DBGprint(DBG_DATA, ("---> send ext message \n"));
+	    DBGprint(DBG_DATA, ("---> send ext message"));
 	    CANout(minor, frameinfo, CAN_EFF + tx2reg);
 	    CANout(minor, frame.extframe.canid1, (uint8)(id >> 21));
 	    CANout(minor, frame.extframe.canid2, (uint8)(id >> 13));
 	    CANout(minor, frame.extframe.canid3, (uint8)(id >> 5));
 	    CANout(minor, frame.extframe.canid4, (uint8)(id << 3) & 0xff);
         } else {
-	    DBGprint(DBG_DATA, ("---> send std message \n"));
+	    DBGprint(DBG_DATA, ("---> send std message"));
 	    CANout(minor, frameinfo, CAN_SFF + tx2reg);
 	    CANout(minor, frame.stdframe.canid1, (uint8)((id) >> 3) );
 	    CANout(minor, frame.stdframe.canid2, (uint8)(id << 5 ) & 0xe0);
@@ -876,7 +876,7 @@ Tx_done:
    } while( (irqsrc = CANin(minor, canirq)) != 0);
 
 /* IRQdone: */
-    DBGprint(DBG_DATA, (" => leave IRQ[%d]\n", minor));
+    DBGprint(DBG_DATA, (" => leave IRQ[%d]", minor));
 #ifdef CAN4LINUX_PCI
     /* Interrupt_0_Enable (bit 17) + Int_0_Reset (bit 1) */
     /*  
