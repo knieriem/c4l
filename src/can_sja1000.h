@@ -336,26 +336,58 @@ extern int Base[];
 
 
 #if CAN_SYSCLK == 10
-/* these timings are valid for clock 10Mhz */
-/* 20 Mhz cristal */
-#  define CAN_TIM0_10K		0x31
+/*
+  Timing values calculated for 10 Mhz clock rate using
+  http://www.port.de/cgi-bin/tq.cgi?ctype=Philips&CLK=10&sample_point=87.5 
+
+  It has been tried to get values matching CANopen bit timings (see
+  http://www.can-cia.org/canopen/protocol/bittiming.html).
+
+  Values enclosed in CAN_TIM_LQ are alternatives with a smaller number
+  of time quanta. Per default this macro is undefined.
+*/
+
+#  define CAN_TIM0_10K		0x31    /* 17/20, 85% */
 #  define CAN_TIM1_10K		0x2f
-#  define CAN_TIM0_20K		0x18
+
+#  define CAN_TIM0_20K		0x18    /* 17/20, 85% */
 #  define CAN_TIM1_20K		0x2f
-#  define CAN_TIM0_50K		0x18
+
+#ifndef CAN_TIM_LQ
+#  define CAN_TIM0_50K		0x09    /* 17/20, 85% */
+#  define CAN_TIM1_50K		0x2f
+#else
+#  define CAN_TIM0_50K		0x18    /* 7/8, 87.5% */
 #  define CAN_TIM1_50K		0x05
-#  define CAN_TIM0_100K		0x04
-#  define CAN_TIM1_100K		0x2f
-#  define CAN_TIM0_125K		0x04
+#endif
+
+#  define CAN_TIM0_100K            4    /* 17/20, 85% */
+#  define CAN_TIM1_100K         0x2f
+
+#  define CAN_TIM0_125K		   4    /* 14/16, 87.5% */
 #  define CAN_TIM1_125K		0x1c
-#  define CAN_TIM0_250K		0x04
-#  define CAN_TIM1_250K		0x05
-#  define CAN_TIM0_500K		0x00
+
+#ifndef CAN_TIM_LQ
+#  define CAN_TIM0_250K		   1    /* 17/20, 85% */
+#  define CAN_TIM1_250K		0x2f
+#else
+#  define CAN_TIM0_250K		   4    /* 7/8, 87.5% */
+#  define CAN_TIM1_250K		   5
+#endif
+
+#  define CAN_TIM0_500K		   0    /* 17/20, 85% */
 #  define CAN_TIM1_500K		0x2f
-#  define CAN_TIM0_800K		0x00
-#  define CAN_TIM1_800K		0x00
-#  define CAN_TIM0_1000K  	0x00
-#  define CAN_TIM1_1000K  	0x07
+
+#  define CAN_TIM0_800K		   0    /* not configured */
+#  define CAN_TIM1_800K		0x16
+
+#ifndef CAN_TIM_LQ
+#  define CAN_TIM0_1000K	   0    /* 8/10, 80% */
+#  define CAN_TIM1_1000K	0x16
+#else
+#  define CAN_TIM0_1000K	   0    /* 7/10, 70% */
+#  define CAN_TIM1_1000K	0x25
+#endif
 
 #define CAN_SYSCLK_is_ok            1
 #endif
