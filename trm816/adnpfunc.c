@@ -29,46 +29,44 @@ void dnp_map_can(unsigned base, unsigned irq, int type) {
 
   if (type==ADNPTRM) {
     /* Init (A)DNP for CAN SJA1000  */
-    /* GPIO_CS1 disable             */
-    /* write_port(0xA6,read_port(0xA6) | 0x02); */
- 
-    /* GPIO_CS1 and GPIO_CS0 disable             */
-    write_port(0xA6,read_port(0xA6) | 0x03);
-  
-    /* GPIO_CS1 to output           */
-    /* write_port(0xA0,read_port(0xA0) | 0x0C); */
-    /* GPIO_CS1 and GPIO_CS0 to output */
-    write_port(0xA0,read_port(0xA0) | 0x0f);
-    
-    /* Lo-Byte of Base Address (base) */
+    /* GPIO_CS0..7 disable (can't read) */
+    write_port(0xA6, 0xFF);
+
+    /* GPIO_CS1 to output
+     *
+     * Bit 3: CS1_PRI = Cause activity or wake up
+     * Bit 2: CS1_DIR = Output
+     */
+    write_port(0xA0, read_port (0xA0) | 0x0C);
+
+    /* GP_CSB address decode register: Bits 0-7 of Base Address (base) */
     write_port(0xB6, base & 0x00FF);
-    
-    /* CS1: Hi-Byte of Base Address        */
+
+    /* GP_CSB address decode register & mask:
+     *
+     * Bits 5-2: CSB_SA{3-0}_MASK = 1110, i.e. address range [base..base+1]
+     * Bits 0-1: bits 8-9 of Base Address
+     */
     write_port(0xB7, (base >> 8) | 0x38);
-    
-    /* Lo-Byte of Base Address (base) */
-    write_port(0xB4, base & 0x00FF);
-    
-    /* CS0: Hi-Byte of Base Address        */
-    write_port(0xB5, (base >> 8) | 0x3c);
-    
-    /* CS1: qualifyed with IOR & IOW */
-    /* write_port(0xB8, (read_port(0xB8) & 0x0F) | 0x30);*/
-    /* CS0 & CS1: qualifyed with IOR & IOW */
-    write_port(0xB8, (read_port(0xB8) & 0x0F) | 0x33);
-    
-    /* GP_CSPIO = GPIO_CS1               */
-    /* write_port(0xB2, (read_port(0xB2) & 0x0F) | 0x10);*/
-    write_port(0xB2, 0x10);
-    
-    /* GPIO_CS1 enable */
+
+    /* CSA/B command qualification register
+     *
+     * Bit    6: 8-bit data bus size and timings
+     * Bits 5-4: GP_CSB qualified with IOR & IOW
+     */
+    write_port(0xB8, (read_port(0xB8) & 0x0F) | 0x30);
+
+    /* Bits 7-4: map GP_CSB to GPIO_CS1 */
+    write_port(0xB2, (read_port(0xB2) & 0x0F) | 0x10);
+
+    /* GPIO_CS0..7 enable */
     write_port(0xA6,0x00);
-    //sti();
   }
 
   if (type==ADNPCUST) {
     fprintf(stderr,"mapping for ADNP1486 on Custom board not yet implemented\n");
   }
+  //sti();
 }
 
 void *pMapmemory(off_t phy_addr, size_t phy_lenght) {
