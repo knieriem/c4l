@@ -25,7 +25,7 @@ fi
 wd=`pwd`
 if test -d "$linux"; then
     cd $linux
-    if test -f MAINTAINERS && test -d include/linux && test -d arch; then :
+    if test -d include/linux; then :
     else
 	echo "$prog: Seems not to be a linux source directory: $linux" >&2
 	exit 1
