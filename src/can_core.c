@@ -362,7 +362,7 @@ int i;
 
 void cleanup_module(void)
 {
-#ifdef CONFIG_DEVFS_FS
+#if defined(LDDK_USE_REGISTER) && defined(CONFIG_DEVFS_FS)
   int i;
 #endif
   DBGin("cleanup_module");

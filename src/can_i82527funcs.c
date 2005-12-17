@@ -718,7 +718,7 @@ void i82527_CAN_Interrupt ( int irq, void *dev_id, struct pt_regs *ptregs )
 	(RxFifo->data[RxFifo->head]).id = 0xFFFFFFFF;
 	
 	RxFifo->status = BUF_OK;
-	RxFifo->head = ++(RxFifo->head) % MAX_BUFSIZE;
+	RxFifo->head = ++(RxFifo->head) % RxFifo->size;
 	if(RxFifo->head == RxFifo->tail) {
 	  printk("CAN[%d] RX: FIFO overrun\n", minor);
 	  RxFifo->status = BUF_OVERRUN;
@@ -853,7 +853,7 @@ void i82527_irq_write_handler(int minor, msg_fifo_t *TxFifo ) {
     }
   
     TxFifo->free[TxFifo->tail] = BUF_EMPTY; /* now this entry is EMPTY */
-    TxFifo->tail = ++(TxFifo->tail) % MAX_BUFSIZE;
+    TxFifo->tail = ++(TxFifo->tail) % TxFifo->size;
   
     /* leave critical section */
     restore_flags(flags);
@@ -937,7 +937,7 @@ void i82527_irq_read_handler( int minor, msg_fifo_t *RxFifo )
     
     RxFifo->status = BUF_OK;
 
-    RxFifo->head = ++(RxFifo->head) % MAX_BUFSIZE;
+    RxFifo->head = ++(RxFifo->head) % RxFifo->size;
 
    
     if(RxFifo->head == RxFifo->tail) {

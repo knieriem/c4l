@@ -113,6 +113,9 @@ __LDDK_CLOSE_TYPE can_close ( __LDDK_CLOSE_PARAM )
 #ifdef CAN_USE_FILTER
 	Can_FilterCleanup(minor);
 #endif
+
+	Can_FifoCleanup(minor);
+
 	Can_FreeIrq(minor, IRQ[minor]);
 #if !defined(CONFIG_PPC)
 	/* printk("CAN module %d has been closed\n",minor); */
