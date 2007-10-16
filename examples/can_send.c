@@ -7,7 +7,7 @@
 * - steuerung der Bitrate beim Start
 * - -debug schaltet mit debug level auch Treiber in debug mode
 * - ..
-* - Konfiguration über config-datei
+* - Konfiguration Ã¼ber config-datei
 * - nanosleep() siehe test3()
 */
 
@@ -453,19 +453,19 @@ static char *usage_text  = "\
 "
 "\
 -t type \n\
-   1 Stresstest für Knoten, Sendet Bursts von kurzen rtr messages\n\
+   1 Stresstest fÃ¼r Knoten, Sendet Bursts von kurzen rtr messages\n\
    2 sendet bursts von 5 Daten Messages, gleiche ID\n\
    3 sendet bursts von 5 Daten Messages, unterschiedliche ID\n\
-     message 5 enthält counter \n\
+     message 5 enthÃ¤lt counter \n\
    4 as without this option, but incremnts CAN-ID with each message\n\
-   10 sendet bursts von 9 Daten Messages, für Comm. Verification\n\
+   10 sendet bursts von 9 Daten Messages, fÃ¼r Comm. Verification\n\
    11 send -T number of messages as fast as possible, if transmit buffer\n\
       is full, sleep for -s ms time. time == 0:don't sleep, poll\n\
       after every message the messageid will increment\n\
    12 same as 11\n\
       but the message id is constant and the databytes will be incremented\n\
--R   setzt nur CAN Controller zurück, danach exit()\n\
--T   Anzahl der Bursts, Abstand -s n (für -t)\n\
+-R   setzt nur CAN Controller zurÃ¼ck, danach exit()\n\
+-T   Anzahl der Bursts, Abstand -s n (fÃ¼r -t)\n\
 -V   version\n\
 \n\
 ";
@@ -788,12 +788,12 @@ struct timespec req;
 	if (sleeptime > 0) {
 
 	    usleep(sleeptime);
-    /* Für die Verwendung von nanosleep muss noch etwas getan werden.
+    /* FÃ¼r die Verwendung von nanosleep muss noch etwas getan werden.
        Nanosleep benutzt bei Zeiten < 2 ms eine echte busy loop im kernel,
        d.h. mit "-s 1" geht bei endlosschleifen dann gar nichts mehr
-       außer dem großen Roten Knopf am Rechner.
+       auÃŸer dem groÃŸen Roten Knopf am Rechner.
        Falls also implementieren, dann auf kurze Schleifen, max 10 ode
-       so begrenzen, damit kann es aber möglich sein mal schnell 
+       so begrenzen, damit kann es aber mÃ¶glich sein mal schnell 
        meherer telegramme hineterinender zu senden, dann wieder usleep()
        nehmen ...
      */

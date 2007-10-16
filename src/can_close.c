@@ -5,7 +5,7 @@
  * can4linux -- LINUX CAN device driver source
  * 
  * Copyright (c) 2001 port GmbH Halle/Saale
- * (c) 2001 Heinz-Jürgen Oertel (oe@port.de)
+ * (c) 2001 Heinz-JÃ¼rgen Oertel (oe@port.de)
  *          Claus Schroeter (clausi@chemie.fu-berlin.de)
  * derived from the the LDDK can4linux version
  *     (c) 1996,1997 Claus Schroeter (clausi@chemie.fu-berlin.de)
@@ -53,7 +53,7 @@
 
 /**
 * \file can_close.c
-* \author Heinz-Jürgen Oertel, port GmbH
+* \author Heinz-JÃ¼rgen Oertel, port GmbH
 * $Revision: 1.7 $
 * $Date: 2003/08/27 13:06:26 $
 *

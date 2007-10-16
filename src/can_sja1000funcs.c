@@ -8,7 +8,7 @@
  *
  * 
 * Copyright (c) 2002 port GmbH Halle/Saale
-* (c) 2001 Heinz-Jürgen Oertel (oe@port.de)
+* (c) 2001 Heinz-JÃ¼rgen Oertel (oe@port.de)
 *------------------------------------------------------------------
 * $Header: /z2/cvsroot/products/0530/software/can4linux/src/can_sja1000funcs.c,v 1.3 2003/08/27 17:49:27 oe Exp $
 *
@@ -642,24 +642,24 @@ delayed_send (unsigned long minor)
  *---------------------------------------------------------------------------
  * 1) CPUPentium 75 - 200
  *  75 MHz, 149.91 bogomips
- *  AT-CAN-MINI                 42/27µs            50 µs
- *  CPC-PCI		        35/26µs		   
+ *  AT-CAN-MINI                 42/27Âµs            50 Âµs
+ *  CPC-PCI		        35/26Âµs		   
  * ---------------------------------------------------------------------------
  * 2) AMD Athlon(tm) Processor 1M
  *    2011.95 bogomips
- *  AT-CAN-MINI  std            24/12µs            ?? µs
- *               ext id           /14µs
+ *  AT-CAN-MINI  std            24/12Âµs            ?? Âµs
+ *               ext id           /14Âµs
  *
  * 
- * 1) 1Byte = (42-27)/8 = 1.87 µs
- * 2) 1Byte = (24-12)/8 = 1.5  µs
+ * 1) 1Byte = (42-27)/8 = 1.87 Âµs
+ * 2) 1Byte = (24-12)/8 = 1.5  Âµs
  *
  *
  *
  * RX Int with to Receive channels:
  * 1)                _____   ___
  *             _____|     |_|   |__
- *                   30    5  20  µs
+ *                   30    5  20  Âµs
  *   first ISR normal length,
  *   time between the two ISR -- short
  *   sec. ISR shorter than first, why? it's the same message
@@ -913,7 +913,7 @@ Tx_done:
       nur 
         writel(0x00020002, Can_pitapci_control[minor] + 0x0);
       als letzte Anweisung in der ISR
-     Schött:
+     SchÃ¶tt:
       bei Eintritt
         writel(0x00000000, Can_pitapci_control[minor] + 0x0);
       am ende

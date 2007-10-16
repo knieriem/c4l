@@ -8,7 +8,7 @@
  * for more details.
  * 
  * Copyright (c) 2001 port GmbH Halle/Saale
- * (c) 2001 Heinz-Jürgen Oertel (oe@port.de)
+ * (c) 2001 Heinz-JÃ¼rgen Oertel (oe@port.de)
  *          Claus Schroeter (clausi@chemie.fu-berlin.de)
  *------------------------------------------------------------------
  * $Header: /z2/cvsroot/products/0530/software/can4linux/src/can_ioctl.c,v 1.8 2003/08/27 17:49:38 oe Exp $
@@ -53,7 +53,7 @@
 
 /**
 * \file can_ioctl.c
-* \author Heinz-Jürgen Oertel, port GmbH
+* \author Heinz-JÃ¼rgen Oertel, port GmbH
 * $Revision: 1.8 $
 * $Date: 2003/08/27 17:49:38 $
 *

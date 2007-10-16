@@ -4,7 +4,7 @@
 * derived from the the LDDK can4linux version
 *     (c) 1996,1997 Claus Schroeter (clausi@chemie.fu-berlin.de)
 *
-* (c) 2001 Heinz-Jürgen Oertel (oe@port.de)
+* (c) 2001 Heinz-JÃ¼rgen Oertel (oe@port.de)
 *          Claus Schroeter (clausi@chemie.fu-berlin.de)
 *------------------------------------------------------------------
 * $Header: /z2/cvsroot/products/0530/software/can4linux/src/can_util.c,v 1.9 2003/08/27 13:07:06 oe Exp $
@@ -96,7 +96,7 @@ int err=0;
        This  doesn't  matter when hooking the
        interrupt, but is required so  that,  when  free_irq()  is
        called,  the  correct driver is unhooked.  Since this is a
-       void *, it can point to anything (such  as  a  device-spe­
+       void *, it can point to anything (such  as  a  device-speÂ­
        cific  structure,  or even empty space), but make sure you
        pass the same pointer to free_irq().
 
@@ -386,7 +386,7 @@ int index = 0;
 #endif
 
 #ifdef CAN4LINUX_PCI
-/* reset both can controllers on the EMS-Wünsche CPC-PCI Board */
+/* reset both can controllers on the EMS-WÃ¼nsche CPC-PCI Board */
 /* writing to the control range at BAR1 of the PCI board */
 void reset_CPC_PCI(unsigned long address)
 {

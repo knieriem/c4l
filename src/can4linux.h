@@ -43,7 +43,7 @@
 
 /**
 * \file can.h
-* \author Heinz-Jürgen Oertel, port GmbH
+* \author Heinz-JÃ¼rgen Oertel, port GmbH
 * $Revision: 1.4 $
 * $Date: 2003/08/27 17:49:04 $
 *

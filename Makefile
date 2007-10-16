@@ -3,7 +3,7 @@
 # can4linux -- LINUX CAN device driver Makefile
 # 
 # Copyright (c) 2001/2/3 port GmbH Halle/Saale
-# (c) 2001/2/3 Heinz-Jürgen Oertel (oe@port.de)
+# (c) 2001/2/3 Heinz-JÃ¼rgen Oertel (oe@port.de)
 #
 # to compile the can4linux device driver,
 # please select some configuration variables.
@@ -407,7 +407,7 @@ man:    port_footer.html
 showman:
 	netscape -raise -remote 'openURL(file:$(PROJECTHOME)/man/html/index.html)'
 
-# Standardfooter für manual pages sollte irgendwo im pms 00340
+# Standardfooter fÃ¼r manual pages sollte irgendwo im pms 00340
 # stehen, dito das port.gif bild
 # 
 port_footer.html:       Makefile
