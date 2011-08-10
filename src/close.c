@@ -62,7 +62,7 @@
 /*
 *
 */
-#include <can_defs.h>
+#include <defs.h>
 
 extern int Can_isopen[];   		/* device minor already opened */
 

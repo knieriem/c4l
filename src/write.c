@@ -56,7 +56,7 @@
 *
 */
 
-#include <can_defs.h>
+#include <defs.h>
 
 /* \fn size_t can_write( __LDDK_WRITE_PARAM) */
 /***************************************************************************/

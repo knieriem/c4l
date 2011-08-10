@@ -27,7 +27,7 @@
 *
 *
 */
-#include <can_defs.h>
+#include <defs.h>
 
 #if  LINUX_VERSION_CODE >= 0x020200
 unsigned int can_select( __LDDK_SELECT_PARAM )

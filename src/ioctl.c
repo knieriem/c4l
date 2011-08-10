@@ -60,7 +60,7 @@
 *
 */
 
-#include <can_defs.h>
+#include <defs.h>
 
 int can_Command(struct inode *inode, int cmd);
 int can_Send(struct inode *inode, canmsg_t *Tx);

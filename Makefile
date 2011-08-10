@@ -261,68 +261,68 @@ endif
 VPATH=src
 # all the files to be compiled into object code
 OBJS	=	\
-	    can_core.o		\
-	    can_open.o		\
-	    can_read.o		\
-	    can_write.o		\
-	    can_ioctl.o		\
-	    can_select.o	\
-	    can_close.o		\
-	    Can_debug.o		\
-	    Can_error.o		\
-	    can_util.o		\
-	    can_sysctl.o	\
+	    core.o		\
+	    open.o		\
+	    read.o		\
+	    write.o		\
+	    ioctl.o		\
+	    select.o	\
+	    close.o		\
+	    debug.o		\
+	    error.o		\
+	    util.o		\
+	    sysctl.o	\
 
 # include Chip specific object files
 ifeq "$(TARGET)" "CPC_PCI"
-OBJS += can_sja1000funcs.o
+OBJS += sja1000funcs.o
 endif
 ifeq "$(TARGET)" "ATCANMINI_PELICAN"
-OBJS += can_sja1000funcs.o
+OBJS += sja1000funcs.o
 endif
 ifeq "$(TARGET)" "IXXAT_PCI03"
-OBJS += can_sja1000funcs.o
+OBJS += sja1000funcs.o
 endif
 ifeq "$(TARGET)" "PCM3680"
-OBJS += can_sja1000funcs.o
+OBJS += sja1000funcs.o
 endif
 ifeq "$(TARGET)" "TRM816"
-OBJS += can_sja1000funcs.o
+OBJS += sja1000funcs.o
 endif
 ifeq "$(TARGET)" "PC104_200"
-OBJS += can_mcf5282funcs.o
+OBJS += mcf5282funcs.o
 endif
 ifeq "$(TARGET)" "IME_SLIMLINE"
-OBJS += can_sja1000funcs.o
+OBJS += sja1000funcs.o
 endif
 
 
 $(CAN_MODULE):  $(addprefix $(OBJDIR)/,$(OBJS)) $(OBJDIR)
 	@$(RLINK) -o $@ $(addprefix $(OBJDIR)/,$(OBJS))
 
-$(OBJDIR)/can_core.o: can_core.c can4linux.h can_defs.h
+$(OBJDIR)/core.o: core.c can4linux.h defs.h
 	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
-$(OBJDIR)/can_open.o: can_open.c can4linux.h can_defs.h
+$(OBJDIR)/open.o: open.c can4linux.h defs.h
 	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
-$(OBJDIR)/can_read.o: can_read.c can4linux.h can_defs.h
+$(OBJDIR)/read.o: read.c can4linux.h defs.h
 	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
-$(OBJDIR)/can_write.o: can_write.c can4linux.h can_defs.h
+$(OBJDIR)/write.o: write.c can4linux.h defs.h
 	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
-$(OBJDIR)/can_ioctl.o: can_ioctl.c can4linux.h can_defs.h
+$(OBJDIR)/ioctl.o: ioctl.c can4linux.h defs.h
 	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
-$(OBJDIR)/can_select.o: can_select.c can4linux.h can_defs.h
+$(OBJDIR)/select.o: select.c can4linux.h defs.h
 	@$(COMPILE) -c $(CFLAGS)  $(INCLUDES) -o $@ $<
-$(OBJDIR)/can_close.o: can_close.c can4linux.h can_defs.h
+$(OBJDIR)/close.o: close.c can4linux.h defs.h
 	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
-$(OBJDIR)/can_sja1000funcs.o: can_sja1000funcs.c can4linux.h can_defs.h
+$(OBJDIR)/sja1000funcs.o: sja1000funcs.c can4linux.h defs.h
 	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
-$(OBJDIR)/can_util.o: can_util.c can4linux.h can_defs.h
+$(OBJDIR)/util.o: util.c can4linux.h defs.h
 	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
-$(OBJDIR)/can_sysctl.o: can_sysctl.c can4linux.h can_defs.h $(OBJDIR)/gnu-arch.h
+$(OBJDIR)/sysctl.o: sysctl.c can4linux.h defs.h $(OBJDIR)/gnu-arch.h
 	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -I obj -o $@ $<
-$(OBJDIR)/Can_error.o: Can_error.c can4linux.h can_defs.h
+$(OBJDIR)/error.o: error.c can4linux.h defs.h
 	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
-$(OBJDIR)/Can_debug.o: Can_debug.c can4linux.h can_defs.h
+$(OBJDIR)/debug.o: debug.c can4linux.h defs.h
 	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
 
 ,,tmp-arch:

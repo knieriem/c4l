@@ -70,7 +70,7 @@
 /* header of project specific types */
 
 /* project headers */
-#include <can_defs.h>
+#include <defs.h>
 
 /* local header */
 

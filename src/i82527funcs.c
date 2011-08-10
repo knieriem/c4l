@@ -12,8 +12,8 @@
  *
  */
 
-#include <can_defs.h>
-#include "can_i82527.h"
+#include <defs.h>
+#include "i82527.h"
 
 
 inline void i82527_irq_read_handler( int minor, msg_fifo_t *RxFifo );

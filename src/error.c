@@ -21,7 +21,7 @@
 *
 *
 */
-#include <can_defs.h>
+#include <defs.h>
 
 int Can_errno = 0;
 

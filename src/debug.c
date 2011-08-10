@@ -24,7 +24,7 @@
 *
 *
 */
-#include <can_defs.h>
+#include <defs.h>
 
 
 /* default debugging level */

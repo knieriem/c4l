@@ -48,7 +48,7 @@
 *
 *
 */
-#include <can_defs.h>
+#include <defs.h>
 
 
 /* int	CAN_Open = 0; */
@@ -923,6 +923,7 @@ Tx_done:
     writel(0x00020000, Can_pitapci_control[minor] + 0x0);
 #endif
 IRQdone_doneNothing:
+    ;
 #if CONFIG_TIME_MEASURE
     outb(0x00, 0x378);  
 #endif
