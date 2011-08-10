@@ -156,7 +156,7 @@ int can_read( __LDDK_READ_PARAM )
 
 	addr = (canmsg_t *)buffer;
 	
-	if( verify_area( VERIFY_WRITE, buffer, count * sizeof(canmsg_t) )) {
+	if( !access_ok( VERIFY_WRITE, buffer, count * sizeof(canmsg_t) )) {
 	   DBGout();
 	   return -EINVAL;
 	}

@@ -117,7 +117,7 @@ int written        = 0;
     /* printk("w[%d/%d]", minor, TxFifo->active); */
     addr = (canmsg_t *)buffer;
 
-    if(verify_area(VERIFY_READ, (canmsg_t *)addr, count * sizeof(canmsg_t))) { 
+    if(!access_ok(VERIFY_READ, (canmsg_t *)addr, count * sizeof(canmsg_t))) { 
 	    DBGout();return -EINVAL;
     }
     while( written < count ) {

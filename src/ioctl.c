@@ -204,10 +204,10 @@ int retval = -EIO;
   switch(cmd){
 
         case COMMAND:
-	  if( verify_area(VERIFY_READ, (void *)arg, sizeof(Command_par_t))) {
+	  if( !access_ok(VERIFY_READ, (void *)arg, sizeof(Command_par_t))) {
 	     DBGout(); return(retval); 
 	  }
-	  if( verify_area(VERIFY_WRITE, (void *)arg, sizeof(Command_par_t))) {
+	  if( !access_ok(VERIFY_WRITE, (void *)arg, sizeof(Command_par_t))) {
 	     DBGout(); return(retval); 
 	  }
 	  argp = (void *) kmalloc( sizeof(Command_par_t) +1 , GFP_KERNEL );
@@ -221,10 +221,10 @@ int retval = -EIO;
 	  kfree(argp);
 	  break;
       case CONFIG:
-	  if( verify_area(VERIFY_READ, (void *) arg, sizeof(Config_par_t))) {
+	  if( !access_ok(VERIFY_READ, (void *) arg, sizeof(Config_par_t))) {
 	     DBGout(); return(retval); 
 	  }
-	  if( verify_area(VERIFY_WRITE, (void *) arg, sizeof(Config_par_t))) {
+	  if( !access_ok(VERIFY_WRITE, (void *) arg, sizeof(Config_par_t))) {
 	     DBGout(); return(retval); 
 	  }
 	  argp = (void *) kmalloc( sizeof(Config_par_t) +1 ,GFP_KERNEL);
@@ -240,10 +240,10 @@ int retval = -EIO;
 	  kfree(argp);
 	  break;
       case SEND:
-	  if( verify_area(VERIFY_READ, (void *) arg, sizeof(Send_par_t))) {
+	  if( !access_ok(VERIFY_READ, (void *) arg, sizeof(Send_par_t))) {
 	     DBGout(); return(retval); 
 	  }
-	  if( verify_area(VERIFY_WRITE, (void *) arg, sizeof(Send_par_t))) {
+	  if( !access_ok(VERIFY_WRITE, (void *) arg, sizeof(Send_par_t))) {
 	     DBGout(); return(retval); 
 	  }
 	  argp = (void *)kmalloc( sizeof(Send_par_t) +1 ,GFP_KERNEL );
@@ -257,10 +257,10 @@ int retval = -EIO;
 	  kfree(argp);
 	  break;
       case RECEIVE:
-	  if( verify_area(VERIFY_READ, (void *) arg, sizeof(Receive_par_t))) {
+	  if( !access_ok(VERIFY_READ, (void *) arg, sizeof(Receive_par_t))) {
 	     DBGout(); return(retval); 
 	  }
-	  if( verify_area(VERIFY_WRITE, (void *) arg, sizeof(Receive_par_t))) {
+	  if( !access_ok(VERIFY_WRITE, (void *) arg, sizeof(Receive_par_t))) {
 	     DBGout(); return(retval); 
 	  }
 	  argp = (void *)kmalloc( sizeof(Receive_par_t) +1 ,GFP_KERNEL );
@@ -274,11 +274,11 @@ int retval = -EIO;
 	  kfree(argp);
 	  break;
       case STATUS:
-	  if( verify_area(VERIFY_READ, (void *) arg,
+	  if( !access_ok(VERIFY_READ, (void *) arg,
 	  				sizeof(CanStatusPar_t))) {
 	     DBGout(); return(retval); 
 	  }
-	  if( verify_area(VERIFY_WRITE, (void *) arg,
+	  if( !access_ok(VERIFY_WRITE, (void *) arg,
 	  			sizeof(CanStatusPar_t))) {
 	     DBGout(); return(retval); 
 	  }
@@ -292,11 +292,11 @@ int retval = -EIO;
 
 #ifdef CAN_RTR_CONFIG
       case CONFIGURERTR:
-	  if( verify_area(VERIFY_READ, (void *) arg,
+	  if( !access_ok(VERIFY_READ, (void *) arg,
 	  			sizeof(ConfigureRTR_par_t))){
 	     DBGout(); return(retval); 
 	  }
-	  if( verify_area(VERIFY_WRITE, (void *) arg,
+	  if( !access_ok(VERIFY_WRITE, (void *) arg,
 	  			sizeof(ConfigureRTR_par_t))){
 	     DBGout(); return(retval); 
 	  }
@@ -361,7 +361,7 @@ int can_Send(struct inode *inode, canmsg_t *Tx)
 unsigned int minor = MINOR(inode->i_rdev);	
 canmsg_t tx;
 
-    if( verify_area(VERIFY_READ,Tx,sizeof(canmsg_t)) ) {
+    if( !access_ok(VERIFY_READ,Tx,sizeof(canmsg_t)) ) {
 	    return -EINVAL;
     }
     __lddk_copy_from_user((canmsg_t *) &tx, (canmsg_t *) Tx,sizeof(canmsg_t));
@@ -383,7 +383,7 @@ int len;
 
     if( len > 0 ){
        /* printk("\nrx[ ] got id 0x%x len %d adr00x%lx\n",rx.id,rx.length,Rx); */
-       if( verify_area(VERIFY_WRITE,Rx,sizeof(canmsg_t) ) ) {
+       if( !access_ok(VERIFY_WRITE,Rx,sizeof(canmsg_t) ) ) {
 	    return -EINVAL;
        }
        __lddk_copy_to_user((canmsg_t *) Rx, (canmsg_t *) &rx,
