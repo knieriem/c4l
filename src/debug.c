@@ -24,7 +24,7 @@
 *
 *
 */
-#include <defs.h>
+#include "defs.h"
 
 
 /* default debugging level */

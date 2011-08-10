@@ -63,7 +63,7 @@
 /* header of project specific types */
 
 /* project headers */
-#include <defs.h>
+#include "defs.h"
 
 /* local header */
 

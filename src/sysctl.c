@@ -49,7 +49,7 @@
  * 
  *
  */
-#include <defs.h>
+#include "defs.h"
 #include <linux/mm.h>
 #include <linux/sysctl.h>
 #include <linux/ctype.h>

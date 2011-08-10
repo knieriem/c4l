@@ -12,7 +12,7 @@
  *
  */
 
-#include <defs.h>
+#include "defs.h"
 #include "i82527.h"
 
 

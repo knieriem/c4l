@@ -40,7 +40,7 @@
 */
 
 
-#include <defs.h>
+#include "defs.h"
 #include <linux/sched.h> 
 #include <linux/proc_fs.h>
 #include <linux/pci.h>

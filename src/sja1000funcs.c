@@ -48,7 +48,7 @@
 *
 *
 */
-#include <defs.h>
+#include "defs.h"
 
 
 /* int	CAN_Open = 0; */
