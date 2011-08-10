@@ -113,7 +113,6 @@ int written        = 0;
     Cnt1[minor] = Cnt1[minor] + 1;
 #endif /* DEBUG_COUNTER */
 
-DEBUG_TTY(1, "write: %d", count);
     DBGprint(DBG_DATA,(" -- write %d msg", count));
     /* printk("w[%d/%d]", minor, TxFifo->active); */
     addr = (canmsg_t *)buffer;
@@ -126,7 +125,7 @@ DEBUG_TTY(1, "write: %d", count);
 	save_flags(flags);cli();
 	/* there are data to write to the network */
 	if(TxFifo->free[TxFifo->head] == BUF_FULL) {
-DEBUG_TTY(1, "ret buffer full");
+	    DBGprint(DBG_DATA,("ret buffer full"));
 	    /* there is already one message at this place */;
 	    DBGout();
 	    /* return -ENOSPC; */
@@ -138,12 +137,12 @@ DEBUG_TTY(1, "ret buffer full");
 		    (canmsg_t *) &(TxFifo->data[TxFifo->head]), 
 		    (canmsg_t *) &addr[written],
 		    sizeof(canmsg_t) );
-DEBUG_TTY(1, " fifo active: id %d/%x; head %d/tail %d",
+	    DBGprint(DBG_DATA,("fifo active: id %d/%x; head %d/tail %d",
 TxFifo->data[TxFifo->head].id,
 TxFifo->data[TxFifo->head].id,
 TxFifo->head,
 TxFifo->tail
-);
+));
 	    TxFifo->free[TxFifo->head] = BUF_FULL; /* now this entry is FULL */
 	    TxFifo->head = ++(TxFifo->head) % TxFifo->size;
 	} else {
@@ -151,12 +150,11 @@ TxFifo->tail
 		    (canmsg_t *) &tx, 
 		    (canmsg_t *) &addr[written],
 		    sizeof(canmsg_t) );
-DEBUG_TTY(1, " fifo in-active: id %d/%x; head %d/tail %d",
+	    DBGprint(DBG_DATA,("fifo in-active: id %d/%x; head %d/tail %d",
 		tx.id, tx.id,
 TxFifo->head,
 TxFifo->tail
-
-);
+));
 	  /* f - fast -- use interrupts */
 	  if( count >= 1 ) {
 	    /* !!! CHIP abh. !!! */
