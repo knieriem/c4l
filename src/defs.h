@@ -477,7 +477,7 @@ extern unsigned int dbgMask;
 #define SYSCTL_DBGMASK 14
 
 
-#define SYSCTL_ARCH 15
+#define SYSCTL_VCSREV 15
 
  /* ------ Global Definitions for Test  */
 extern  int Cnt1[];

@@ -318,18 +318,16 @@ $(OBJDIR)/sja1000funcs.o: sja1000funcs.c can4linux.h defs.h
 	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
 $(OBJDIR)/util.o: util.c can4linux.h defs.h
 	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
-$(OBJDIR)/sysctl.o: sysctl.c can4linux.h defs.h $(OBJDIR)/gnu-arch.h
+$(OBJDIR)/sysctl.o: sysctl.c can4linux.h defs.h $(OBJDIR)/vcs.h
 	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -I obj -o $@ $<
 $(OBJDIR)/error.o: error.c can4linux.h defs.h
 	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
 $(OBJDIR)/debug.o: debug.c can4linux.h defs.h
 	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
 
-,,tmp-arch:
-	tla logs -Df | tail -n2| sed 's,^ *,,' > $@
-$(OBJDIR)/gnu-arch.h: ,,tmp-arch
-	sed 's,^,#define GNU_ARCH_REV_STRING ",;N;s,\n,\\n,;s, *$$,",' < $< > $@
-	wc -c < ,,tmp-arch | sed 's,^,#define GNU_ARCH_REV_LENGTH ,' >> $@
+$(OBJDIR)/vcs.h:
+	id=`hg id -i`; \
+	hg log -l1 --template '#define VCS_REV_STRING "{date|shortdate} '$$id'"\n' > $@
 
 # load host specific CAN configuration
 load:
@@ -361,7 +359,7 @@ examples:
 
 clean:
 	-rm -f tags
-	-rm -f ,,tmp-arch obj/gnu-arch.h
+	-rm -f obj/vcs.h
 	-rm -f obj/*.o
 	-rm -f Can.o
 	(cd examples;make clean)
