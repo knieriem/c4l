@@ -91,17 +91,11 @@
 
 #include <linux/version.h>
 
-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,4,12)
-# include <linux/slab.h>
-#else
-# include <linux/malloc.h>
-#endif
+#include <linux/slab.h>
 
 #include <linux/wrapper.h>
 
-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,1,0)
 #include <linux/poll.h>
-#endif
 
 #include <asm/io.h>
 #include <asm/segment.h>
@@ -117,26 +111,12 @@
 #include <linux/devfs_fs_kernel.h>
 #endif
 
-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,1,0)
 #include <asm/uaccess.h>
 
 #define __lddk_copy_from_user(a,b,c) copy_from_user(a,b,c)
 #define __lddk_copy_to_user(a,b,c) copy_to_user(a,b,c)
 
-#else
-
-/* #define __lddk_copy_from_user(a,b,c) memcpy_fromio(a,b,c) */
-/* #define __lddk_copy_to_user(a,b,c) memcpy_toio(a,b,c) */
-#define __lddk_copy_from_user(a,b,c) memcpy_fromfs(a,b,c)
-#define __lddk_copy_to_user(a,b,c) memcpy_tofs(a,b,c)
-
-
-#include <linux/sched.h>
-#endif
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,4,4)
 #include <linux/ioport.h>
-#endif
 #include <linux/ioport.h>
 
 #endif
@@ -167,8 +147,6 @@
 /* Length of the "Chipset" string entry in /proc/.../version */
 #define PROC_CHIPSET_LENGTH 30 
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,3,0)
-/* kernels higher 2.3.x have a f****** new kernel interface ******************/
 #define __LDDK_WRITE_TYPE	ssize_t
 #define __LDDK_CLOSE_TYPE	int
 #define __LDDK_READ_TYPE	ssize_t
@@ -198,68 +176,6 @@
 #ifndef SLOW_DOWN_IO
 # define SLOW_DOWN_IO __SLOW_DOWN_IO
 #endif
-
-
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(2,2,0)
-/* kernels higher 2.2.x have a f****** new kernel interface ******************/
-#define __LDDK_READ_TYPE	ssize_t
-#define __LDDK_WRITE_TYPE	ssize_t
-#define __LDDK_SELECT_TYPE	unsigned int
-#define __LDDK_IOCTL_TYPE	int
-#define __LDDK_OPEN_TYPE	int
-#define __LDDK_CLOSE_TYPE	int
-
-#define __LDDK_SEEK_PARAM 	struct file *file, loff_t off, int count
-#define __LDDK_READ_PARAM 	struct file *file, char *buffer, size_t count, loff_t *loff
-#define __LDDK_WRITE_PARAM 	struct file *file, const char *buffer, size_t count, loff_t *loff
-#define __LDDK_READDIR_PARAM 	struct file *file, struct dirent *dirent, int count
-#define __LDDK_SELECT_PARAM 	struct file *file, poll_table *wait
-#define __LDDK_IOCTL_PARAM 	struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg
-#define __LDDK_MMAP_PARAM 	struct file *file, struct vm_area_struct * vma
-#define __LDDK_OPEN_PARAM 	struct inode *inode, struct file *file 
-#define __LDDK_FLUSH_PARAM	struct file *file 
-#define __LDDK_CLOSE_PARAM 	struct inode *inode, struct file *file 
-#define __LDDK_FSYNC_PARAM 	struct file *file
-#define __LDDK_FASYNC_PARAM 	struct file *file, int count 
-#define __LDDK_CCHECK_PARAM 	kdev_t dev
-#define __LDDK_REVAL_PARAM 	kdev_t dev
-
-#define __LDDK_MINOR MINOR(file->f_dentry->d_inode->i_rdev)
-#define __LDDK_INO_MINOR MINOR(inode->i_rdev)
-
-#ifndef SLOW_DOWN_IO
-# define SLOW_DOWN_IO __SLOW_DOWN_IO
-#endif
-
-#else
-/* kernels < 2.3.x **********************************************************/
- /* 2.0.x */
-#define __LDDK_WRITE_TYPE	int
-#define __LDDK_CLOSE_TYPE	void
-#define __LDDK_READ_TYPE
-#define __LDDK_OPEN_TYPE
-#define __LDDK_IOCTL_TYPE
-#define __LDDK_SELECT_TYPE	int
-
-#define __LDDK_SEEK_PARAM 	struct inode *inode, struct file *file, off_t off, int count
-#define __LDDK_READ_PARAM 	struct inode *inode, struct file *file, char *buffer, int count
-#define __LDDK_WRITE_PARAM 	struct inode *inode, struct file *file, const char *buffer, int count
-#define __LDDK_READDIR_PARAM 	struct inode *inode, struct file *file, struct dirent *dirent, int count
-#define __LDDK_SELECT_PARAM 	struct inode *inode, struct file *filp, int sel_type, select_table * wait
-#define __LDDK_IOCTL_PARAM 	struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg
-#define __LDDK_MMAP_PARAM 	struct inode *inode, struct file *file, struct vm_area_struct * vma
-#define __LDDK_OPEN_PARAM 	struct inode *inode, struct file *file 
-#define __LDDK_CLOSE_PARAM 	struct inode *inode, struct file *file 
-#define __LDDK_FSYNC_PARAM 	struct inode *inode, struct file *file
-#define __LDDK_FASYNC_PARAM 	struct inode *inode, struct file *file, int count 
-#define __LDDK_CCHECK_PARAM 	kdev_t dev
-#define __LDDK_REVAL_PARAM 	kdev_t dev
-
-#define __LDDK_MINOR MINOR(inode->i_rdev)
-#define __LDDK_INO_MINOR MINOR(inode->i_rdev)
-
-#endif
-
 
 
 /************************************************************************/
@@ -382,11 +298,7 @@ extern __LDDK_CLOSE_TYPE can_close (__LDDK_CLOSE_PARAM);
 
  extern int Can_RequestIrq(int minor, int irq, irq_handler_t handler);
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,3,1)
  extern wait_queue_head_t CanWait[];
-#else
- extern struct wait_queue *CanWait[];
-#endif
 
  extern unsigned char *can_base[];
  extern unsigned int   can_range[];

@@ -249,25 +249,15 @@ static char devname[MAX_CHANNELS];
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
 struct file_operations can_fops = { 
-#if LINUX_VERSION_CODE >= 0x020201 
     llseek:	NULL, 
-#else
-    lseek:	NULL, 
-#endif
     read:	can_read,
     write:	can_write,
     readdir:	NULL, 
-#if LINUX_VERSION_CODE >= 0x020203 
     poll:	can_select,
-#else
-    select:	can_select,
-#endif 
     ioctl:	can_ioctl,
     mmap:	NULL, 
     open:	can_open,
-#if LINUX_VERSION_CODE >= 0x020203
     flush:	NULL, /* flush call */
-#endif 
     release:	can_close,
     fsync:	NULL,
     fasync:	NULL,

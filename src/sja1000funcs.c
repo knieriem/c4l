@@ -337,11 +337,7 @@ uint8 tx2reg, stat;
     DBGin("CAN_SendMessage");
 
     while ( ! ((stat=CANin(board, canstat)) & CAN_TRANSMIT_BUFFER_ACCESS )) {
-	    #if LINUX_VERSION_CODE >= 131587
 	    if( current->need_resched ) schedule();
-	    #else
-	    if( need_resched ) schedule();
-	    #endif
     }
 
     DBGprint(DBG_DATA,(
@@ -454,8 +450,6 @@ int CAN_VendorInit (int minor)
 /* End: 1. Vendor specific part ------------------------------------------- */
 
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,3,11)
-
 #if !defined(CAN4LINUX_PCI)
     /* Request the controllers address space */
 #if defined(CAN_PORT_IO) 
@@ -484,26 +478,6 @@ int CAN_VendorInit (int minor)
 #else
 	can_base[minor] = ioremap(Base[minor], 0x200);
 #endif
-#else 	  /*  LINUX_VERSION_CODE >= KERNEL_VERSION(2,3,11) */
-    
-/* both drivers use high memory area */
-#if !defined(CONFIG_PPC) && !defined(CAN4LINUX_PCI)
-    if( check_region(Base[minor], CAN_RANGE ) ) {
-		     /* MOD_DEC_USE_COUNT; */
-		     DBGout();
-		     return -EBUSY;
-    } else {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,0,0)
-          request_region(Base[minor], can_range[minor], "CAN-IO" );
-#else
-          request_region(Base[minor], can_range[minor] );
-#endif  /* LINUX_VERSION_CODE >= KERNEL_VERSION(2,0,0) */
-    }
-#endif /* !defined  ... */
-
-    /* we don't need ioremap in older Kernels */
-    can_base[minor] = Base[minor];
-#endif  /*  LINUX_VERSION_CODE >= KERNEL_VERSION(2,3,11) */
 
     /* now the virtual address can be used for the register address macros */
 

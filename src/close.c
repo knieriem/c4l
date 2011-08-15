@@ -124,14 +124,10 @@ __LDDK_CLOSE_TYPE can_close ( __LDDK_CLOSE_PARAM )
 	if(Can_isopen[minor] > 0) {
 	    --Can_isopen[minor];		/* flag device as free */
 	    MOD_DEC_USE_COUNT;
-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,2,0)
 	    return 0;
-#endif
 	}
 	
     }
     DBGout();
-#if LINUX_VERSION_CODE > KERNEL_VERSION(2,2,0)
     return -EBADF;
-#endif
 }

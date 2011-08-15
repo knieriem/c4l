@@ -29,11 +29,7 @@
 */
 #include "defs.h"
 
-#if  LINUX_VERSION_CODE >= 0x020200
 unsigned int can_select( __LDDK_SELECT_PARAM )
-#else
-int can_select( __LDDK_SELECT_PARAM )
-#endif
 {
 
 unsigned int minor = __LDDK_MINOR;
@@ -43,7 +39,6 @@ msg_fifo_t *RxFifo = &Rx_Buf[minor];
 #ifdef DEBUG
     CAN_ShowStat(minor);
 #endif
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,3,0)
     DBGprint(DBG_BRANCH,("POLL: fifo empty,poll waiting...\n"));
 
     /* every event queue that could wake up the process
@@ -105,37 +100,6 @@ msg_fifo_t *RxFifo = &Rx_Buf[minor];
       DBGout();
       return ret_mask;
     }
-
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(2,2,3)
-    DBGprint(DBG_BRANCH,("POLL: fifo empty,poll waiting...\n"));
-    poll_wait(file, &CanWait[minor] , wait);
-    DBGprint(DBG_BRANCH,("POLL: wait returned \n"));
-    if( RxFifo->head != RxFifo->tail ) {
-	/* fifo has some telegrams */
-	DBGout();
-	return POLLIN | POLLRDNORM;
-    }
-    DBGout();return 0;
-
-#else
-    switch (sel_type) {
-	case SEL_IN:
-	    DBGprint(DBG_BRANCH,("sel_in \n"));
-	    if( RxFifo->head == RxFifo->tail ) {
-		DBGprint(DBG_BRANCH,("fifo empty \n"));
-		select_wait(&CanWait[minor],wait);
-		DBGout();return 0;
-	    }
-	    break;
-	case SEL_OUT:
-	    DBGprint(DBG_BRANCH,("sel_out \n"));
-	    /* ready for write ? */
-	    select_wait(&CanWait[minor],wait);
-	    DBGout();return 0;
-    }
-    DBGout();return 1;
-#endif
-
         
     DBGout();
     return 0;

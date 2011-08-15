@@ -49,21 +49,14 @@
  * Refuse to compile under versions older than 1.99.4
  */
 #define VERSION_CODE(vers,rel,seq) ( ((vers)<<16) | ((rel)<<8) | (seq) )
-#if LINUX_VERSION_CODE < VERSION_CODE(1,99,4)
-#  error "This module needs Linux 1.99.4 or newer"
-#endif
 
  volatile int irq2minormap[15];
  volatile int irq2pidmap[15];
 
  /* each CAN channel has one wait_queue for read() */
  /* #define wait_queue_head_t     struct wait_queue * */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,3,1)
  wait_queue_head_t CanWait[MAX_CHANNELS];
  /* wait_queue_head_t *CanWait[MAX_CHANNELS]; */
-#else
- struct wait_queue *CanWait[MAX_CHANNELS];
-#endif
 
 
 
@@ -132,14 +125,10 @@ int Can_WaitInit(int minor)
 {
     DBGin("Can_WaitInit");
 	/* reset the wait_queue pointer */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,3,0)
 /* soll so sein */
 	init_waitqueue_head(&CanWait[minor]);
 /* das geht */
 	/* CanWait[minor] = NULL; */
-#else
-	CanWait[minor] = NULL;
-#endif
     DBGout();
     return 0;
 }
