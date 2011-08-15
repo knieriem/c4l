@@ -361,7 +361,6 @@ extern int CAN_StopChip(int);
 extern int CAN_SetMask(int, unsigned int, unsigned int);
 extern int CAN_SetOMode(int,int);
 extern int CAN_SendMessage(int, canmsg_t *);
-extern int CAN_GetMessage(int , canmsg_t *);
 extern void CAN_Interrupt(int irq, void *unused, struct pt_regs *ptregs );
 extern int CAN_VendorInit(int);
 

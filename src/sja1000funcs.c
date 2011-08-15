@@ -359,46 +359,6 @@ uint8 tx2reg, stat;
   DBGout();return i;
 }
 
-#if 1
-/* CAN_GetMessage is used in Polling Mode with ioctl()
- * !!!! curently not working for the PELICAN mode 
- * and BASIC CAN mode code already removed !!!!
- */
-int CAN_GetMessage (int board, canmsg_t *rx )
-{
-uint8 dummy = 0, stat;
-int i = 0;
-  
-    DBGin("CAN_GetMessage");
-    stat = CANin(board, canstat);
-
-    rx->flags  = 0;
-    rx->length = 0;
-
-    if( stat & CAN_DATA_OVERRUN ) {
-    DBGprint(DBG_DATA,("Rx: overrun!"));
-    Overrun[board]++;
-    }
-
-    if( stat & CAN_RECEIVE_BUFFER_STATUS ) {
-      dummy  &= 0x0f; /* strip length code */ 
-      rx->length = dummy;
-      DBGprint(DBG_DATA,("rx.id=0x%lx rx.length=0x%x", rx->id, dummy));
-
-      dummy %= 9;
-      for( i = 0; i < dummy; i++) {
-      /* missing code here */
-	DBGprint(DBG_DATA,("rx[%d]: 0x%x ('%c')",i,rx->data[i],rx->data[i] ));
-      }
-      CANout(board, cancmd, CAN_RELEASE_RECEIVE_BUFFER | CAN_CLEAR_OVERRUN_STATUS );
-    } else {
-      i=0;
-    }
-    DBGout();
-    return i;
-}
-#endif
-
 int CAN_VendorInit (int minor)
 {
     DBGin("CAN_VendorInit");

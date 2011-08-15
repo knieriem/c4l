@@ -208,23 +208,6 @@ int retval = -EIO;
 	  				sizeof(Send_par_t));
 	  kfree(argp);
 	  break;
-      case RECEIVE:
-	  if( !access_ok(VERIFY_READ, (void *) arg, sizeof(Receive_par_t))) {
-	     DBGout(); return(retval); 
-	  }
-	  if( !access_ok(VERIFY_WRITE, (void *) arg, sizeof(Receive_par_t))) {
-	     DBGout(); return(retval); 
-	  }
-	  argp = (void *)kmalloc( sizeof(Receive_par_t) +1 ,GFP_KERNEL );
-	  __lddk_copy_from_user( (void *)argp, (Receive_par_t *)arg,
-	  				sizeof(Receive_par_t));
-	  ((Receive_par_t *) argp)->retval =
-	  		can_Receive(inode, ((Receive_par_t *) argp)->Rx);
-	  ((Receive_par_t *) argp)->error = Can_errno;
-	  __lddk_copy_to_user( (Receive_par_t *)arg, (void *) argp,
-	  				sizeof(Receive_par_t));
-	  kfree(argp);
-	  break;
       case STATUS:
 	  if( !access_ok(VERIFY_READ, (void *) arg,
 	  				sizeof(CanStatusPar_t))) {
@@ -316,34 +299,6 @@ canmsg_t tx;
     __lddk_copy_from_user((canmsg_t *) &tx, (canmsg_t *) Tx,sizeof(canmsg_t));
     return CAN_SendMessage(minor, &tx);
 }
-
-
-int can_Receive(
-	struct inode *inode,
-	canmsg_t *Rx
-	)
-{
-
-unsigned int minor = MINOR(inode->i_rdev);
-canmsg_t rx;
-int len;
-
-    len = CAN_GetMessage(minor,&rx);
-
-    if( len > 0 ){
-       /* printk("\nrx[ ] got id 0x%x len %d adr00x%lx\n",rx.id,rx.length,Rx); */
-       if( !access_ok(VERIFY_WRITE,Rx,sizeof(canmsg_t) ) ) {
-	    return -EINVAL;
-       }
-       __lddk_copy_to_user((canmsg_t *) Rx, (canmsg_t *) &rx,
-       						sizeof(canmsg_t));
-       return rx.length;
-    } else {
-     /* no message availiable */
-     return 0;
-    }
-}
-
 
 int can_Config(
 	struct inode *inode,
