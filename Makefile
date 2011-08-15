@@ -38,8 +38,6 @@ KVERSION= $(shell $(SHELL) linux-info.sh --kversion)
 endif
 CONFIG := $(shell uname -n)
 
-TITLE = CAN driver can4linux
-
 #
 # The CAN driver major device number
 # development starts with major=63
@@ -58,17 +56,10 @@ CAN_MAJOR=	91
 ##        PCM3680 PC104_200
 ## 
 ## compile DigiTec FC-CAN as ATCANMINI_PELICAN
-##
-#TARGET=IXXAT_PCI03
-#TARGET=IME_SLIMLINE
-#TARGET=PCM3680
-#TARGET=PC104_200
+
+
 TARGET=ATCANMINI_PELICAN
-#TARGET=CPC_PCI
-#TARGET=TRM816
 
-
-TARGET_MATCHED = false
 # location of the compiled objects and the final driver module 
 OBJDIR = obj
 
@@ -94,113 +85,16 @@ DEBUG=DEBUG=1
 #
 
 
+DEFS = -D$(TARGET) -D$(DEBUG) -DDEFAULT_DEBUG -DCan_MAJOR=$(CAN_MAJOR)
+include target/$(TARGET).mk
 
-ifeq "$(TARGET)" "CPC_PCI"
-# CPC-PCI PeliCAN  PCI (only with SJA1000) ------------------------------------
-DEFS =  -D$(TARGET) -D$(DEBUG) -DDEFAULT_DEBUG -DCan_MAJOR=$(CAN_MAJOR)\
-	-DCAN4LINUX_PCI \
-	-DCAN_SYSCLK=8
-
-	#-DIODEBUG
-DEV = sja1000
-TARGET_MATCHED = true
-endif
-
-ifeq "$(TARGET)" "ATCANMINI_PELICAN"
-# AT-CAN-MINI PeliCAN ISA (only with SJA1000) --------------------------------
-DEFS =  -D$(TARGET) -D$(DEBUG) -DDEFAULT_DEBUG -DCan_MAJOR=$(CAN_MAJOR) \
-	-DCAN_PORT_IO \
-	-DCAN_SYSCLK=8
-	#-DCONFIG_TIME_MEASURE=1
-
-DEV = sja1000
-TARGET_MATCHED = true
-endif
-
-ifeq "$(TARGET)" "IXXAT_PCI03"
-# IXXAT PC-I 03 board ISA (only with SJA1000) ---------------------------------
-DEFS =  -D$(TARGET) -D$(DEBUG) -DDEFAULT_DEBUG -DCan_MAJOR=$(CAN_MAJOR) \
-	-DCAN_SYSCLK=8
-
-DEV = sja1000
-TARGET_MATCHED = true
-endif
-
-ifeq "$(TARGET)" "PCM3680"
-# Advantech PCM3680 board ISA (only with SJA1000) ----------------------------
-DEFS =  -D$(TARGET) -D$(DEBUG) -DDEFAULT_DEBUG -DCan_MAJOR=$(CAN_MAJOR) \
-	-DCAN_SYSCLK=8
-
-DEV = sja1000
-TARGET_MATCHED = true
-endif
-
-ifeq "$(TARGET)" "TRM816"
-# TRM816 Onboard CAN-Controller (only with SJA1000) --------------------------
-DEFS =  -D$(TARGET) -D$(DEBUG) -DDEFAULT_DEBUG -DCan_MAJOR=$(CAN_MAJOR) \
-	-DCAN_INDEXED_PORT_IO \
-	-DCAN_SYSCLK=10
-
-DEV = sja1000
-TARGET_MATCHED = true
-endif
-
-ifeq "$(TARGET)" "PC104_200"
-# ESD PC104-200 PC104 board (with SJA1000) ----------------------------
-DEFS =  -D$(TARGET) -D$(DEBUG) -DDEFAULT_DEBUG -DCan_MAJOR=$(CAN_MAJOR) \
-	-DCAN_PORT_IO -DPC104 \
-	-DCAN_SYSCLK=8
-
-DEV = mcf5282
-TARGET_MATCHED = true
-endif
-
-ifeq "$(TARGET)" "IME_SLIMLINE"
-# I+ME  PcSlimline ISA (only with SJA1000) -----------------------------------
-DEFS =  -D$(TARGET) -D$(DEBUG) -DDEFAULT_DEBUG -DCan_MAJOR=$(CAN_MAJOR) \
-	-DCAN_SYSCLK=8
-
-DEV = sja1000
-TARGET_MATCHED = true
-endif
 
 ifeq "$(LINUXTARGET)" "LINUXOS"
 #use normal Linux OS
-LIBS   =
 CAN_MODULE = Can.o
-PROJECTHOME=$(shell pwd)
-INSTALLHOME=/usr/src
 endif
  
 
-
-# TARGET=ELIMA selcts the powerpc-linux crosscompiler
-
-# which sets defines like PPC, __PPC__, __PPC
-
-ifeq "$(TARGET)" "ELIMA"
-CC:=		powerpc-linux-gcc 
-CFLAGS=		-v -s -O9 -fforce-addr -fforce-mem -ffast-math	\
-		-fomit-frame-pointer -funroll-loops		\
-		-DLOOPS=300000 -DTIMES -DHZ=100
-DDLFLAGS = -I./ddllib -p powerpc-linux-
-
-TARGET_MATCHED = true
-else
-CC:=		gcc
-CFLAGS =  
-endif
-
-###########################################################################
-ifneq "$(TARGET_MATCHED)" "true"
-.DEFAULT: all ; @$(MAKE) all
-all:	
-	@echo "You didn't select a supported TARGET"
-	@echo "select one of: ATCANMINI_PELICAN, CPC_PCI, IME_SLIMLINE, IXXAT_PCI03, PCM3680, PC104_200, TRM816"
-else
-###########################################################################
-# select the compiler toolchain
-###########################################################################
 TOOLS=
 
 ECHO		= /bin/echo
@@ -235,9 +129,12 @@ endif
 endif
 
 # That are the finally used flags for compiling the sources
-CFLAGS = -Wall -D__KERNEL__ -DLINUX -O2 -Wstrict-prototypes -fomit-frame-pointer $(DEFS) $(OPTIONS) $(INCLUDES) -DVERSION=\"$(DVERSION)_$(TARGET)\"
+CFLAGS = -O2 -Wall -Wstrict-prototypes -fomit-frame-pointer\
+	-D__KERNEL__\
+	-DLINUX\
+	 $(DEFS) $(OPTIONS) $(INCLUDES)\
+	-DVERSION=\"$(DVERSION)_$(TARGET)\"
 
-# all the files to be compiled into object code
 OBJS=\
 	core.o\
 	open.o\
@@ -251,7 +148,6 @@ OBJS=\
 	util.o\
 	sysctl.o\
 
-# include Chip specific object files
 OBJS += $(DEV)funcs.o
 
 OBJDIROBJS=$(addprefix $(OBJDIR)/,$(OBJS)) $(OBJDIR)
@@ -278,5 +174,3 @@ clean:
 distclean: clean
 	cd examples; make clean
 	cd trm816; make clean
-
-endif

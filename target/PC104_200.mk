@@ -1,0 +1,6 @@
+# ESD PC104-200 PC104 board (with SJA1000)
+DEFS += \
+	-DCAN_PORT_IO -DPC104 \
+	-DCAN_SYSCLK=8
+
+DEV = mcf5282
