@@ -137,7 +137,7 @@ int written        = 0;
 		    (canmsg_t *) &(TxFifo->data[TxFifo->head]), 
 		    (canmsg_t *) &addr[written],
 		    sizeof(canmsg_t) );
-	    DBGprint(DBG_DATA,("fifo active: id %d/%x; head %d/tail %d",
+	    DBGprint(DBG_DATA,("fifo active: id %ld/%lx; head %d/tail %d",
 TxFifo->data[TxFifo->head].id,
 TxFifo->data[TxFifo->head].id,
 TxFifo->head,
@@ -150,7 +150,7 @@ TxFifo->tail
 		    (canmsg_t *) &tx, 
 		    (canmsg_t *) &addr[written],
 		    sizeof(canmsg_t) );
-	    DBGprint(DBG_DATA,("fifo in-active: id %d/%x; head %d/tail %d",
+	    DBGprint(DBG_DATA,("fifo in-active: id %ld/%lx; head %d/tail %d",
 		tx.id, tx.id,
 TxFifo->head,
 TxFifo->tail

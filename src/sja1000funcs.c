@@ -336,8 +336,7 @@ uint8 tx2reg, stat;
 
     DBGin("CAN_SendMessage");
 
-    while ( ! (stat=CANin(board, canstat))
-  	& CAN_TRANSMIT_BUFFER_ACCESS ) {
+    while ( ! ((stat=CANin(board, canstat)) & CAN_TRANSMIT_BUFFER_ACCESS )) {
 	    #if LINUX_VERSION_CODE >= 131587
 	    if( current->need_resched ) schedule();
 	    #else
