@@ -1,5 +1,3 @@
-#
-#
 # can4linux -- LINUX CAN device driver Makefile
 # 
 # Copyright (c) 2001/2/3 port GmbH Halle/Saale
@@ -39,9 +37,6 @@ else
 KVERSION= $(shell $(SHELL) linux-info.sh --kversion)
 endif
 CONFIG := $(shell uname -n)
-
-CTAGS =	ctags --c-types=dtvf 
-CTAGS =	elvtags -tsevl
 
 TITLE = CAN driver can4linux
 
@@ -107,7 +102,7 @@ DEFS =  -D$(TARGET) -D$(DEBUG) -DDEFAULT_DEBUG -DCan_MAJOR=$(CAN_MAJOR)\
 	-DCAN_SYSCLK=8
 
 	#-DIODEBUG
-
+DEV = sja1000
 TARGET_MATCHED = true
 endif
 
@@ -118,6 +113,7 @@ DEFS =  -D$(TARGET) -D$(DEBUG) -DDEFAULT_DEBUG -DCan_MAJOR=$(CAN_MAJOR) \
 	-DCAN_SYSCLK=8
 	#-DCONFIG_TIME_MEASURE=1
 
+DEV = sja1000
 TARGET_MATCHED = true
 endif
 
@@ -126,6 +122,7 @@ ifeq "$(TARGET)" "IXXAT_PCI03"
 DEFS =  -D$(TARGET) -D$(DEBUG) -DDEFAULT_DEBUG -DCan_MAJOR=$(CAN_MAJOR) \
 	-DCAN_SYSCLK=8
 
+DEV = sja1000
 TARGET_MATCHED = true
 endif
 
@@ -134,6 +131,7 @@ ifeq "$(TARGET)" "PCM3680"
 DEFS =  -D$(TARGET) -D$(DEBUG) -DDEFAULT_DEBUG -DCan_MAJOR=$(CAN_MAJOR) \
 	-DCAN_SYSCLK=8
 
+DEV = sja1000
 TARGET_MATCHED = true
 endif
 
@@ -143,6 +141,7 @@ DEFS =  -D$(TARGET) -D$(DEBUG) -DDEFAULT_DEBUG -DCan_MAJOR=$(CAN_MAJOR) \
 	-DCAN_INDEXED_PORT_IO \
 	-DCAN_SYSCLK=10
 
+DEV = sja1000
 TARGET_MATCHED = true
 endif
 
@@ -152,6 +151,7 @@ DEFS =  -D$(TARGET) -D$(DEBUG) -DDEFAULT_DEBUG -DCan_MAJOR=$(CAN_MAJOR) \
 	-DCAN_PORT_IO -DPC104 \
 	-DCAN_SYSCLK=8
 
+DEV = mcf5282
 TARGET_MATCHED = true
 endif
 
@@ -160,6 +160,7 @@ ifeq "$(TARGET)" "IME_SLIMLINE"
 DEFS =  -D$(TARGET) -D$(DEBUG) -DDEFAULT_DEBUG -DCan_MAJOR=$(CAN_MAJOR) \
 	-DCAN_SYSCLK=8
 
+DEV = sja1000
 TARGET_MATCHED = true
 endif
 
@@ -200,26 +201,19 @@ else
 ###########################################################################
 # select the compiler toolchain
 ###########################################################################
-TOOLS=powerpc-linux-gcc 
-TOOLS=arm-uclinux-
-TOOLS=/usr/local/armtools_glibc/bin/arm-uclinux-
 TOOLS=
 
 ECHO		= /bin/echo
 
 COMPILE	= $(ECHO) "--- Compiling "$<" for $(TARGET) on $(LINUXTARGET) ..." ; \
 	  $(TOOLS)gcc
-DEPEND	= $(ECHO) "--- Checking dependencies..." ; $(TOOLS)$(CPP)
 RLINK	= $(ECHO) "--- Linking (relocatable) "$@"..." ;\
 	  $(TOOLS)ld -r
 LINK	= $(ECHO) "--- Linking "$@"..." ; $(TOOLS)gcc
-YACC	= $(ECHO) --- Running bison on $<...; bison -d -y
-LEX	= $(ECHO) --- Running flex on $<...; flex 
 
 CC	= $(COMPILE)
 
 all: $(CAN_MODULE)
-
 
 # !! should be for all Kernels > 2.2.17 ???
 # for each kernel ther is a set of kernel specific headers in 
@@ -233,7 +227,7 @@ else
   ifndef LINUX_INFO
  INCLUDES = -Isrc -I/lib/modules/`uname -r`/build/include
   else
- INCLUDES = -Isrc -I$(shell $(SHELL) linux-info.sh -I)
+ INCLUDES = -I$(shell $(SHELL) linux-info.sh -I)
   endif
  #INCLUDES = -Isrc -I/home/geg/kernel/linux-2.4.22-586/include
  TEST = Ja
@@ -243,79 +237,39 @@ endif
 # That are the finally used flags for compiling the sources
 CFLAGS = -Wall -D__KERNEL__ -DLINUX -O2 -Wstrict-prototypes -fomit-frame-pointer $(DEFS) $(OPTIONS) $(INCLUDES) -DVERSION=\"$(DVERSION)_$(TARGET)\"
 
-VPATH=src
 # all the files to be compiled into object code
-OBJS	=	\
-	    core.o\
-	    open.o\
-	    read.o\
-	    write.o\
-	    ioctl.o\
-	    select.o\
-	    close.o\
-	    debug.o\
-	    error.o\
-	    util.o\
-	    sysctl.o\
+OBJS=\
+	core.o\
+	open.o\
+	read.o\
+	write.o\
+	ioctl.o\
+	select.o\
+	close.o\
+	debug.o\
+	error.o\
+	util.o\
+	sysctl.o\
 
 # include Chip specific object files
-ifeq "$(TARGET)" "CPC_PCI"
-OBJS += sja1000funcs.o
-endif
-ifeq "$(TARGET)" "ATCANMINI_PELICAN"
-OBJS += sja1000funcs.o
-endif
-ifeq "$(TARGET)" "IXXAT_PCI03"
-OBJS += sja1000funcs.o
-endif
-ifeq "$(TARGET)" "PCM3680"
-OBJS += sja1000funcs.o
-endif
-ifeq "$(TARGET)" "TRM816"
-OBJS += sja1000funcs.o
-endif
-ifeq "$(TARGET)" "PC104_200"
-OBJS += mcf5282funcs.o
-endif
-ifeq "$(TARGET)" "IME_SLIMLINE"
-OBJS += sja1000funcs.o
-endif
+OBJS += $(DEV)funcs.o
 
-
-$(CAN_MODULE):  $(addprefix $(OBJDIR)/,$(OBJS)) $(OBJDIR)
+OBJDIROBJS=$(addprefix $(OBJDIR)/,$(OBJS)) $(OBJDIR)
+$(CAN_MODULE):  $(OBJDIROBJS)
 	@$(RLINK) -o $@ $(addprefix $(OBJDIR)/,$(OBJS))
 
-$(OBJDIR)/core.o: core.c can4linux.h defs.h
-	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
-$(OBJDIR)/open.o: open.c can4linux.h defs.h
-	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
-$(OBJDIR)/read.o: read.c can4linux.h defs.h
-	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
-$(OBJDIR)/write.o: write.c can4linux.h defs.h
-	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
-$(OBJDIR)/ioctl.o: ioctl.c can4linux.h defs.h
-	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
-$(OBJDIR)/select.o: select.c can4linux.h defs.h
-	@$(COMPILE) -c $(CFLAGS)  $(INCLUDES) -o $@ $<
-$(OBJDIR)/close.o: close.c can4linux.h defs.h
-	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
-$(OBJDIR)/sja1000funcs.o: sja1000funcs.c can4linux.h defs.h
-	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
-$(OBJDIR)/util.o: util.c can4linux.h defs.h
-	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
-$(OBJDIR)/sysctl.o: sysctl.c can4linux.h defs.h $(OBJDIR)/vcs.h
-	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -I obj -o $@ $<
-$(OBJDIR)/error.o: error.c can4linux.h defs.h
-	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
-$(OBJDIR)/debug.o: debug.c can4linux.h defs.h
-	@$(COMPILE) -c $(CFLAGS) $(INCLUDES) -o $@ $<
+$(OBJDIROBJS): src/can4linux.h src/defs.h
+
+$(OBJDIR)/sysctl.o: $(OBJDIR)/vcs.h
+
+$(OBJDIR)/%.o: src/%.c
+	@$(COMPILE) -o $@ -c $(CFLAGS) $(INCLUDES) -I$(OBJDIR) $<
 
 $(OBJDIR)/vcs.h:
 	id=`hg id -i`; \
 	hg log -l1 --template '#define VCS_REV_STRING "{date|shortdate} '$$id'"\n' > $@
 
 clean:
-	-rm -f tags
 	-rm -f obj/vcs.h
 	-rm -f obj/*.o
 	-rm -f Can.o
