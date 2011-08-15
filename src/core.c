@@ -159,10 +159,6 @@ erstellt
 #include "defs.h"
 #include <linux/version.h>
 
-MODULE_LICENSE("GPL");
-MODULE_AUTHOR("H.-J.Oertel <oe@port.de>");
-MODULE_DESCRIPTION("CAN fieldbus driver");
-
 
 char kernel_version[] = UTS_RELEASE;
 

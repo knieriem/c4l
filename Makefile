@@ -134,7 +134,7 @@ endif
 
 # That are the finally used flags for compiling the sources
 CFLAGS = -O2 -Wall -Wstrict-prototypes -fomit-frame-pointer\
-	-D__KERNEL__\
+	-D__KERNEL__ -DMODULE\
 	-DLINUX\
 	 $(DEFS) $(OPTIONS) $(INCLUDES)\
 	-DVERSION=\"$(DVERSION)_$(TARGET)\"

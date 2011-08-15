@@ -27,3 +27,7 @@ void	decusers(void)
 {
 	MOD_DEC_USE_COUNT;
 }
+
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("H.-J.Oertel <oe@port.de>");
+MODULE_DESCRIPTION("CAN fieldbus driver");

@@ -4,20 +4,6 @@
  * Copyright (c) 2001 port GmbH Halle/Saale
   */
 
-#ifndef NOMODULE
-#define __NO_VERSION__
-#define MODULE
-#endif
-#ifdef __KERNEL__
-#ifndef KERNEL_VERSION
-#define KERNEL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
-#endif
-
-#ifdef __KERNEL__
-#include <linux/module.h>
-
-
-#include <linux/config.h>
 #include <linux/kernel.h>
 #include <linux/tty.h>
 #include <linux/errno.h>
@@ -27,8 +13,6 @@
 #include <linux/version.h>
 
 #include <linux/slab.h>
-
-#include <linux/wrapper.h>
 
 #include <linux/poll.h>
 
@@ -53,8 +37,6 @@
 
 #include <linux/ioport.h>
 #include <linux/ioport.h>
-
-#endif
 
 extern	void	decusers(void);
 extern	void	incusers(void);
@@ -121,14 +103,12 @@ extern	int	inuse(void);
 #include "debug.h"
 /************************************************************************/
 /* #include <can_Proto.h> */
-#ifdef __KERNEL__
 extern int can_read (__LDDK_READ_PARAM); 
 extern __LDDK_WRITE_TYPE can_write (__LDDK_WRITE_PARAM); 
 extern __LDDK_SELECT_TYPE can_select ( __LDDK_SELECT_PARAM ); 
 extern int can_ioctl ( __LDDK_IOCTL_PARAM ); 
 extern int can_open ( __LDDK_OPEN_PARAM ); 
 extern __LDDK_CLOSE_TYPE can_close (__LDDK_CLOSE_PARAM); 
-#endif 
 
 
 /*---------- Default Outc value for some known boards
@@ -241,7 +221,6 @@ extern __LDDK_CLOSE_TYPE can_close (__LDDK_CLOSE_PARAM);
 
  extern unsigned char *can_base[];
  extern unsigned int   can_range[];
-#endif
 
 extern int IRQ_requested[];
 extern int Can_minors[];			/* used as IRQ dev_id */
@@ -249,7 +228,6 @@ extern int Can_minors[];			/* used as IRQ dev_id */
 
 /************************************************************************/
 #define LDDK_USE_SYSCTL 1
-#ifdef __KERNEL__
 #include <linux/sysctl.h>
 
 extern ctl_table Can_sysctl_table[];
@@ -337,7 +315,6 @@ extern  int Cnt2[];
 #define SYSCTL_CNT2 17
  
  
-#endif
 /************************************************************************/
 
 
@@ -513,66 +490,4 @@ static inline unsigned Indexed_Inb(unsigned base,unsigned adr) {
 
 #endif  	/* ! CAN_INDEXED_PORT_IO */
 #endif 		/* ! CAN_PORT_IO */
-
-/*________________________E_O_F_____________________________________________*/
-
-
-#if 0
-/*
-There is a special access mode for the 82527 CAN controller
-called fast register access.
-This mode is sometimes used instead of normal Mem-Read/Write
-and substitutes  MEM_In/MEM_Out
-
-*/
-
-uint8 MEM_In (unsigned long  adr ) { 
-#if IODEBUG
-        int ret = readb(adr);
-        printk("MIn: 0x%x=0x%x\n", adr, ret);
-        return ret;
-#else
-	SLOW_DOWN_IO;	SLOW_DOWN_IO;
-	return readb(adr);
-#endif
-}
-
-uint8 fastMEM_In (unsigned long  adr ) {
-        /* Fast access:
-         * first read desired register,
-         * after that read register 4
-         */
-	int ret = readb(adr);
-        if((adr & 0x000000FF) == 0x02) {
-        	return ret;
-	}
-	/* 250 ns delay, SLOW_DOWN_IO is empty on ELIMA */
-	asm volatile("nop;nop;nop;nop");
-	asm volatile("nop;nop;nop;nop");
-	asm volatile("nop;nop;nop;nop");
-	asm volatile("nop;nop;nop;nop");
-	ret = readb((adr & 0xFFFFFF00) + 4);
-#if IODEBUG
-        printk("MfIn: 0x%x=0x%x\n", adr, ret);
-#endif
-        return ret;
-}
-
-void MEM_Out(uint8 v, unsigned long adr ) {
-#if IODEBUG
-        printk("MOut: 0x%x->0x%x\n", v, adr);
-#endif
-	SLOW_DOWN_IO;
-        writeb(v, adr);
-	SLOW_DOWN_IO; 
-#if defined(CONFIG_PPC)
-	/* 250 ns delay, SLOW_DOWN_IO is empty on ELIMA */
-	asm volatile("nop;nop;nop;nop");
-	asm volatile("nop;nop;nop;nop");
-	asm volatile("nop;nop;nop;nop");
-	asm volatile("nop;nop;nop;nop");
-#endif
-}
-
-#endif
 
