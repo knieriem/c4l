@@ -10,17 +10,8 @@
 */
 #include "defs.h"
 
-
 /* default debugging level */
 
-#if DEBUG
-# ifndef DEFAULT_DEBUG
-  unsigned int   dbgMask  = \
+unsigned int dbgMask  = \
     (DBG_ENTRY | DBG_EXIT | DBG_BRANCH | DBG_DATA | DBG_INTR | DBG_1PPL)
     & ~DBG_ALL;
-# else
-unsigned int   dbgMask  = 0;
-# endif
-#else
-unsigned int   dbgMask  = 0;
-#endif

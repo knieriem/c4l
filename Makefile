@@ -84,8 +84,12 @@ DEBUG=DEBUG=1
 # CONFIG_TIME_MEASURE=1 - enable Time measurement at parallel port
 #
 
+ifneq ($DEBUG),NODEBUG)
+DEFAULT_DBG_MASK = some
+endif
+DEFAULT_DBG_MASK = none
 
-DEFS = -D$(TARGET) -D$(DEBUG) -DDEFAULT_DEBUG -DCan_MAJOR=$(CAN_MAJOR)
+DEFS = -D$(TARGET) -D$(DEBUG) -DCan_MAJOR=$(CAN_MAJOR)
 include target/$(TARGET).mk
 
 
@@ -143,7 +147,7 @@ OBJS=\
 	ioctl.o\
 	select.o\
 	close.o\
-	debug.o\
+	debug_$(DEFAULT_DBG_MASK).o\
 	error.o\
 	util.o\
 	sysctl.o\
