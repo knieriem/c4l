@@ -37,6 +37,6 @@ canLtwo.so:	canLtwo.c canLtwo.i ../src/can4linux.h
 	$(CC) -shared canLtwo.o canLtwo_wrap.o -o $@
 
 clean:
-	-rm *.o can_send receive transmit noiser \
+	-rm -f *.o can_send receive transmit noiser \
 		ctest acceptance baud can_verify \
 		#canLtwo.so

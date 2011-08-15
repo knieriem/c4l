@@ -16,9 +16,6 @@
 #
 # SSV TRM/816 support by Sven Geggus <geggus@iitb.fraunhofer.de>
 #
-# $Id: Makefile,v 1.1.1.1 2003/02/17 17:44:45 jjt Exp $ 
-# 
-#
 
 # if available, call this script to get values for KVERSION and INCLUDE
 ifeq ($(wildcard linux-info.sh),linux-info.sh)
@@ -208,24 +205,20 @@ TOOLS=arm-uclinux-
 TOOLS=/usr/local/armtools_glibc/bin/arm-uclinux-
 TOOLS=
 
-BOLD		= "\033[1m"
-BOLD		= "\033[0;31m"
-NBOLD		= "\033[0m"
+ECHO		= /bin/echo
 
-ECHO		= /bin/echo -e
-
-COMPILE	= $(ECHO) "--- Compiling "$(BOLD)$<$(NBOLD)" for $(TARGET) on $(LINUXTARGET) ..." ; \
+COMPILE	= $(ECHO) "--- Compiling "$<" for $(TARGET) on $(LINUXTARGET) ..." ; \
 	  $(TOOLS)gcc
 DEPEND	= $(ECHO) "--- Checking dependencies..." ; $(TOOLS)$(CPP)
-RLINK	= $(ECHO) "--- Linking (relocatable) "$(BOLD)$@$(NBOLD)"..." ;\
+RLINK	= $(ECHO) "--- Linking (relocatable) "$@"..." ;\
 	  $(TOOLS)ld -r
-LINK	= $(ECHO) "--- Linking "$(BOLD)$@$(NBOLD)"..." ; $(TOOLS)gcc
-YACC	= $(ECHO) --- Running bison on $(BOLD)$<$(NBOLD)...; bison -d -y
-LEX	= $(ECHO) --- Running flex on $(BOLD)$<$(NBOLD)...; flex 
+LINK	= $(ECHO) "--- Linking "$@"..." ; $(TOOLS)gcc
+YACC	= $(ECHO) --- Running bison on $<...; bison -d -y
+LEX	= $(ECHO) --- Running flex on $<...; flex 
 
 CC	= $(COMPILE)
 
-all: $(CAN_MODULE) #examples 
+all: $(CAN_MODULE)
 
 
 # !! should be for all Kernels > 2.2.17 ???
@@ -247,31 +240,23 @@ else
 endif
 endif
 
-ifeq "$(LINUXTARGET)" "LINUXOS"
 # That are the finally used flags for compiling the sources
 CFLAGS = -Wall -D__KERNEL__ -DLINUX -O2 -Wstrict-prototypes -fomit-frame-pointer $(DEFS) $(OPTIONS) $(INCLUDES) -DVERSION=\"$(DVERSION)_$(TARGET)\"
-
-else
-#define for RTlLinux
-MYCFLAGS = -O2	 -Wall
-include rtl.mk	
-
-endif
 
 VPATH=src
 # all the files to be compiled into object code
 OBJS	=	\
-	    core.o		\
-	    open.o		\
-	    read.o		\
-	    write.o		\
-	    ioctl.o		\
-	    select.o	\
-	    close.o		\
-	    debug.o		\
-	    error.o		\
-	    util.o		\
-	    sysctl.o	\
+	    core.o\
+	    open.o\
+	    read.o\
+	    write.o\
+	    ioctl.o\
+	    select.o\
+	    close.o\
+	    debug.o\
+	    error.o\
+	    util.o\
+	    sysctl.o\
 
 # include Chip specific object files
 ifeq "$(TARGET)" "CPC_PCI"
@@ -329,34 +314,6 @@ $(OBJDIR)/vcs.h:
 	id=`hg id -i`; \
 	hg log -l1 --template '#define VCS_REV_STRING "{date|shortdate} '$$id'"\n' > $@
 
-# load host specific CAN configuration
-load:
-	$(ECHO) ">>> " Loading Driver Module to Kernel
-	/sbin/insmod $(CAN_MODULE) 
-	@echo "Loading etc/$(CONFIG).conf CAN configuration"
-	utils/cansetup etc/$(CONFIG).conf
-	echo 0 >/proc/sys/Can/dbgMask
-
-# load host configuration and set dbgMask
-dload:
-	$(ECHO) ">>> " Loading Driver Module to Kernel
-	/sbin/insmod $(CAN_MODULE) 
-	@echo "Loading etc/$(CONFIG).conf CAN configuration"
-	utils/cansetup etc/$(CONFIG).conf
-	echo 7 >/proc/sys/Can/dbgMask
-	echo "125 125 125 125" >/proc/sys/Can/Baud
-
-
-# unload the CAN driver module
-unload:
-	$(ECHO) ">>> " Removing Driver Module from Kernel
-	-/sbin/rmmod $(CAN_MODULE:.o=)
-
-
-.PHONY:examples
-examples:
-	(cd examples;make)
-
 clean:
 	-rm -f tags
 	-rm -f obj/vcs.h
@@ -368,99 +325,4 @@ distclean: clean
 	cd examples; make clean
 	cd trm816; make clean
 
-
-inodes:
-	-mknod /dev/can0 c $(CAN_MAJOR) 0
-	-mknod /dev/can1 c $(CAN_MAJOR) 1
-	-mknod /dev/can2 c $(CAN_MAJOR) 2
-	-mknod /dev/can3 c $(CAN_MAJOR) 3
-	-mknod /dev/can4 c $(CAN_MAJOR) 4
-	-mknod /dev/can5 c $(CAN_MAJOR) 5
-	-mknod /dev/can6 c $(CAN_MAJOR) 6
-	-mknod /dev/can7 c $(CAN_MAJOR) 7
-	chmod 666 /dev/can[0-7]
-
-
-
-ctags:
-	$(CTAGS)  src/*.[ch] /usr/include/linux/pci.h
-
-############################################################################
-#              V e r s i o n  C o n t r o l
-#
-#
-############################################################################
-# commit changes of all files to the cvs repository
-commit:
-	cvs commit -F commitfile
-
-# tag all files in the current module
-tag:
-	cvs tag $(RELEASE)
-
-#### HTML Manual section. #################################
-man:    port_footer.html
-	doxygen
-
-showman:
-	netscape -raise -remote 'openURL(file:$(PROJECTHOME)/man/html/index.html)'
-
-# Standardfooter für manual pages sollte irgendwo im pms 00340
-# stehen, dito das port.gif bild
-# 
-port_footer.html:       Makefile
-	cat ft.html | sed 's/TITLE/$(TITLE)/' \
-		    | sed 's/DATE/$(shell date)/' \
-		    > $@
-
-
-archive:	distclean
-	tar  zcvf can4linux.$(VERSION).$(REL).tgz -h\
-		Makefile Doxyfile README* \
-	        INSTALL.t2 INSTALL.pdf INSTALL-g.pdf CHANGELOG \
-		etc \
-		man \
-		src \
-		obj \
-		examples \
-		utils \
-		ft.html \
-		debug \
-		trm816
-
-
-install:
-	-mkdir $(INSTALLHOME)/can4linux
-	-mkdir $(INSTALLHOME)/can4linux/obj
-	(cd $(INSTALLHOME)/can4linux; ln -s $(PROJECTHOME)/etc .)
-	(cd $(INSTALLHOME)/can4linux; ln -s $(PROJECTHOME)/examples .)
-	(cd $(INSTALLHOME)/can4linux; ln -s $(PROJECTHOME)/src .)
-	(cd $(INSTALLHOME)/can4linux; ln -s $(PROJECTHOME)/utils .)
-	cp Makefile $(INSTALLHOME)/can4linux
-	(cd $(INSTALLHOME)/can4linux; make)
-
 endif
-# Help Text
-## 
-## make targets:
-##  Can.o      - compile the driver sources to Can.o
-##  examples   - compile examples in examples directory
-##  man        - manual pages using Doxygen
-##  archive    - create a *tgz
-## 
-## only as super user:
-##  inodes     - create device entries  in /dev
-##  load       - load the driver and use actual "host"-configuration
-##  dload      - load with debugMask set to "debug"
-##  unload     - unload the CAN driver module
-## 
-##  install    - install the driver in /usr/src with references to
-##               this actual source tree
-
-
-.PHONY:help
-help:
-	@echo -e "\nMakefile for the can4linux CAN driver module"
-	@echo "Actual Release Tag is set to RELEASE=$(RELEASE)."
-	@sed -n '/^##/s/^## //p' Makefile
-
