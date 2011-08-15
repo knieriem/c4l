@@ -14,9 +14,7 @@ if test -f +linux-info; then
     . +linux-info
 else
     # kernel version to be used
-    kver=
-
-    # linux source directory to be used
+     # linux source directory to be used
     linux=/dev/null
 
     # remove when properly filled in the above values
@@ -45,7 +43,7 @@ uts_release=`cat include/linux/version.h | sed -n '/#.*fine *UTS_RELEASE/s,.*UTS
 
 case $1 in
     --kversion)
-	echo $kver
+	echo $uts_release
 	;;
     -I)
 	echo $linux/include
@@ -53,23 +51,14 @@ case $1 in
     *)
 cat <<EOF >&2
 
-  ,--------------------------------------------------------------.
-  | Using kernel source tree                                     |
+  ,------------------------
+  | Kernel source tree:
+  |	$linux
   |
-  |   $linux
-  |
-  |
-  | The module will be compiled for kernel 
-  |
-  |   $kver,
-  |
-  |
-  | UTS_RELEASE:
-  |
+  | Version:
   |   $uts_release
   |
-  |                                                              |
-  \`--------------------------------------------------------------'
+  \`------------------------
 
 
 EOF
