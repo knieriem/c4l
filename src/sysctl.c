@@ -7,40 +7,6 @@
 *          Claus Schroeter (clausi@chemie.fu-berlin.de)
 * derived from the the LDDK can4linux version
 *     (c) 1996,1997 Claus Schroeter (clausi@chemie.fu-berlin.de)
-*------------------------------------------------------------------
-* $Header: /z2/cvsroot/products/0530/software/can4linux/src/can_sysctl.c,v 1.9 2003/08/27 13:06:27 oe Exp $
-*
-*--------------------------------------------------------------------------
-*
-*
-* modification history
-* --------------------
-* $Log: can_sysctl.c,v $
-* Revision 1.9  2003/08/27 13:06:27  oe
-* - Version 3.0
-*
-* Revision 1.8  2003/07/05 14:28:55  oe
-* - all changes for the new 3.0: try to eliminate hw depedencies at run-time.
-*   configure for HW at compile time
-*
-* Revision 1.7  2002/10/11 16:58:06  oe
-* - IOModel, Outc, VendOpt are now set at compile time
-* - deleted one misleading printk()
-*
-* Revision 1.6  2002/08/20 05:55:01  oe
-* *** empty log message ***
-*
-* Revision 1.5  2002/08/08 18:05:02  oe
-* - no predefined controller base addresses
-* - changed /proc/ ... /version to be longer, containg TARGET name
-*
-* Revision 1.4  2001/11/20 16:43:52  oe
-* *** empty log message ***
-*
-* Revision 1.3  2001/09/14 14:58:09  oe
-* first free release
-*
-*
 */
 /*
  * This Template implements the SYSCTL basics, and handler/strategy routines

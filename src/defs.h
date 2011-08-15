@@ -2,72 +2,7 @@
  * can_read - can4linux CAN driver module
  *
  * Copyright (c) 2001 port GmbH Halle/Saale
- *------------------------------------------------------------------
- * $Header: /z2/cvsroot/products/0530/software/can4linux/src/can_defs.h,v 1.11 2003/07/05 14:28:55 oe Exp $
- *
- *--------------------------------------------------------------------------
- *
- *
- * modification history
- * --------------------
- * $Log: can_defs.h,v $
- * Revision 1.11  2003/07/05 14:28:55  oe
- * - all changes for the new 3.0: try to eliminate hw depedencies at run-time.
- *   configure for HW at compile time
- *
- * Revision 1.10  2002/12/01 17:24:22  oe
- * - data type of Can_timeout
- *
- * Revision 1.9  2002/12/01 17:01:01  oe
- * - corrected wrong index definitions into Sysctl array.
- *   (very strange, could bring the system into nirwana)
- *
- * Revision 1.8  2002/10/11 16:58:06  oe
- * - IOModel, Outc, VendOpt are now set at compile time
- * - deleted one misleading printk()
- *
- * Revision 1.7  2002/08/20 05:57:22  oe
- * - new write() handling, now not ovrwriting buffer content if buffer fill
- * - ioctl() get status returns buffer information
- *
- * Revision 1.6  2002/08/08 18:00:40  oe
- * adapted to new kernel: include linux/malloc.h --> linux/slab.h
- *
- * Revision 1.5  2002/01/10 19:13:19  oe
- * - application header file changed name can.h -> can4linux.h
- *
- * Revision 1.4  2001/09/14 14:58:09  oe
- * first free release
- *
- * Revision 1.3  2001/09/04 15:51:44  oe
- * changed struct file_operations can_fops
- *
- * Revision 1.2  2001/06/15 15:32:43  oe
- * - added PCI support EMS CPC-PCI
- *
- * Revision 1.1.1.1  2001/06/11 18:30:54  oe
- * minimal version can4linux embedded, compile time Konfigurierbar
- *
- *
- *
- *
- *--------------------------------------------------------------------------
- */
-
-
-/**
-* \file can_defs.h
-* \author Name, port GmbH
-* $Revision: 1.11 $
-* $Date: 2003/07/05 14:28:55 $
-*
-* Module Desription 
-* see Doxygen Doc for all possibilites
-*
-*
-*
-*/
-
+  */
 
 #ifndef NOMODULE
 #define __NO_VERSION__
@@ -637,10 +572,4 @@ void MEM_Out(uint8 v, unsigned long adr ) {
 }
 
 #endif
-
-
-
-
-
-
 

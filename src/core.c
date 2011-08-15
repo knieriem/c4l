@@ -1,6 +1,5 @@
 /*
  * can_core - can4linux CAN driver module
-set tagprg="global -t $1"
  *
  *
  * can4linux -- LINUX CAN device driver source
@@ -10,70 +9,7 @@ set tagprg="global -t $1"
  *          Claus Schroeter (clausi@chemie.fu-berlin.de)
  * derived from the the LDDK can4linux version
  *     (c) 1996,1997 Claus Schroeter (clausi@chemie.fu-berlin.de)
- *------------------------------------------------------------------
- * $Header: /z2/cvsroot/products/0530/software/can4linux/src/can_core.c,v 1.10 2003/08/27 13:06:26 oe Exp $
- *
- *--------------------------------------------------------------------------
- *
- *
- * modification history
- * --------------------
- * $Log: can_core.c,v $
- * Revision 1.10  2003/08/27 13:06:26  oe
- * - Version 3.0
- *
- * Revision 1.9  2003/07/05 14:28:55  oe
- * - all changes for the new 3.0: try to eliminate hw depedencies at run-time.
- *   configure for HW at compile time
- *
- * Revision 1.8  2002/10/25 10:39:25  oe
- * - vendor specific handling for Advantech board added by "R.R.Robotica" <rrrobot@tin.it>
- *
- * Revision 1.7  2002/10/11 16:58:06  oe
- * - IOModel, Outc, VendOpt are now set at compile time
- * - deleted one misleading printk()
- *
- * Revision 1.6  2002/08/08 17:59:38  oe
- * *** empty log message ***
- *
- * Revision 1.5  2001/11/20 16:43:29  oe
- * *** empty log message ***
- *
- * Revision 1.4  2001/09/14 14:58:09  oe
- * first free release
- *
- * Revision 1.3  2001/09/04 15:51:44  oe
- * changed struct file_operations can_fops
- *
- * Revision 1.2  2001/06/15 15:32:10  oe
- * - added PCI support EMS CPC-PCI
- *
- * Revision 1.1.1.1  2001/06/11 18:30:54  oe
- * minimal version can4linux embedded, compile time Konfigurierbar
- *
- *
- *
- *
- *--------------------------------------------------------------------------
  */
-
-
-/**
-* \file can_core.c
-* \author Heinz-Jürgen Oertel, port GmbH
-* $Revision: 1.10 $
-* $Date: 2003/08/27 13:06:26 $
-*
-* Contains the code for module initialization.
-* The functions herein are never called directly by the user
-* but when the driver module is loaded into the kernel space
-* or unloaded.
-*
-* The driver is highly configurable using the \b sysctl interface.
-* For a description see main page.
-
-*/
-
 
 /****************************************************************************/
 /**
@@ -223,11 +159,6 @@ erstellt
 #include "defs.h"
 #include <linux/version.h>
 
-
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-
-
-
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("H.-J.Oertel <oe@port.de>");
 MODULE_DESCRIPTION("CAN fieldbus driver");
@@ -246,8 +177,6 @@ static char devname[MAX_CHANNELS];
 #endif
 #endif
 
-#endif /* DOXYGEN_SHOULD_SKIP_THIS */
-
 struct file_operations can_fops = { 
     llseek:	NULL, 
     read:	can_read,
@@ -263,8 +192,6 @@ struct file_operations can_fops = {
     fasync:	NULL,
 };
 
-
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 #ifdef CAN_INDEXED_PORT_IO
 canregs_t* regbase=0;
@@ -388,6 +315,3 @@ void cleanup_module(void)
 #endif
     DBGout();
 }
-
-#endif /* DOXYGEN_SHOULD_SKIP_THIS */
-

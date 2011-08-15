@@ -1,6 +1,3 @@
-/*
-*/
-#ifndef __DEBUG_INCLUDED
 #if DEBUG       
 
 #define DRIVER_NAME "Can"
@@ -39,9 +36,3 @@ extern char *ffmt[];
 extern unsigned int dbgMask;
 
 #endif					
-
-#define __DEBUG_INCLUDED
-#endif
-
-
-

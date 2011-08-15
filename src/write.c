@@ -9,57 +9,10 @@
  *          Claus Schroeter (clausi@chemie.fu-berlin.de)
  * derived from the the LDDK can4linux version
  *     (c) 1996,1997 Claus Schroeter (clausi@chemie.fu-berlin.de)
- *------------------------------------------------------------------
- * $Header: /z2/cvsroot/products/0530/software/can4linux/src/can_write.c,v 1.7 2003/07/05 14:28:55 oe Exp $
- *
- *--------------------------------------------------------------------------
- *
- *
- * modification history
- * --------------------
- * $Log: can_write.c,v $
- * Revision 1.7  2003/07/05 14:28:55  oe
- * - all changes for the new 3.0: try to eliminate hw depedencies at run-time.
- *   configure for HW at compile time
- *
- * Revision 1.6  2002/08/20 05:57:22  oe
- * - new write() handling, now not ovrwriting buffer content if buffer fill
- * - ioctl() get status returns buffer information
- *
- * Revision 1.5  2002/08/08 18:05:57  oe
- * *** empty log message ***
- *
- * Revision 1.4  2001/09/14 14:58:09  oe
- * first free release
- *
- * Revision 1.3  2001/09/04 15:51:44  oe
- * changed struct file_operations can_fops
- *
- * Revision 1.2  2001/06/15 15:32:49  oe
- * - added PCI support EMS CPC-PCI
- *
- * Revision 1.1.1.1  2001/06/11 18:30:54  oe
- * minimal version can4linux embedded, compile time Konfigurierbar
- *
- *
- *
- *
- *--------------------------------------------------------------------------
  */
-
-
-/**
-* \file can_write.c
-* \author Heinz-Jürgen Oertel, port GmbH
-* $Revision: 1.7 $
-* $Date: 2003/07/05 14:28:55 $
-*
-*/
 
 #include "defs.h"
 
-/* \fn size_t can_write( __LDDK_WRITE_PARAM) */
-/***************************************************************************/
 /**
 
 \brief size_t write(int fd, const char *buf, size_t count);
@@ -170,4 +123,3 @@ TxFifo->tail
     DBGout();
     return written;
 }
-

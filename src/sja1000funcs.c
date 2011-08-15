@@ -9,45 +9,8 @@
  * 
 * Copyright (c) 2002 port GmbH Halle/Saale
 * (c) 2001 Heinz-Jürgen Oertel (oe@port.de)
-*------------------------------------------------------------------
-* $Header: /z2/cvsroot/products/0530/software/can4linux/src/can_sja1000funcs.c,v 1.3 2003/08/27 17:49:27 oe Exp $
-*
-*--------------------------------------------------------------------------
-*
-*
-* modification history
-* --------------------
-* $Log: can_sja1000funcs.c,v $
-* Revision 1.3  2003/08/27 17:49:27  oe
-* - New CanStatusPar structure
-*
-* Revision 1.2  2003/08/27 13:06:27  oe
-* - Version 3.0
-*
-* Revision 1.1  2003/07/05 14:28:55  oe
-* - all changes for the new 3.0: try to eliminate hw depedencies at run-time.
-*   configure for HW at compile time
-*
-* Revision 1.8  2002/10/25 10:39:00  oe
-* - vendor specific handling for Advantech board added by "R.R.Robotica" <rrrobot@tin.it>
-*
-* Revision 1.7  2002/10/11 16:58:06  oe
-* - IOModel, Outc, VendOpt are now set at compile time
-* - deleted one misleading printk()
-*
-* Revision 1.6  2002/08/20 05:57:22  oe
-* - new write() handling, now not ovrwriting buffer content if buffer fill
-* - ioctl() get status returns buffer information
-*
-* Revision 1.5  2002/08/08 17:55:32  oe
-* - added vendor specific code for stzp 's' IXXAT board iPC03
-* - received message with id=0xffffffff == error
-*
-* Revision 1.4  2001/09/14 14:58:09  oe
-* first free release
-*
-*
 */
+
 #include "defs.h"
 
 

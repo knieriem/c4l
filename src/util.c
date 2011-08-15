@@ -6,37 +6,6 @@
 *
 * (c) 2001 Heinz-Jürgen Oertel (oe@port.de)
 *          Claus Schroeter (clausi@chemie.fu-berlin.de)
-*------------------------------------------------------------------
-* $Header: /z2/cvsroot/products/0530/software/can4linux/src/can_util.c,v 1.9 2003/08/27 13:07:06 oe Exp $
-*
-*--------------------------------------------------------------------------
-*
-*
-* modification history
-* --------------------
-* $Log: can_util.c,v $
-* Revision 1.9  2003/08/27 13:07:06  oe
-* - Version 3.0, PCI code new according linux > 2.4.0
-*
-* Revision 1.8  2003/07/05 14:28:55  oe
-* - all changes for the new 3.0: try to eliminate hw depedencies at run-time.
-*   configure for HW at compile time
-*
-* Revision 1.7  2002/10/11 16:58:06  oe
-* - IOModel, Outc, VendOpt are now set at compile time
-* - deleted one misleading printk()
-*
-* Revision 1.6  2002/08/20 05:57:22  oe
-* - new write() handling, now not ovrwriting buffer content if buffer fill
-* - ioctl() get status returns buffer information
-*
-* Revision 1.5  2002/08/08 18:05:36  oe
-* *** empty log message ***
-*
-* Revision 1.4  2001/09/14 14:58:09  oe
-* first free release
-*
-*
 */
 
 
@@ -44,11 +13,6 @@
 #include <linux/sched.h> 
 #include <linux/proc_fs.h>
 #include <linux/pci.h>
-
-/*
- * Refuse to compile under versions older than 1.99.4
- */
-#define VERSION_CODE(vers,rel,seq) ( ((vers)<<16) | ((rel)<<8) | (seq) )
 
  volatile int irq2minormap[15];
  volatile int irq2pidmap[15];

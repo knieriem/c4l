@@ -6,57 +6,7 @@
  * for more details.
  *
  * Copyright (c) 2001 port GmbH Halle/Saale
- *------------------------------------------------------------------
- * $Header: /z2/cvsroot/products/0530/software/can4linux/src/can4linux.h,v 1.4 2003/08/27 17:49:04 oe Exp $
- *
- *--------------------------------------------------------------------------
- *
- *
- * modification history
- * --------------------
- * $Log: can4linux.h,v $
- * Revision 1.4  2003/08/27 17:49:04  oe
- * - New CanStatusPar structure
- *
- * Revision 1.3  2002/08/20 05:57:22  oe
- * - new write() handling, now not ovrwriting buffer content if buffer fill
- * - ioctl() get status returns buffer information
- *
- * Revision 1.2  2002/08/08 17:50:46  oe
- * - MSG_ERR_MASK extended
- *
- * Revision 1.1  2002/01/10 19:13:19  oe
- * - application header file changed name can.h -> can4linux.h
- *
- * Revision 1.2  2001/09/14 14:58:09  oe
- * first free release
- *
- * Revision 1.1.1.1  2001/06/11 18:30:54  oe
- * minimal version can4linux embedded, compile time Konfigurierbar
- *
- *
- *
- *
- *--------------------------------------------------------------------------
  */
-
-
-/**
-* \file can.h
-* \author Heinz-Jürgen Oertel, port GmbH
-* $Revision: 1.4 $
-* $Date: 2003/08/27 17:49:04 $
-*
-* can4linux interface definitions
-*
-*
-*
-*/
-
-
-#ifndef __CAN_H
-#define __CAN_H
-
 
 #ifndef __KERNEL__
 #include <sys/time.h>
@@ -197,5 +147,3 @@ typedef struct ConfigureRTR_par {
 # define CONF_FILTER	5
 # define CONF_FENABLE	6
 # define CONF_FDISABLE	7
-
-#endif 	/* __CAN_H */
