@@ -140,7 +140,7 @@ uint8 status;
 	    CANin(board, canmode) ));
     if( ! (CANin(board, canmode) & CAN_RESET_REQUEST ) ){
 	    printk("ERROR: no board present!");
-	    MOD_DEC_USE_COUNT;
+	    decusers();
 	    DBGout();return -1;
     }
 

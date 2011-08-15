@@ -56,6 +56,10 @@
 
 #endif
 
+extern	void	decusers(void);
+extern	void	incusers(void);
+extern	int	inuse(void);
+
 #if CAN4LINUX_PCI
 # define _BUS_TYPE "PCI-"
 /* the only one supported: EMS CPC-PCI */

@@ -55,7 +55,7 @@ int can_open( __LDDK_OPEN_PARAM )
 int retval = 0;
 
     DBGin("can_open");
-    MOD_INC_USE_COUNT;
+    incusers();
     {
 
 	int lasterr;	
@@ -68,7 +68,7 @@ int retval = 0;
 	if( minor > 3 )
 	{
 	    printk("CAN: Illegal minor number %d\n", minor);
-	    MOD_DEC_USE_COUNT;
+	    decusers();
 	    DBGout();
 	    return -EINVAL;
 	}
@@ -76,14 +76,14 @@ int retval = 0;
 
 #ifdef UNSAFE
 	/* if(Can_isopen[minor]) { */
-	    /* MOD_DEC_USE_COUNT; */
+	    /* decusers(); */
 	    /* DBGout(); */
 	    /* return -ENXIO; */
 	/* } */
 	++Can_isopen[minor];		/* flag device in use */
 #else
 	if(Can_isopen[minor] == 1) {
-	    MOD_DEC_USE_COUNT;
+	    decusers();
 	    DBGout();
 	    return -ENXIO;
 	}
@@ -92,7 +92,7 @@ int retval = 0;
 	if( Base[minor] == 0x00) {
 	    /* No device available */
 	    printk("CAN[%d]: no device available\n", minor);
-	    MOD_DEC_USE_COUNT;
+	    decusers();
 	    DBGout();
 	    return -ENXIO;
 	}
@@ -100,7 +100,7 @@ int retval = 0;
 	/* the following does all the board specific things
 	   also memory remapping if necessary */
 	if( (lasterr = CAN_VendorInit(minor)) < 0 ){
-	    MOD_DEC_USE_COUNT;
+	    decusers();
 	    DBGout();
 	    return lasterr;
 	}
@@ -112,7 +112,7 @@ int retval = 0;
 
 	if (Can_FifoInit(minor) < 0)
 	{
-		MOD_DEC_USE_COUNT;
+		decusers();
 		DBGout();
 		return -ENOMEM;
 	}
@@ -122,7 +122,7 @@ int retval = 0;
 #endif
 
 	if( CAN_ChipReset(minor) < 0 ) {
-	    MOD_DEC_USE_COUNT;
+	    decusers();
 	    DBGout();
 	    return -EINVAL;
 	}

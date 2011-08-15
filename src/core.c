@@ -197,7 +197,7 @@ struct file_operations can_fops = {
 canregs_t* regbase=0;
 #endif
 
-int init_module(void)
+int core_init(void)
 {
 int i;
 #if LDDK_USE_BLKREQUEST
@@ -277,13 +277,13 @@ int i;
     return 0;
 }
 
-void cleanup_module(void)
+void core_cleanup(void)
 {
 #if defined(LDDK_USE_REGISTER) && defined(CONFIG_DEVFS_FS)
   int i;
 #endif
   DBGin("cleanup_module");
-  if (MOD_IN_USE) {
+  if (inuse()) {
     printk("Can : device busy, remove delayed\n");
   }
 

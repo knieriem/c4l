@@ -151,6 +151,7 @@ OBJS=\
 	error.o\
 	util.o\
 	sysctl.o\
+	linux_2.4.o\
 
 OBJS += $(DEV)funcs.o
 
