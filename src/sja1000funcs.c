@@ -12,7 +12,7 @@
 */
 
 #include "defs.h"
-
+#include "io.h"
 
 /* int	CAN_Open = 0; */
 
