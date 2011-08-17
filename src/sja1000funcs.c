@@ -12,6 +12,7 @@
 */
 
 #include "defs.h"
+#include <asm/dma.h>
 #include "io.h"
 
 /* int	CAN_Open = 0; */

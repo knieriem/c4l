@@ -5,37 +5,23 @@
   */
 
 #include <linux/kernel.h>
-#include <linux/tty.h>
-#include <linux/errno.h>
-#include <linux/major.h>
 #include <linux/interrupt.h>         /* tasklets */
-
-#include <linux/version.h>
 
 #include <linux/slab.h>
 
 #include <linux/poll.h>
 
 #include <asm/io.h>
-#include <asm/segment.h>
-#include <asm/system.h>
-#include <asm/irq.h>
-#include <asm/dma.h>
 
 #include <linux/mm.h>
 #include <linux/signal.h>
 #include <linux/timer.h>
-
-#ifdef CONFIG_DEVFS_FS /* only if enabled, to avoid errors in 2.0 */
-#include <linux/devfs_fs_kernel.h>
-#endif
 
 #include <asm/uaccess.h>
 
 #define __lddk_copy_from_user(a,b,c) copy_from_user(a,b,c)
 #define __lddk_copy_to_user(a,b,c) copy_to_user(a,b,c)
 
-#include <linux/ioport.h>
 #include <linux/ioport.h>
 
 extern	void	decusers(void);
@@ -152,10 +138,8 @@ extern __LDDK_CLOSE_TYPE can_close (__LDDK_CLOSE_PARAM);
 #endif
 
 
-/************************************************************************/
 #include "sja1000.h"
-/************************************************************************/
-/************************************************************************/
+
 #include "can4linux.h"
 /************************************************************************/
  extern volatile int irq2minormap[];
@@ -226,7 +210,6 @@ extern int IRQ_requested[];
 extern int Can_minors[];			/* used as IRQ dev_id */
 
 
-/************************************************************************/
 #define LDDK_USE_SYSCTL 1
 #include <linux/sysctl.h>
 
