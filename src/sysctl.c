@@ -16,30 +16,9 @@
  *
  */
 #include "defs.h"
-#include <linux/mm.h>
 #include <linux/sysctl.h>
-#include <linux/ctype.h>
-/* #include <can_sysctl.h> */
-
-#define Can_dointvec proc_dointvec
-#define Can_dostring proc_dostring
-#define Can_sysctl_string sysctl_string
 
 #define SYSCTL_Can 1
-
-/* ----- Prototypes */
-
-extern int Can_dointvec(ctl_table *table, int write, struct file *filp,
-		  void *buffer, size_t *lenp);
-
-extern int Can_dostring(ctl_table *table, int write, struct file *filp,
-		  void *buffer, size_t *lenp);
-
-
-extern int Can_sysctl_string(ctl_table *table, int *name, int nlen,
-		  void *oldval, size_t *oldlenp,
-		  void *newval, size_t newlen, void **context);
-
 
 /* ----- global variables accessible through /proc/sys/Can */
 
@@ -85,42 +64,42 @@ int Cnt2[MAX_CHANNELS]    = { 0x0 };
 
 ctl_table Can_sysctl_table[] = {
  { SYSCTL_VERSION, "version", &version, PROC_VER_LENGTH, 
-		 0444, NULL, &Can_dostring , &Can_sysctl_string },
+		 0444, NULL, &proc_dostring , &sysctl_string },
  { SYSCTL_CHIPSET, "Chipset", &Chipset, PROC_CHIPSET_LENGTH, 
-		 0444, NULL, &Can_dostring , &Can_sysctl_string },
+		 0444, NULL, &proc_dostring , &sysctl_string },
  { SYSCTL_IOMODEL, "IOModel", &IOModel, MAX_CHANNELS + 1, 
-		 0444, NULL, &Can_dostring , &Can_sysctl_string },
+		 0444, NULL, &proc_dostring , &sysctl_string },
  { SYSCTL_IRQ, "IRQ",(void *) IRQ, MAX_CHANNELS*sizeof(int), 
-		 0644, NULL, &Can_dointvec , NULL  },
+		 0644, NULL, &proc_dointvec , NULL  },
  { SYSCTL_BASE, "Base",(void *) Base, MAX_CHANNELS*sizeof(int), 
-		 0644, NULL, &Can_dointvec , NULL  },
+		 0644, NULL, &proc_dointvec , NULL  },
  { SYSCTL_BAUD, "Baud",(void *) Baud, MAX_CHANNELS*sizeof(int), 
-		 0666, NULL, &Can_dointvec , NULL  },
+		 0666, NULL, &proc_dointvec , NULL  },
  { SYSCTL_ACCCODE, "AccCode",(void *) AccCode, MAX_CHANNELS*sizeof(unsigned int), 
-		 0644, NULL, &Can_dointvec , NULL  },
+		 0644, NULL, &proc_dointvec , NULL  },
  { SYSCTL_ACCMASK, "AccMask",(void *) AccMask, MAX_CHANNELS*sizeof(unsigned int), 
-		 0644, NULL, &Can_dointvec , NULL  },
+		 0644, NULL, &proc_dointvec , NULL  },
  { SYSCTL_TIMEOUT, "Timeout",(void *) Timeout, MAX_CHANNELS*sizeof(int), 
-		 0644, NULL, &Can_dointvec , NULL  },
+		 0644, NULL, &proc_dointvec , NULL  },
  { SYSCTL_OUTC, "Outc",(void *) Outc, MAX_CHANNELS*sizeof(int), 
-		 0644, NULL, &Can_dointvec , NULL  },
+		 0644, NULL, &proc_dointvec , NULL  },
  { SYSCTL_TXERR, "TxErr",(void *) TxErr, MAX_CHANNELS*sizeof(int), 
-		 0444, NULL, &Can_dointvec , NULL  },
+		 0444, NULL, &proc_dointvec , NULL  },
  { SYSCTL_RXERR, "RxErr",(void *) RxErr, MAX_CHANNELS*sizeof(int), 
-		 0444, NULL, &Can_dointvec , NULL  },
+		 0444, NULL, &proc_dointvec , NULL  },
  { SYSCTL_OVERRUN, "Overrun",(void *) Overrun, MAX_CHANNELS*sizeof(int), 
-		 0444, NULL, &Can_dointvec , NULL  },
+		 0444, NULL, &proc_dointvec , NULL  },
  { SYSCTL_DBGMASK, "dbgMask",(void *) &dbgMask, 1*sizeof(int), 
-		 0644, NULL, &Can_dointvec , NULL  },
+		 0644, NULL, &proc_dointvec , NULL  },
 #include "vcs.h"
  { SYSCTL_VCSREV, "vcs-rev", VCS_REV_STRING, sizeof(VCS_REV_STRING)-1,
-		 0444, NULL, &Can_dostring , &Can_sysctl_string },
+		 0444, NULL, &proc_dostring , &sysctl_string },
 #ifdef DEBUG_COUNTER
 /* ---------------------------------------------------------------------- */
  { SYSCTL_CNT1, "cnt1",(void *) Cnt1, MAX_CHANNELS*sizeof(int), 
-		 0444, NULL, &Can_dointvec , NULL  },
+		 0444, NULL, &proc_dointvec , NULL  },
  { SYSCTL_CNT2, "cnt2",(void *) Cnt2, MAX_CHANNELS*sizeof(int), 
-		 0444, NULL, &Can_dointvec , NULL  },
+		 0444, NULL, &proc_dointvec , NULL  },
 /* ---------------------------------------------------------------------- */
 #endif /* DEBUG_COUNTER */
    {0}
@@ -134,7 +113,6 @@ ctl_table Can_sys_table[] = {
 	    {0}	
 };
 
-/* ----- register and unregister entrys */
 
 struct ctl_table_header *Can_systable;
 
