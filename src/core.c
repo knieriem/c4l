@@ -157,37 +157,13 @@ erstellt
 */
 
 #include "defs.h"
-#include <linux/version.h>
+#include "kapi.h"
 #include ",,sysctl.h"
 
 
-char kernel_version[] = UTS_RELEASE;
-
 int IRQ_requested[MAX_CHANNELS];
 int Can_minors[MAX_CHANNELS];			/* used as IRQ dev_id */
-#define LDDK_USE_REGISTER 1
-#ifdef LDDK_USE_REGISTER
-    int Can_major = Can_MAJOR; 
-#ifdef CONFIG_DEVFS_FS
-devfs_handle_t can_dev_handle[MAX_CHANNELS];
-static char devname[MAX_CHANNELS];
-#endif
-#endif
-
-struct file_operations can_fops = { 
-    llseek:	NULL, 
-    read:	can_read,
-    write:	can_write,
-    readdir:	NULL, 
-    poll:	can_select,
-    ioctl:	can_ioctl,
-    mmap:	NULL, 
-    open:	can_open,
-    flush:	NULL, /* flush call */
-    release:	can_close,
-    fsync:	NULL,
-    fasync:	NULL,
-};
+int Can_major = Can_MAJOR; 
 
 
 #ifdef CAN_INDEXED_PORT_IO
@@ -202,26 +178,10 @@ int i;
 #endif
 
   DBGin("init_module");
-#ifdef LDDK_USE_REGISTER
-#ifdef CONFIG_DEVFS_FS
-    /* If we have devfs, create /dev/canX to put files in there */
-    for (i=0; i < MAX_CHANNELS; i++) {
-      sprintf(devname, "can%i", i);
-      can_dev_handle[i]=devfs_register(NULL, devname,
-		     0,
-		     Can_major, i, S_IFCHR | S_IRUGO | S_IWUGO,
-		     &can_fops,
-		     NULL);
-
-    }
-    devfs_register_chrdev(Can_major, "Can", &can_fops);
-#else /* no devfs, do it the "classic" way  */
-      if( register_chrdev(Can_major, "Can", &can_fops) ) {
+      if( kapi_register_chrdev(Can_major, "Can") ) {
 	  printk("can't get Major %d\n", Can_major);
       return(-EIO);
     }
-#endif
-#endif
     {
 	printk(__CAN_TYPE__ "CAN Driver " VERSION " (c) " __DATE__  "\n");
 	printk(" H.J. Oertel (oe@port.de)\n");
@@ -276,9 +236,6 @@ int i;
 
 void core_cleanup(void)
 {
-#if defined(LDDK_USE_REGISTER) && defined(CONFIG_DEVFS_FS)
-  int i;
-#endif
   DBGin("cleanup_module");
   if (inuse()) {
     printk("Can : device busy, remove delayed\n");
@@ -290,20 +247,7 @@ void core_cleanup(void)
 #if LDDK_USE_BLKREQUEST
     blk_dev[Can_major].request_fn = NULL ;
 #endif
-#ifdef LDDK_USE_REGISTER
-#ifndef CONFIG_DEVFS_FS
-    if( unregister_chrdev(Can_major, "Can") != 0 ){
-        printk("can't unregister Can, device busy \n");
-    } else {
-        printk("Can successfully removed\n");
-    }
-#else
-    for (i = 0; i < MAX_CHANNELS; i++) {
-      devfs_unregister(can_dev_handle[i]);
-    }
-    devfs_unregister_chrdev(Can_major, "Can");
-#endif
-#endif
+    kapi_unregister_chrdev(Can_major, "Can");
 #if LDDK_USE_PROCINFO
     unregister_procinfo();
 #endif
