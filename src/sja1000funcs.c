@@ -14,6 +14,7 @@
 #include "defs.h"
 #include <asm/dma.h>
 #include "io.h"
+#include ",,sysctl.h"
 
 /* int	CAN_Open = 0; */
 

@@ -13,6 +13,7 @@
 #include <linux/sched.h> 
 #include <linux/proc_fs.h>
 #include <linux/pci.h>
+#include ",,sysctl.h"
 
  volatile int irq2minormap[15];
  volatile int irq2pidmap[15];

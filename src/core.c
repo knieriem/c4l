@@ -158,6 +158,7 @@ erstellt
 
 #include "defs.h"
 #include <linux/version.h>
+#include ",,sysctl.h"
 
 
 char kernel_version[] = UTS_RELEASE;
@@ -251,8 +252,8 @@ int i;
      * and access mode
      * are fixed and provided by the PCI BIOS
      */
-    Can_sysctl_table[SYSCTL_IRQ - 1].mode = 0444;
-    Can_sysctl_table[SYSCTL_BASE - 1].mode = 0444;
+    can_sysctl_table[SYSCTL_IRQ - 1].mode = 0444;
+    can_sysctl_table[SYSCTL_BASE - 1].mode = 0444;
     /* printk("CAN pci test loaded\n"); */
     /* dbgMask = 0; */
     pcimod_scan();

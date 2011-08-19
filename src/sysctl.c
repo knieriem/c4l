@@ -16,14 +16,19 @@
  *
  */
 #include "defs.h"
+#include <linux/version.h>
 #include <linux/sysctl.h>
+#include ",,sysctl.h"
 
-#define SYSCTL_Can 1
+#ifndef CTL_UNNUMBERED
+#define CTL_UNNUMBERED 1
+#endif
+
 
 /* ----- global variables accessible through /proc/sys/Can */
 
 char version[] = VERSION;
-char IOModel[MAX_CHANNELS];
+char IOModel[MAX_CHANNELS+1];
 char Chipset[] =
 #if defined(ATCANMINI_PELICAN)
 	"SJA1000"
@@ -60,68 +65,21 @@ int Cnt1[MAX_CHANNELS]    = { 0x0 };
 int Cnt2[MAX_CHANNELS]    = { 0x0 };
 #endif /* DEBUG_COUNTER */
 
-/* ----- the sysctl table */
 
-ctl_table Can_sysctl_table[] = {
- { SYSCTL_VERSION, "version", &version, PROC_VER_LENGTH, 
-		 0444, NULL, &proc_dostring , &sysctl_string },
- { SYSCTL_CHIPSET, "Chipset", &Chipset, PROC_CHIPSET_LENGTH, 
-		 0444, NULL, &proc_dostring , &sysctl_string },
- { SYSCTL_IOMODEL, "IOModel", &IOModel, MAX_CHANNELS + 1, 
-		 0444, NULL, &proc_dostring , &sysctl_string },
- { SYSCTL_IRQ, "IRQ",(void *) IRQ, MAX_CHANNELS*sizeof(int), 
-		 0644, NULL, &proc_dointvec , NULL  },
- { SYSCTL_BASE, "Base",(void *) Base, MAX_CHANNELS*sizeof(int), 
-		 0644, NULL, &proc_dointvec , NULL  },
- { SYSCTL_BAUD, "Baud",(void *) Baud, MAX_CHANNELS*sizeof(int), 
-		 0666, NULL, &proc_dointvec , NULL  },
- { SYSCTL_ACCCODE, "AccCode",(void *) AccCode, MAX_CHANNELS*sizeof(unsigned int), 
-		 0644, NULL, &proc_dointvec , NULL  },
- { SYSCTL_ACCMASK, "AccMask",(void *) AccMask, MAX_CHANNELS*sizeof(unsigned int), 
-		 0644, NULL, &proc_dointvec , NULL  },
- { SYSCTL_TIMEOUT, "Timeout",(void *) Timeout, MAX_CHANNELS*sizeof(int), 
-		 0644, NULL, &proc_dointvec , NULL  },
- { SYSCTL_OUTC, "Outc",(void *) Outc, MAX_CHANNELS*sizeof(int), 
-		 0644, NULL, &proc_dointvec , NULL  },
- { SYSCTL_TXERR, "TxErr",(void *) TxErr, MAX_CHANNELS*sizeof(int), 
-		 0444, NULL, &proc_dointvec , NULL  },
- { SYSCTL_RXERR, "RxErr",(void *) RxErr, MAX_CHANNELS*sizeof(int), 
-		 0444, NULL, &proc_dointvec , NULL  },
- { SYSCTL_OVERRUN, "Overrun",(void *) Overrun, MAX_CHANNELS*sizeof(int), 
-		 0444, NULL, &proc_dointvec , NULL  },
- { SYSCTL_DBGMASK, "dbgMask",(void *) &dbgMask, 1*sizeof(int), 
-		 0644, NULL, &proc_dointvec , NULL  },
-#include "vcs.h"
- { SYSCTL_VCSREV, "vcs-rev", VCS_REV_STRING, sizeof(VCS_REV_STRING)-1,
-		 0444, NULL, &proc_dostring , &sysctl_string },
-#ifdef DEBUG_COUNTER
-/* ---------------------------------------------------------------------- */
- { SYSCTL_CNT1, "cnt1",(void *) Cnt1, MAX_CHANNELS*sizeof(int), 
-		 0444, NULL, &proc_dointvec , NULL  },
- { SYSCTL_CNT2, "cnt2",(void *) Cnt2, MAX_CHANNELS*sizeof(int), 
-		 0444, NULL, &proc_dointvec , NULL  },
-/* ---------------------------------------------------------------------- */
-#endif /* DEBUG_COUNTER */
-   {0}
-};
+#include ",,sysctl.c"
 
-/* ----- the main directory entry in /proc/sys */
-
-ctl_table Can_sys_table[] = {
-	    {SYSCTL_Can, "Can", NULL, 0, 0555, 
-                 Can_sysctl_table},	
-	    {0}	
-};
-
-
-struct ctl_table_header *Can_systable;
+static struct ctl_table_header *systable;
 
 void register_systables(void)
 {
-    Can_systable = register_sysctl_table( Can_sys_table, 0 );
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,21)
+    systable = register_sysctl_table(sys, 0);
+#else
+    systable = register_sysctl_table(sys);
+#endif
 }
 
 void unregister_systables(void)
 {
-    unregister_sysctl_table(Can_systable);
+    unregister_sysctl_table(systable);
 }

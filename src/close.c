@@ -12,6 +12,7 @@
  */
 
 #include "defs.h"
+#include ",,sysctl.h"
 
 extern int Can_isopen[];   		/* device minor already opened */
 

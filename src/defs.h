@@ -49,11 +49,6 @@ extern	int	inuse(void);
 # endif
 
 
-/* Length of the "version" string entry in /proc/.../version */
-#define PROC_VER_LENGTH 30 
-/* Length of the "Chipset" string entry in /proc/.../version */
-#define PROC_CHIPSET_LENGTH 30 
-
 #define __LDDK_WRITE_TYPE	ssize_t
 #define __LDDK_CLOSE_TYPE	int
 #define __LDDK_READ_TYPE	ssize_t
@@ -208,98 +203,6 @@ extern __LDDK_CLOSE_TYPE can_close (__LDDK_CLOSE_PARAM);
 
 extern int IRQ_requested[];
 extern int Can_minors[];			/* used as IRQ dev_id */
-
-
-#define LDDK_USE_SYSCTL 1
-#include <linux/sysctl.h>
-
-extern ctl_table Can_sysctl_table[];
-extern ctl_table Can_sys_table[];
-
-
-
- /* ------ Global Definitions for version */
-
-extern char version[];
-#define SYSCTL_VERSION 1
- 
- /* ------ Global Definitions for Chpset */
-
-extern char Chipset[];
-#define SYSCTL_CHIPSET 2
- 
- /* ------ Global Definitions for IOModel */
-
-extern char IOModel[];
-#define SYSCTL_IOMODEL 3
- 
- /* ------ Global Definitions for IRQ */
-
-extern  int IRQ[];
-#define SYSCTL_IRQ 4
- 
- /* ------ Global Definitions for Base */
-
-extern  int Base[];
-#define SYSCTL_BASE 5
- 
- /* ------ Global Definitions for Baud */
-
-extern  int Baud[];
-#define SYSCTL_BAUD 6
- 
- /* ------ Global Definitions for AccCode */
-
-extern  unsigned int AccCode[];
-#define SYSCTL_ACCCODE 7
- 
- /* ------ Global Definitions for AccMask */
-
-extern  unsigned int AccMask[];
-#define SYSCTL_ACCMASK 8
- 
- /* ------ Global Definitions for Timeout */
-
-extern  int Timeout[];
-#define SYSCTL_TIMEOUT 9
- 
- /* ------ Global Definitions for Outc */
-
-extern  int Outc[];
-#define SYSCTL_OUTC 10
- 
- /* ------ Global Definitions for TxErr */
-
-extern  int TxErr[];
-#define SYSCTL_TXERR 11
- 
- /* ------ Global Definitions for RxErr */
-
-extern  int RxErr[];
-#define SYSCTL_RXERR 12
- 
- /* ------ Global Definitions for Overrun */
-
-extern  int Overrun[];
-#define SYSCTL_OVERRUN 13
- 
- /* ------ Global Definitions for dbgMask */
-
-extern unsigned int dbgMask;
-#define SYSCTL_DBGMASK 14
-
-
-#define SYSCTL_VCSREV 15
-
- /* ------ Global Definitions for Test  */
-extern  int Cnt1[];
-#define SYSCTL_CNT1 16
-extern  int Cnt2[];
-#define SYSCTL_CNT2 17
- 
- 
-/************************************************************************/
-
 
 
 #ifndef Can_MAJOR

@@ -1,0 +1,25 @@
+can_sysctl_table	global
+	(30)string	0444	version
+	(30)string	0444	Chipset
+	(#chan+1)string	0444	IOModel
+
+	[#chan]int	0644	IRQ		#
+	[#chan]int	0644	Base		#
+	[#chan]int	0644	Baud
+	[#chan]uint	0644	AccCode
+	[#chan]uint	0644	AccMask
+	[#chan]int	0644	Timeout
+	[#chan]int	0644	Outc
+	[#chan]int	0444	TxErr
+	[#chan]int	0444	RxErr
+	[#chan]int	0444	Overrun
+
+	[1]uint	0644	dbgMask	&
+
+	hgrev	0444	vcs-rev
+
+//	[#chan]int	0444	cnt1	Cnt1
+//	[#chan]int	0444	cnt2	Cnt2
+
+sys
+	child	0555	Can	can_sysctl_table

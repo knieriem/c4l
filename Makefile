@@ -159,19 +159,17 @@ OBJDIROBJS=$(addprefix $(OBJDIR)/,$(OBJS)) $(OBJDIR)
 $(CAN_MODULE):  $(OBJDIROBJS)
 	@$(RLINK) -o $@ $(addprefix $(OBJDIR)/,$(OBJS))
 
-$(OBJDIROBJS): src/can4linux.h src/defs.h
-
-$(OBJDIR)/sysctl.o: $(OBJDIR)/vcs.h
+$(OBJDIROBJS): src/can4linux.h src/defs.h $(OBJDIR)/,,sysctl.h
 
 $(OBJDIR)/%.o: src/%.c
 	@$(COMPILE) -o $@ -c $(CFLAGS) $(INCLUDES) -I$(OBJDIR) $<
 
-$(OBJDIR)/vcs.h:
-	id=`hg id -i`; \
-	hg log -l1 --template '#define VCS_REV_STRING "{date|shortdate} '$$id'"\n' > $@
+$(OBJDIR)/,,%.h: src/%.list
+	@echo --- sysctl.awk: create $(OBJDIR)/,,sysctl.c and $(OBJDIR)/,,sysctl.h
+	@awk -f sysctl.awk -v 'root=.' -v 'defs=$(OBJDIR)/,,sysctl.h' < $< > $(OBJDIR)/,,sysctl.c
 
 clean:
-	-rm -f obj/vcs.h
+	-rm -f obj/,,sysctl.[ch]
 	-rm -f obj/*.o
 	-rm -f Can.o
 	(cd examples;make clean)
