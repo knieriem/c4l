@@ -425,7 +425,7 @@ int	candev = 0;				/* number of found devices */
 unsigned long ptr;				/* ptr to PITA control */
 
     if (pci_present ()) {
-	    while ((pdev = pci_find_device (PCI_VENDOR, PCI_DEVICE, pdev))) {
+	    while ((pdev = pci_find_device (PCIvendorid, PCIdeviceid, pdev))) {
 	    printk("  found CPC-PCI: %s\n", pdev->name);
 	    if (pci_enable_device(pdev)) {
 		continue;

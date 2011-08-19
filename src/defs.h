@@ -31,8 +31,8 @@ extern	int	inuse(void);
 #if CAN4LINUX_PCI
 # define _BUS_TYPE "PCI-"
 /* the only one supported: EMS CPC-PCI */
-# define PCI_VENDOR 0x110a
-# define PCI_DEVICE 0x2104
+# define PCIvendorid 0x110a
+# define PCIdeviceid 0x2104
 
 #else
 # define _BUS_TYPE "ISA-"
