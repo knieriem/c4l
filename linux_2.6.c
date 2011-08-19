@@ -57,6 +57,7 @@ static struct file_operations fops = {
     release:	can_close,
     fsync:	NULL,
     fasync:	NULL,
+    owner: THIS_MODULE,
 };
 
 int	kapi_register_chrdev(int major, char *name)
