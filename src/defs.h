@@ -19,8 +19,8 @@
 
 #include <asm/uaccess.h>
 
-#define __lddk_copy_from_user(a,b,c) copy_from_user(a,b,c)
-#define __lddk_copy_to_user(a,b,c) copy_to_user(a,b,c)
+#define __lddk_copy_from_user(a,b,c) if(copy_from_user(a,b,c)){}
+#define __lddk_copy_to_user(a,b,c) if(copy_to_user(a,b,c)){}
 
 #include <linux/ioport.h>
 
