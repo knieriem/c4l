@@ -100,3 +100,12 @@ void	kapi_unregister_chrdev(int major, char *name)
 	devfs_unregister_chrdev(major, name);
 #endif
 }
+
+static void	isr(int irq, void *dev_id, struct pt_regs *regs) {
+	CAN_Interrupt(irq, dev_id);
+}
+
+int kapi_request_irq(int irq, char *name, void *dev)
+{
+	return request_irq(irq, isr, SA_SHIRQ, "Can", dev);
+}

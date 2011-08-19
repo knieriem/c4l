@@ -192,9 +192,7 @@ extern __LDDK_CLOSE_TYPE can_close (__LDDK_CLOSE_PARAM);
  extern msg_fifo_t Tx_Buf[];
  extern msg_fifo_t Rx_Buf[];
 
- typedef void (*irq_handler_t)(int irq, void *unused, struct pt_regs *ptregs);
-
- extern int Can_RequestIrq(int minor, int irq, irq_handler_t handler);
+ extern int Can_RequestIrq(int minor, int irq);
 
  extern wait_queue_head_t CanWait[];
 
@@ -228,7 +226,7 @@ extern int CAN_StopChip(int);
 extern int CAN_SetMask(int, unsigned int, unsigned int);
 extern int CAN_SetOMode(int,int);
 extern int CAN_SendMessage(int, canmsg_t *);
-extern void CAN_Interrupt(int irq, void *unused, struct pt_regs *ptregs );
+extern int CAN_Interrupt(int irq, void *unused);
 extern int CAN_VendorInit(int);
 
 extern void register_systables(void);

@@ -439,7 +439,7 @@ int CAN_VendorInit (int minor)
 /* End: 2. Vendor specific part ------------------------------------------- */
 
     if( IRQ[minor] > 0 ) {
-        if( Can_RequestIrq( minor, IRQ[minor] , CAN_Interrupt) ) {
+        if( Can_RequestIrq( minor, IRQ[minor]) ) {
 	     printk("Can[%d]: Can't request IRQ %d \n", minor, IRQ[minor]);
 	     DBGout(); return -EBUSY;
         }
@@ -563,7 +563,7 @@ delayed_send (unsigned long minor)
  *   sec. ISR shorter than first, why? it's the same message
  */
 
-void CAN_Interrupt ( int irq, void *dev_id, struct pt_regs *ptregs )
+int CAN_Interrupt ( int irq, void *dev_id)
 {
 int minor;
 int i;
@@ -825,6 +825,7 @@ IRQdone_doneNothing:
 #if CONFIG_TIME_MEASURE
     outb(0x00, 0x378);  
 #endif
+	return 1;
 }
 
 

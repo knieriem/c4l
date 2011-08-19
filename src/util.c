@@ -10,6 +10,7 @@
 
 
 #include "defs.h"
+#include "kapi.h"
 #include <linux/sched.h> 
 #include <linux/proc_fs.h>
 #include <linux/pci.h>
@@ -35,7 +36,7 @@ unsigned char *can_base[MAX_CHANNELS];		/* ioremapped adresses */
 unsigned int can_range[MAX_CHANNELS];		/* ioremapped adresses */
 
 
-int Can_RequestIrq(int minor, int irq, irq_handler_t handler)
+int Can_RequestIrq(int minor, int irq)
 {
 int err=0;
 
@@ -60,18 +61,12 @@ int err=0;
 
     */
 
-#if defined(CONFIG_PPC)
-    /* LINUX_PPC */
-    err = request_8xxirq( irq, handler, 0, "Can", NULL );
-#else
-    err = request_irq( irq, handler, SA_SHIRQ, "Can", &Can_minors[minor]);
-#endif
+    err = kapi_request_irq(irq, "Can", &Can_minors[minor]);
     if( !err ){
 /* printk("Requested IRQ[%d]: %d @ 0x%x", minor, irq, handler); */
       irq2minormap[irq] = minor;
       irq2pidmap[irq] = current->pid;
-      DBGprint(DBG_BRANCH,("Requested IRQ: %d @ 0x%lx",
-      				irq, (unsigned long)handler));
+      DBGprint(DBG_BRANCH,("Requested IRQ: %d", irq));
       IRQ_requested[minor] = 1;
     }
     DBGout();return err;
