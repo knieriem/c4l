@@ -155,22 +155,21 @@ OBJS=\
 
 OBJS += $(DEV)funcs.o
 
-OBJDIROBJS=$(addprefix $(OBJDIR)/,$(OBJS)) $(OBJDIR)
-$(CAN_MODULE):  $(OBJDIROBJS)
-	@$(RLINK) -o $@ $(addprefix $(OBJDIR)/,$(OBJS))
+$(CAN_MODULE):  $(OBJS)
+	@$(RLINK) -o $@ $(OBJS)
 
-$(OBJDIROBJS): src/can4linux.h src/defs.h $(OBJDIR)/,,sysctl.h
+$(OBJS): can4linux.h defs.h ,,sysctl.h
 
-$(OBJDIR)/%.o: src/%.c
+%.o: %.c
 	@$(COMPILE) -o $@ -c $(CFLAGS) $(INCLUDES) -I$(OBJDIR) $<
 
-$(OBJDIR)/,,%.h: src/%.list
-	@echo --- sysctl.awk: create $(OBJDIR)/,,sysctl.c and $(OBJDIR)/,,sysctl.h
-	@awk -f sysctl.awk -v 'root=.' -v 'defs=$(OBJDIR)/,,sysctl.h' < $< > $(OBJDIR)/,,sysctl.c
+,,%.h: %.list
+	@echo --- sysctl.awk: create ,,sysctl.c and ,,sysctl.h
+	@awk -f sysctl.awk -v 'root=.' -v 'defs=,,sysctl.h' < $< > ,,sysctl.c
 
 clean:
-	-rm -f obj/,,sysctl.[ch]
-	-rm -f obj/*.o
+	-rm -f ,,sysctl.[ch]
+	-rm -f *.o
 	-rm -f Can.o
 	(cd examples;make clean)
 
