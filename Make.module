@@ -1,0 +1,40 @@
+ifneq ($DEBUG),NODEBUG)
+DEFAULT_DBG_MASK = some
+endif
+DEFAULT_DBG_MASK = none
+
+DEFS = -D$(TARGET) -D$(DEBUG) -DCan_MAJOR=$(CAN_MAJOR)
+include $(M)/target/$(TARGET).mk
+
+# general compiler switches
+DEFS += -Wno-undef
+
+OBJS=\
+	core.o\
+	open.o\
+	read.o\
+	write.o\
+	ioctl.o\
+	select.o\
+	close.o\
+	debug_$(DEFAULT_DBG_MASK).o\
+	error.o\
+	util.o\
+	sysctl.o\
+	$(DEV)funcs.o\
+
+
+$(M)/core.o: $(M)/,,sysctl.h
+
+$(M)/,,%.h: $(M)/%.list
+	@echo --- sysctl.awk: create ,,sysctl.c and ,,sysctl.h
+	@awk -f $(M)/sysctl.awk -v 'root=$(M)' -v 'defs=$(M)/,,sysctl.h' < $< > $(M)/,,sysctl.c
+
+	
+EXTRA_CFLAGS = $(DEFS) -DVERSION=\"$(DVERSION)_$(TARGET)\"
+
+obj-m := can.o
+
+can-objs := \
+	$(OBJS)\
+	linux_2.6.o\

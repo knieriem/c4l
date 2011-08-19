@@ -38,12 +38,20 @@ fi
 
 
 # print some information for the developer
-uts_release=`cat include/linux/version.h | sed -n '/#.*fine *UTS_RELEASE/s,.*UTS_REL.* ",,p' | sed 's, *" *$,,'`
+utsh=include/generated/utsrelease.h
+vh=include/linux/version.h
+if test -f $utsh; then
+	vh=$utsh
+fi
+uts_release=`cat $vh | sed -n '/#.*fine *UTS_RELEASE/s,.*UTS_REL.* ",,p' | sed 's, *" *$,,'`
 
 
 case $1 in
     --kversion)
 	echo $uts_release
+	;;
+    --srcdir)
+	echo $linux
 	;;
     -I)
 	echo $linux/include

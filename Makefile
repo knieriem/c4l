@@ -1,3 +1,7 @@
+ifneq ($(M),)
+include $(M)/Make.module
+else
+
 # can4linux -- LINUX CAN device driver Makefile
 # 
 # Copyright (c) 2001/2/3 port GmbH Halle/Saale
@@ -16,10 +20,9 @@
 #
 
 # if available, call this script to get values for KVERSION and INCLUDE
-ifeq ($(wildcard linux-info.sh),linux-info.sh)
-LINUX_INFO := 1
-li_dummy   := $(shell $(SHELL) linux-info.sh)
-endif
+LINUXSRC := $(shell $(SHELL) linux-info.sh --srcdir)
+KVERSION := $(shell $(SHELL) linux-info.sh --kversion)
+INCLUDES := -I$(shell $(SHELL) linux-info.sh -I)
 
 # Used release tag for this software version
 VERSION=3
@@ -31,12 +34,6 @@ DVERSION=$(VERSION).$(REL)
 LINUXTARGET=LINUXOS
 #LINUXTARGET=RTLinux
 
-ifndef LINUX_INFO
-KVERSION= $(shell uname -r)
-else
-KVERSION= $(shell $(SHELL) linux-info.sh --kversion)
-endif
-CONFIG := $(shell uname -n)
 
 #
 # The CAN driver major device number
@@ -59,9 +56,6 @@ CAN_MAJOR=	91
 
 
 TARGET=ATCANMINI_PELICAN
-
-# location of the compiled objects and the final driver module 
-OBJDIR = obj
 
 # Debugging Code within the driver
 # to use the Debugging option
@@ -89,16 +83,12 @@ DEFAULT_DBG_MASK = some
 endif
 DEFAULT_DBG_MASK = none
 
-DEFS = -D$(TARGET) -D$(DEBUG) -DCan_MAJOR=$(CAN_MAJOR)
-include target/$(TARGET).mk
-
-
+ifneq ($(findstring 2.4., $(KVERSION)),)
 ifeq "$(LINUXTARGET)" "LINUXOS"
 #use normal Linux OS
-CAN_MODULE = Can.o
+CAN_MODULE = can.o
 endif
  
-
 TOOLS=
 
 ECHO		= /bin/echo
@@ -113,25 +103,6 @@ CC	= $(COMPILE)
 
 all: $(CAN_MODULE)
 
-# !! should be for all Kernels > 2.2.17 ???
-# for each kernel ther is a set of kernel specific headers in 
-# /lib/modules/`uname -r`/build/include
-#
-ifeq "$(LINUXTARGET)" "LINUXOS"
-ifeq "$(findstring 2.4., $(KVERSION))" ""
- INCLUDES = -Isrc
- TEST = Nein
-else
-  ifndef LINUX_INFO
- INCLUDES = -Isrc -I/lib/modules/`uname -r`/build/include
-  else
- INCLUDES = -I$(shell $(SHELL) linux-info.sh -I)
-  endif
- #INCLUDES = -Isrc -I/home/geg/kernel/linux-2.4.22-586/include
- TEST = Ja
-endif
-endif
-
 # That are the finally used flags for compiling the sources
 CFLAGS = -O2 -Wall -Wstrict-prototypes -fomit-frame-pointer\
 	-D__KERNEL__ -DMODULE\
@@ -139,40 +110,39 @@ CFLAGS = -O2 -Wall -Wstrict-prototypes -fomit-frame-pointer\
 	 $(DEFS) $(OPTIONS) $(INCLUDES)\
 	-DVERSION=\"$(DVERSION)_$(TARGET)\"
 
-OBJS=\
-	core.o\
-	open.o\
-	read.o\
-	write.o\
-	ioctl.o\
-	select.o\
-	close.o\
-	debug_$(DEFAULT_DBG_MASK).o\
-	error.o\
-	util.o\
-	sysctl.o\
-	linux_2.4.o\
+M=.
+include Make.module
 
-OBJS += $(DEV)funcs.o
+OBJS += linux_2.4.o
+else
+export \
+	TARGET\
+	DEBUG\
+	CAN_MAJOR\
+	DVERSION\
+
+all:
+	make -C $(LINUXSRC) 'M=$(CURDIR)' modules
+
+endif
 
 $(CAN_MODULE):  $(OBJS)
 	@$(RLINK) -o $@ $(OBJS)
 
 $(OBJS): can4linux.h defs.h ,,sysctl.h
 
-%.o: %.c
-	@$(COMPILE) -o $@ -c $(CFLAGS) $(INCLUDES) -I$(OBJDIR) $<
 
-,,%.h: %.list
-	@echo --- sysctl.awk: create ,,sysctl.c and ,,sysctl.h
-	@awk -f sysctl.awk -v 'root=.' -v 'defs=,,sysctl.h' < $< > ,,sysctl.c
+%.o: %.c
+	@$(COMPILE) -o $@ -c $(CFLAGS) $(INCLUDES) $<
 
 clean:
 	-rm -f ,,sysctl.[ch]
 	-rm -f *.o
-	-rm -f Can.o
+	-rm -f can.ko can.o
 	(cd examples;make clean)
 
 distclean: clean
 	cd examples; make clean
 	cd trm816; make clean
+
+endif
