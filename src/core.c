@@ -219,12 +219,7 @@ int i;
     pcimod_scan();
 #endif
 
-#if LDDK_USE_PROCINFO
-    register_procinfo();
-#endif
-#if LDDK_USE_SYSCTL
     register_systables();
-#endif
 
 #if LDDK_USE_BLKREQUEST
     blk_dev[Can_major].request_fn = Can_request ;
@@ -248,11 +243,6 @@ void core_cleanup(void)
     blk_dev[Can_major].request_fn = NULL ;
 #endif
     kapi_unregister_chrdev(Can_major, "Can");
-#if LDDK_USE_PROCINFO
-    unregister_procinfo();
-#endif
-#if LDDK_USE_SYSCTL
     unregister_systables();
-#endif
     DBGout();
 }
