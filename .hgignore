@@ -1,2 +1,11 @@
 .arch-ids/.*
 \{arch\}/.*
+
+syntax:glob
+.*.o.cmd
+.*.ko.cmd
+modules.order
+Module.symvers
+can.mod.c
+*.o
+*.ko
