@@ -109,3 +109,8 @@ int kapi_request_irq(int irq, char *name, void *dev)
 {
 	return request_irq(irq, isr, SA_SHIRQ, "Can", dev);
 }
+
+struct inode* kapi_fileinode(struct file *file)
+{
+	return file->f_dentry->d_inode;
+}

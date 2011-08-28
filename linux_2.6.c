@@ -40,7 +40,7 @@ MODULE_DESCRIPTION("CAN fieldbus driver");
 
 static long ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
-	return can_ioctl(file->f_dentry->d_inode, file, cmd, arg);
+	return can_ioctl(file->f_path.dentry->d_inode, file, cmd, arg);
 }
 
 
@@ -79,4 +79,9 @@ static irqreturn_t	isr(int irq, void *dev_id) {
 int kapi_request_irq(int irq, char *name, void *dev)
 {
 	return request_threaded_irq(irq, NULL, isr, 0, "Can", dev);
+}
+
+struct inode* kapi_fileinode(struct file *file)
+{
+	return file->f_dentry->d_inode;
 }

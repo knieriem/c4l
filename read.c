@@ -9,7 +9,6 @@
  */
 
 #include "defs.h"
-#include "msgq.h"
 
 static int copymsgtouser(canmsg_t *src, void *dst)
 {
@@ -19,8 +18,7 @@ static int copymsgtouser(canmsg_t *src, void *dst)
 
 int can_read( __LDDK_READ_PARAM )
 {
-	unsigned int minor = __LDDK_MINOR;
-	MsgQ *rxq = &rxqueues[minor];
+	Dev *dev = filedev(file);
 	canmsg_t *addr; 
 	int written;
 
@@ -33,7 +31,7 @@ int can_read( __LDDK_READ_PARAM )
 		return -EINVAL;
 	}
 	for (written=0; written < count; written++) {
-		if (!qconsume(rxq, copymsgtouser, &addr[written])) {
+		if (!qconsume(&dev->rxq, copymsgtouser, &addr[written])) {
 			break;
 		}
 	}

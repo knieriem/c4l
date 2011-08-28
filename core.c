@@ -161,9 +161,14 @@ erstellt
 #include ",,sysctl.h"
 
 
-int IRQ_requested[MAX_CHANNELS];
-int Can_minors[MAX_CHANNELS];			/* used as IRQ dev_id */
 int Can_major = Can_MAJOR; 
+static Dev candevs[MAX_CHANNELS];		/* used as IRQ dev_id */
+
+Dev* filedev(struct file *file)
+{
+	int minor = MINOR(kapi_fileinode(file)->i_rdev);
+	return &candevs[minor];
+}
 
 
 #ifdef CAN_INDEXED_PORT_IO
@@ -198,9 +203,8 @@ int i;
 	AccCode[i]       = AccMask[i] =  0xffffffff;
 	Timeout[i]       = 100;
 	Outc[i]          = CAN_OUTC_VAL;
-	IRQ_requested[i] = 0;
-	Can_minors[i]    = i;		/* used as IRQ dev_id */
-
+	candevs[i].minor = i;
+	candevs[i].requestedIrq = 0;
     }
     IOModel[i] = '\0';
 

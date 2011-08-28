@@ -71,9 +71,6 @@ extern	int	inuse(void);
 #define __LDDK_CCHECK_PARAM 	kdev_t dev
 #define __LDDK_REVAL_PARAM 	kdev_t dev
 
-#define __LDDK_MINOR MINOR(file->f_dentry->d_inode->i_rdev)
-#define __LDDK_INO_MINOR MINOR(inode->i_rdev)
-
 
 #ifndef SLOW_DOWN_IO
 # define SLOW_DOWN_IO __SLOW_DOWN_IO
@@ -172,15 +169,23 @@ extern __LDDK_CLOSE_TYPE can_close (__LDDK_CLOSE_PARAM);
  extern msg_filter_t Rx_Filter[];
 #endif
 
- extern int Can_RequestIrq(int minor, int irq);
+#include "msgq.h"
+typedef struct Dev Dev;
+struct Dev {
+	int	minor;
+	int	requestedIrq;
+	MsgQ	rxq;
+	MsgQ	txq;
+};
+
+extern	Dev*	filedev(struct file*);
+
+extern int Can_RequestIrq(Dev*, int irq);
 
  extern wait_queue_head_t CanWait[];
 
  extern unsigned char *can_base[];
  extern unsigned int   can_range[];
-
-extern int IRQ_requested[];
-extern int Can_minors[];			/* used as IRQ dev_id */
 
 
 #ifndef Can_MAJOR
@@ -206,7 +211,7 @@ extern int CAN_StopChip(int);
 extern int CAN_SetMask(int, unsigned int, unsigned int);
 extern int CAN_SetOMode(int,int);
 extern int CAN_Interrupt(int irq, void *unused);
-extern int CAN_VendorInit(int);
+extern int CAN_VendorInit(Dev*);
 
 extern void register_systables(void);
 extern void unregister_systables(void);
@@ -215,8 +220,8 @@ extern void unregister_systables(void);
 extern int CAN_ShowStat (int board);
 
 /* util.c */
-extern int Can_FifoInit(int minor);
-extern int Can_FifoCleanup(int minor);
+extern int Can_FifoInit(Dev*);
+extern int Can_FifoCleanup(Dev*);
 extern int Can_FilterCleanup(int minor);
 extern int Can_FilterInit(int minor);
 extern int Can_FilterMessage(int minor, unsigned message, unsigned enable);
@@ -224,7 +229,7 @@ extern int Can_FilterOnOff(int minor, unsigned on);
 extern int Can_FilterSigNo(int minor, unsigned signo, unsigned signal);
 extern int Can_FilterSignal(int minor, unsigned id, unsigned signal);
 extern int Can_FilterTimestamp(int minor, unsigned message, unsigned stamp);
-extern int Can_FreeIrq(int minor, int irq );
+extern int Can_FreeIrq(Dev*, int irq);
 extern int Can_WaitInit(int minor);
 extern void Can_StartTimer(unsigned long v);
 extern void Can_StopTimer(void);

@@ -37,10 +37,11 @@ extern int Can_isopen[];   		/* device minor already opened */
 */
 __LDDK_CLOSE_TYPE can_close ( __LDDK_CLOSE_PARAM )
 {
+	Dev *dev = filedev(file);
+	int minor = dev->minor;
+
     DBGin("can_close");
     {
-	unsigned int minor = __LDDK_MINOR;
-
 	CAN_StopChip(minor);
 
         /* since Vx.y (2.4?) macros defined in ioport.h,
@@ -61,9 +62,9 @@ __LDDK_CLOSE_TYPE can_close ( __LDDK_CLOSE_PARAM )
 	Can_FilterCleanup(minor);
 #endif
 
-	Can_FifoCleanup(minor);
+	Can_FifoCleanup(dev);
 
-	Can_FreeIrq(minor, IRQ[minor]);
+	Can_FreeIrq(dev, IRQ[minor]);
 #if !defined(CONFIG_PPC)
 	/* printk("CAN module %d has been closed\n",minor); */
 #endif

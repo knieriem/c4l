@@ -10,18 +10,15 @@
 */
 
 #include "defs.h"
-#include "msgq.h"
 
 unsigned int can_select( __LDDK_SELECT_PARAM )
 {
+	Dev *dev = filedev(file);
 
-unsigned int minor = __LDDK_MINOR;
-MsgQ *rxq = &rxqueues[minor];
-MsgQ *txq = &txqueues[minor];
-    DBGin("can_select");
-	    DBGprint(DBG_DATA,("minor = %d", minor));
+	DBGin("can_select");
+	DBGprint(DBG_DATA,("minor = %d", dev->minor));
 #ifdef DEBUG
-    CAN_ShowStat(minor);
+    CAN_ShowStat(dev->minor);
 #endif
     DBGprint(DBG_BRANCH,("POLL: fifo empty,poll waiting...\n"));
 
@@ -31,13 +28,13 @@ MsgQ *txq = &txqueues[minor];
      * calling the function poll_wait:  
      */
                 /*     _select para, wait queue, _select para */
-/* X */		poll_wait(file, &CanWait[minor] , wait);
+/* X */		poll_wait(file, &CanWait[dev->minor] , wait);
 
     DBGprint(DBG_BRANCH,("POLL: wait returned \n"));
     {
       int ret_mask = 0;
 
-      if (qlen(rxq) > 0) {
+      if (qlen(&dev->rxq) > 0) {
 	  /* fifo has some telegrams */
 	  /* Return a bit mask
 	   * describing operations that could be immediately performed
@@ -55,7 +52,7 @@ MsgQ *txq = &txqueues[minor];
 	   */
 	  ret_mask |= POLLIN | POLLRDNORM;
       }
-      if (qlen(txq) <= qsize(txq)/2) {
+      if (qlen(&dev->txq) <= qsize(&dev->txq)/2) {
 	  /* Tx-queue is half-empty, the user may fill it again.
 	   *
 	   * POLLOUT This bit is set in the return value if the device

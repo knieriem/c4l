@@ -17,7 +17,7 @@
 
 int can_Command(struct inode *inode, int cmd);
 int can_Receive(struct inode *inode, canmsg_t *Rx);
-int can_GetStat(struct inode *inode, CanStatusPar_t *s);
+int can_GetStat(Dev*, CanStatusPar_t *s);
 int can_Config(struct inode *inode, int target, unsigned long val1,
 					       unsigned long val2);
 
@@ -198,7 +198,7 @@ int retval = -EIO;
 	  }
 	  argp = (void *)kmalloc( sizeof(CanStatusPar_t) +1 ,GFP_KERNEL );
 	  ((CanStatusPar_t *) argp)->retval =
-	  		can_GetStat(inode, ((CanStatusPar_t *)argp));
+	  		can_GetStat(filedev(file), ((CanStatusPar_t *)argp));
 	  __lddk_copy_to_user( (CanStatusPar_t *)arg, (void *) argp,
 	  				sizeof(CanStatusPar_t));
 	  kfree(argp);

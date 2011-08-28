@@ -14,7 +14,6 @@
 #include <linux/sched.h> 
 #include <linux/proc_fs.h>
 #include <linux/pci.h>
-#include "msgq.h"
 #include ",,sysctl.h"
 
  /* each CAN channel has one wait_queue for read() */
@@ -23,9 +22,6 @@
  /* wait_queue_head_t *CanWait[MAX_CHANNELS]; */
 
 
-
-MsgQ txqueues[MAX_CHANNELS];
-MsgQ rxqueues[MAX_CHANNELS];
 #ifdef CAN_USE_FILTER
     msg_filter_t Rx_Filter[MAX_CHANNELS]; 
 #endif
@@ -34,7 +30,7 @@ unsigned char *can_base[MAX_CHANNELS];		/* ioremapped adresses */
 unsigned int can_range[MAX_CHANNELS];		/* ioremapped adresses */
 
 
-int Can_RequestIrq(int minor, int irq)
+int Can_RequestIrq(Dev *dev, int irq)
 {
 int err=0;
 
@@ -59,22 +55,22 @@ int err=0;
 
     */
 
-    err = kapi_request_irq(irq, "Can", &Can_minors[minor]);
-    if( !err ){
-/* printk("Requested IRQ[%d]: %d @ 0x%x", minor, irq, handler); */
-      DBGprint(DBG_BRANCH,("Requested IRQ: %d", irq));
-      IRQ_requested[minor] = 1;
+    err = kapi_request_irq(irq, "Can", dev);
+    if (!err) {
+	/* printk("Requested IRQ[%d]: %d @ 0x%x", minor, irq, handler); */
+	DBGprint(DBG_BRANCH,("Requested IRQ: %d", irq));
+	dev->requestedIrq = 1;
     }
     DBGout();return err;
 }
 
-int Can_FreeIrq(int minor, int irq )
+int Can_FreeIrq(Dev *dev, int irq)
 {
-    DBGin("Can_FreeIrq");
-    IRQ_requested[minor] = 0;
-    free_irq(irq, &Can_minors[minor]);
-    DBGout();
-    return 0;
+	DBGin("Can_FreeIrq");
+	dev->requestedIrq = 0;
+	free_irq(irq, dev);
+	DBGout();
+	return 0;
 }
 
 int Can_WaitInit(int minor)
@@ -89,10 +85,10 @@ int Can_WaitInit(int minor)
     return 0;
 }
 
-int Can_FifoInit(int minor)
+int Can_FifoInit(Dev *dev)
 {
 	DBGin("Can_FifoInit");
-	if (qcreate(&rxqueues[minor], MAX_RX_BUFSIZE, 0) == -1 || qcreate(&txqueues[minor], MAX_TX_BUFSIZE, 1) == -1) {
+	if (qcreate(&dev->rxq, MAX_RX_BUFSIZE, 0) == -1 || qcreate(&dev->txq, MAX_TX_BUFSIZE, 1) == -1) {
 		DBGout();
 		return -1;
 	}
@@ -102,10 +98,10 @@ int Can_FifoInit(int minor)
 }
 
 
-int Can_FifoCleanup(int minor)
+int Can_FifoCleanup(Dev *dev)
 {
-	qfree(&txqueues[minor]);
-	qfree(&rxqueues[minor]);
+	qfree(&dev->txq);
+	qfree(&dev->rxq);
 	return 0;
 }
 

@@ -59,12 +59,12 @@ int retval = 0;
     {
 
 	int lasterr;	
-
-	unsigned int minor = __LDDK_MINOR;
+	Dev *dev = filedev(file);
+	unsigned int minor = dev->minor;
 
 	/* Can_dump(minor); */
 
-/* release_mem_region(0xd8000, 0x200 ); */
+	/* release_mem_region(0xd8000, 0x200 ); */
 	if( minor > 3 )
 	{
 	    printk("CAN: Illegal minor number %d\n", minor);
@@ -99,7 +99,7 @@ int retval = 0;
 
 	/* the following does all the board specific things
 	   also memory remapping if necessary */
-	if( (lasterr = CAN_VendorInit(minor)) < 0 ){
+	if( (lasterr = CAN_VendorInit(dev	)) < 0 ){
 	    decusers();
 	    DBGout();
 	    return lasterr;
@@ -110,7 +110,7 @@ int retval = 0;
 /* controller_available(curr + 0x400, 4); */
 	Can_WaitInit(minor);	/* initialize wait queue for select() */
 
-	if (Can_FifoInit(minor) < 0)
+	if (Can_FifoInit(dev) < 0)
 	{
 		decusers();
 		DBGout();

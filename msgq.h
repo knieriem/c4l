@@ -19,6 +19,3 @@ extern	int	qproduce(MsgQ*, void (*f)(canmsg_t*, void*), void*);
 extern	int	qconsume(MsgQ*, int (*f)(canmsg_t*, void*), void*);
 extern	int	qlen(MsgQ*);
 extern	int	qsize(MsgQ*);
-
-extern	MsgQ	txqueues[MAX_CHANNELS];
-extern	MsgQ	rxqueues[MAX_CHANNELS];

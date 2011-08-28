@@ -1,5 +1,4 @@
 #include "defs.h"
-#include "msgq.h"
 
 /* lock-free queues from `Real Time in Plan 9'
  * http://plan9.bell-labs.com/iwp9/Real-time.pdf

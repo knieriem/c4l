@@ -16,7 +16,6 @@
 #include <linux/delay.h>
 #include <linux/sched.h>
 #include "io.h"
-#include "msgq.h"
 #include ",,sysctl.h"
 
 typedef struct Msginf Msginf;
@@ -90,9 +89,9 @@ int CAN_ShowStat (int board)
 * occur until the reset mode is cancelled again.
 */
 
-int can_GetStat(struct inode *inode, CanStatusPar_t *stat)
+int can_GetStat(Dev *dev, CanStatusPar_t *stat)
 {
-	unsigned int board = MINOR(inode->i_rdev);	
+	unsigned int board = dev->minor;
 
 	stat->type = CAN_TYPE_SJA1000;
 
@@ -105,10 +104,10 @@ int can_GetStat(struct inode *inode, CanStatusPar_t *stat)
 	stat->tx_errors = CANin(board, txerror);
 	stat->error_code= CANin(board, errorcode);
 
-	stat->rx_buffer_size = qsize(&txqueues[board]);
-	stat->rx_buffer_used = qlen(&txqueues[board]);
-	stat->tx_buffer_size = qsize(&txqueues[board]);
-	stat->tx_buffer_used = qlen(&txqueues[board]);
+	stat->rx_buffer_size = qsize(&dev->rxq);
+	stat->rx_buffer_used = qlen(&dev->rxq);
+	stat->tx_buffer_size = qsize(&dev->txq);
+	stat->tx_buffer_used = qlen(&dev->txq);
 	return 0;
 }
 
@@ -283,9 +282,12 @@ int CAN_SetMask (int board, unsigned int code, unsigned int mask)
     return 0;
 }
 
-int CAN_VendorInit (int minor)
+int CAN_VendorInit(Dev *dev)
 {
-    DBGin("CAN_VendorInit");
+	int minor;
+
+	minor = dev->minor;
+	DBGin("CAN_VendorInit");
 
 /* 1. Vendor specific part ------------------------------------------------ */
 #if defined(IXXAT_PCI03) || defined (PCM3680)
@@ -358,30 +360,30 @@ int CAN_VendorInit (int minor)
 #endif
 
 
-/* End: 2. Vendor specific part ------------------------------------------- */
+	if (IRQ[minor] > 0) {
+		if (Can_RequestIrq(dev, IRQ[minor])) {
+			printk("Can[%d]: Can't request IRQ %d \n", minor, IRQ[minor]);
+			DBGout(); return -EBUSY;
+		}
+	}
 
-    if( IRQ[minor] > 0 ) {
-        if( Can_RequestIrq( minor, IRQ[minor]) ) {
-	     printk("Can[%d]: Can't request IRQ %d \n", minor, IRQ[minor]);
-	     DBGout(); return -EBUSY;
-        }
-    }
-
-    DBGout(); return 0;
+	DBGout();
+	return 0;
 }
 
 static int txinprogress;
 static int rxstatus[MAX_CHANNELS];
 
 /* called from qconsume to transmit one message on transmit interrupt, and */
-int sendcanmsg(canmsg_t *msg, void *data)
+int sendcanmsg(canmsg_t *msg, void *v)
 {
 	unsigned long id;
+	Dev *dev = v;
 	int minor;
 	int ext, i;
 	uint8 tx2reg;
 
-	minor = (int)data;
+	minor = dev->minor;
 	if (msg->timestamp.tv_usec != 0) {
 		/* start delayed worker */
 		return 0;	/* not consumed */
@@ -532,8 +534,7 @@ int CAN_Interrupt ( int irq, void *dev_id)
 int minor;
 int irqsrc;
 	Msginf msginf;
-	MsgQ *rxq;
-	MsgQ *txq;
+	Dev *dev = dev_id;
 #if CAN_USE_FILTER
 msg_filter_t *RxPass;
 unsigned int id;
@@ -546,9 +547,7 @@ int first = 0;
     outb(0xff, 0x378);  
 #endif
 
-    minor = *(int *)dev_id;
-    rxq = &rxqueues[minor];
-    txq = &txqueues[minor];
+    minor = dev->minor;
 #if CAN_USE_FILTER
     RxPass = &Rx_Filter[minor];
 #endif 
@@ -581,7 +580,7 @@ int first = 0;
 	msginf.flags = rxstatus[minor] & BUF_OVERRUN ? MSG_BOVR : 0;
 
 	if (irqsrc & CAN_RECEIVE_INT) {
-		rxproduce(rxq, readcanmsg, &msginf);
+		rxproduce(&dev->rxq, readcanmsg, &msginf);
 		if (CANin(minor, canstat) & CAN_DATA_OVERRUN) {
 			printk("CAN[%d] Rx: Overrun Status \n", minor);
 			CANout(minor, cancmd, CAN_CLEAR_OVERRUN_STATUS);
@@ -631,13 +630,13 @@ int first = 0;
 	    msginf.flags += err;
 
 	printk ("\n");
-	rxproduce(rxq, errmsg, &msginf);
+	rxproduce(&dev->rxq, errmsg, &msginf);
     }
 
 	if (irqsrc & CAN_TRANSMIT_INT) {
 		txinprogress &= ~(1<<minor);
-		qconsume(txq, sendcanmsg, (void*)minor);
-		if (qlen(txq) <= qsize(txq)/2)
+		qconsume(&dev->txq, sendcanmsg, dev);
+		if (qlen(&dev->txq) <= qsize(&dev->txq)/2)
 			wake_up_interruptible (&CanWait[minor]);
 	}
 
@@ -651,7 +650,7 @@ int first = 0;
 		s = CANin(minor,canstat);
 		if (s & CAN_DATA_OVERRUN)
 			msginf.flags += MSG_OVR;
-		rxproduce(rxq, errmsg, &msginf);
+		rxproduce(&dev->rxq, errmsg, &msginf);
 
 		CANout(minor, cancmd, CAN_CLEAR_OVERRUN_STATUS );
 	}

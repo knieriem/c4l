@@ -12,7 +12,6 @@
  */
 
 #include "defs.h"
-#include "msgq.h"
 
 extern int sendcanmsg(canmsg_t* , void*);
 
@@ -63,32 +62,33 @@ static void copyusermsg(canmsg_t *dst, void *src)
 
 __LDDK_WRITE_TYPE can_write( __LDDK_WRITE_PARAM )
 {
-	unsigned int minor = __LDDK_MINOR;
-	MsgQ *txq = &txqueues[minor];
+	Dev *dev = filedev(file);
+	MsgQ *txq;
 	canmsg_t *addr;
 	int written;
 
+	txq = &dev->txq;
 	DBGin("can_write");
 #ifdef DEBUG_COUNTER
-	Cnt1[minor] = Cnt1[minor] + 1;
+	Cnt1[dev->minor] = Cnt1[dev->minor] + 1;
 #endif /* DEBUG_COUNTER */
 
 	DBGprint(DBG_DATA,(" -- write %d msg", count));
 	addr = (canmsg_t *)buffer;
 
-	if(!access_ok(VERIFY_READ, (canmsg_t *)addr, count * sizeof(canmsg_t))) { 
+	if (!access_ok(VERIFY_READ, (canmsg_t *)addr, count * sizeof(canmsg_t))) { 
 		DBGout();return -EINVAL;
 	}
 	for (written=0; written < count; written++) {
 		if (!qproduce(txq, copyusermsg, &addr[written])) {
-//printk("full %d\n", minor);
+//printk("full %d\n", dev->minor);
 			DBGprint(DBG_DATA,("tx buffer full"));
 			break;
 		}
 		if (txq->idle) {
 			txq->idle = 0;
-//printk("idle %d\n", minor);
-			qconsume(txq, sendcanmsg, (void*)minor);
+//printk("idle %d\n", dev->minor);
+			qconsume(txq, sendcanmsg, dev);
 		}
 	}
 	DBGout();
