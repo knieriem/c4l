@@ -88,7 +88,7 @@ int can_read( __LDDK_READ_PARAM )
 			(canmsg_t *) &(RxFifo->data[RxFifo->tail]),
 			sizeof(canmsg_t) );
 	    written++;
-	    RxFifo->tail = ++(RxFifo->tail) % RxFifo->size;
+	    RxFifo->tail = (RxFifo->tail+1) % RxFifo->size;
 	}
 	DBGout();
 	return(written);

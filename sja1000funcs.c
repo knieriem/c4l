@@ -656,7 +656,7 @@ int first = 0;
 	    }
 	}
 	RxFifo->status = BUF_OK;
-        RxFifo->head = ++(RxFifo->head) % RxFifo->size;
+        RxFifo->head = (RxFifo->head+1) % RxFifo->size;
 
 	if(RxFifo->head == RxFifo->tail) {
 		printk("CAN[%d] RX: FIFO overrun", minor);
@@ -731,7 +731,7 @@ int first = 0;
 	/* (RxFifo->data[RxFifo->head]).length = 0; */
 	/* (RxFifo->data[RxFifo->head]).data[i] = 0; */
 	RxFifo->status = BUF_OK;
-	RxFifo->head = ++(RxFifo->head) % RxFifo->size;
+	RxFifo->head = (RxFifo->head+1) % RxFifo->size;
 	if(RxFifo->head == RxFifo->tail) {
 	    printk("CAN[%d] RX: FIFO overrun\n", minor);
             RxFifo->status = BUF_OVERRUN;
@@ -791,7 +791,7 @@ Tx_done:
 	/* (RxFifo->data[RxFifo->head]).length = 0; */
 	/* (RxFifo->data[RxFifo->head]).data[i] = 0; */
 	RxFifo->status = BUF_OK;
-	RxFifo->head = ++(RxFifo->head) % RxFifo->size;
+	RxFifo->head = (RxFifo->head+1) % RxFifo->size;
 	if(RxFifo->head == RxFifo->tail) {
             printk("CAN[%d] RX: FIFO overrun\n", minor);
             RxFifo->status = BUF_OVERRUN;
