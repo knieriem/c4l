@@ -138,6 +138,10 @@ $(OBJS): can4linux.h defs.h ,,sysctl.h
 clean:
 	-rm -f ,,sysctl.[ch]
 	-rm -f *.o
+	-rm -f .*.o.cmd
+	-rm -f .*.ko.cmd
+	-rm -f can.mod.c
+	-rm -f Module.symvers modules.order
 	-rm -f can.ko can.o
 	(cd examples;make clean)
 
