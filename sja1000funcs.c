@@ -13,6 +13,8 @@
 
 #include "defs.h"
 #include <asm/dma.h>
+#include <linux/delay.h>
+#include <linux/sched.h>
 #include "io.h"
 #include ",,sysctl.h"
 
