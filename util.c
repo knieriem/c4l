@@ -89,31 +89,6 @@ int Can_WaitInit(int minor)
     return 0;
 }
 
-/*
-initialize RX and TX Fifo's
-*/
-static int
-create_msg_fifo (msg_fifo_t *fifo)
-{
-	int i;
-
-	fifo->free = kmalloc (sizeof (char) * fifo->size, GFP_KERNEL);
-	if (fifo->free == NULL)
-	  return -1;
-
-	fifo->data = kmalloc (sizeof (canmsg_t) * fifo->size, GFP_KERNEL);
-	if (fifo->data == NULL)	{
-		kfree (fifo->free);
-		return -1;
-	}
-
-	for (i = 0; i < fifo->size; i++) {
-		fifo->free[i]  = BUF_EMPTY;
-	}
-
-	return 0;
-}
-
 int Can_FifoInit(int minor)
 {
 	DBGin("Can_FifoInit");

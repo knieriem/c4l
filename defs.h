@@ -150,21 +150,6 @@ extern __LDDK_CLOSE_TYPE can_close (__LDDK_CLOSE_PARAM);
 #define BUF_OK       1
 #define BUF_FULL     BUF_OK
 #define BUF_OVERRUN  2
-#define BUF_UNDERRUN 3
-
-
- typedef struct {
-	int head;
-        int tail;
-        int status;
-	int active;
-
-        /* dynamically allocated buffer, see can_util.c:Can_FifoInit() */
-	int size;
-	char *free;
-        canmsg_t *data;
- } msg_fifo_t;
-
 
 
 #ifdef CAN_USE_FILTER
