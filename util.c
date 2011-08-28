@@ -14,6 +14,7 @@
 #include <linux/sched.h> 
 #include <linux/proc_fs.h>
 #include <linux/pci.h>
+#include "msgq.h"
 #include ",,sysctl.h"
 
  /* each CAN channel has one wait_queue for read() */
@@ -23,7 +24,7 @@
 
 
 
-msg_fifo_t   Tx_Buf[MAX_CHANNELS];
+MsgQ   txqueues[MAX_CHANNELS];
 msg_fifo_t   Rx_Buf[MAX_CHANNELS];
 #ifdef CAN_USE_FILTER
     msg_filter_t Rx_Filter[MAX_CHANNELS]; 
@@ -116,16 +117,15 @@ create_msg_fifo (msg_fifo_t *fifo)
 int Can_FifoInit(int minor)
 {
     DBGin("Can_FifoInit");
-       Tx_Buf[minor].head   = Rx_Buf[minor].head = 0;
-       Tx_Buf[minor].tail   = Rx_Buf[minor].tail = 0;
-       Tx_Buf[minor].status = Rx_Buf[minor].status = 0;
-       Tx_Buf[minor].active = Rx_Buf[minor].active = 0;
+       Rx_Buf[minor].head = 0;
+       Rx_Buf[minor].tail = 0;
+       Rx_Buf[minor].status = 0;
+       Rx_Buf[minor].active = 0;
 
 	Rx_Buf[minor].size = MAX_RX_BUFSIZE;
-	Tx_Buf[minor].size = MAX_TX_BUFSIZE;
 
 	if (create_msg_fifo (&Rx_Buf[minor]) == -1 
-	    ||	create_msg_fifo (&Tx_Buf[minor]) == -1)
+	    ||	qcreate(&txqueues[minor], MAX_TX_BUFSIZE, 1) == -1)
 	{
 		DBGout();
 		return -1;
@@ -138,8 +138,7 @@ int Can_FifoInit(int minor)
 
 int Can_FifoCleanup(int minor)
 {
-	kfree (Tx_Buf[minor].data);
-	kfree (Tx_Buf[minor].free);
+	qfree(&txqueues[minor]);
 
 	kfree (Rx_Buf[minor].data);
 	kfree (Rx_Buf[minor].free);

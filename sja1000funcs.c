@@ -16,6 +16,7 @@
 #include <linux/delay.h>
 #include <linux/sched.h>
 #include "io.h"
+#include "msgq.h"
 #include ",,sysctl.h"
 
 /* int	CAN_Open = 0; */
@@ -89,7 +90,6 @@ int can_GetStat(
 {
 unsigned int board = MINOR(inode->i_rdev);	
 msg_fifo_t *Fifo;
-unsigned long flags;
 
     stat->type = CAN_TYPE_SJA1000;
 
@@ -104,22 +104,14 @@ unsigned long flags;
 
     /* Disable CAN Interrupts */
     /* !!!!!!!!!!!!!!!!!!!!! */
-    save_flags(flags); cli();
     Fifo = &Rx_Buf[board];
     stat->rx_buffer_size = Fifo->size;		/**< size of rx buffer  */
     /* number of messages */
     stat->rx_buffer_used =
     	(Fifo->head < Fifo->tail)
     	? (Fifo->size - Fifo->tail + Fifo->head) : (Fifo->head - Fifo->tail);
-    Fifo = &Tx_Buf[board];
-    stat->tx_buffer_size = Fifo->size;		/* size of tx buffer  */
-    /* number of messages */
-    stat->tx_buffer_used = 
-    	(Fifo->head < Fifo->tail)
-    	? (Fifo->size - Fifo->tail + Fifo->head) : (Fifo->head - Fifo->tail);
-    /* Enable CAN Interrupts */
-    /* !!!!!!!!!!!!!!!!!!!!! */
-    restore_flags(flags);
+    stat->tx_buffer_size = qsize(&txqueues[board]);		/* size of tx buffer  */
+    stat->tx_buffer_used = qlen(&txqueues[board]);		/* number of messages */
     return 0;
 }
 
@@ -294,75 +286,6 @@ int CAN_SetMask (int board, unsigned int code, unsigned int mask)
     return 0;
 }
 
-
-int CAN_SendMessage (int board, canmsg_t *tx)
-{
-int i = 0;
-int ext;			/* message format to send */
-uint8 tx2reg, stat;
-
-    DBGin("CAN_SendMessage");
-
-    while ( ! ((stat=CANin(board, canstat)) & CAN_TRANSMIT_BUFFER_ACCESS )) {
-	    if( current->need_resched ) schedule();
-    }
-
-    DBGprint(DBG_DATA,(
-    		"CAN[%d]: tx.flags=%d tx.id=0x%lx tx.length=%d stat=0x%x",
-		board, tx->flags, tx->id, tx->length, stat));
-
-
-    /* delay message sending for some micro-seconds, if requested by
-       the user */
-    if (tx->timestamp.tv_usec) {
-	if (tx->timestamp.tv_usec > 1000)
-	    mdelay (tx->timestamp.tv_usec / 1000);
-	else
-	    udelay (tx->timestamp.tv_usec);
-    }
-
-
-    tx->length %= 9;			/* limit CAN message length to 8 */
-    ext = (tx->flags & MSG_EXT);	/* read message format */
-
-    /* fill the frame info and identifier fields */
-    tx2reg = tx->length;
-    if( tx->flags & MSG_RTR) {
-	    tx2reg |= CAN_RTR;
-    }
-    if(ext) {
-    DBGprint(DBG_DATA, ("---> send ext message"));
-	CANout(board, frameinfo, CAN_EFF + tx2reg);
-	CANout(board, frame.extframe.canid1, (uint8)(tx->id >> 21));
-	CANout(board, frame.extframe.canid2, (uint8)(tx->id >> 13));
-	CANout(board, frame.extframe.canid3, (uint8)(tx->id >> 5));
-	CANout(board, frame.extframe.canid4, (uint8)(tx->id << 3) & 0xff);
-
-    } else {
-	DBGprint(DBG_DATA, ("---> send std message"));
-	CANout(board, frameinfo, CAN_SFF + tx2reg);
-	CANout(board, frame.stdframe.canid1, (uint8)((tx->id) >> 3) );
-	CANout(board, frame.stdframe.canid2, (uint8)(tx->id << 5 ) & 0xe0);
-    }
-
-    /* - fill data ---------------------------------------------------- */
-    if(ext) {
-	for( i=0; i < tx->length ; i++) {
-	    CANout( board, frame.extframe.canxdata[R_OFF * i], tx->data[i]);
-	    	/* SLOW_DOWN_IO; SLOW_DOWN_IO; */
-	}
-    } else {
-	for( i=0; i < tx->length ; i++) {
-	    CANout( board, frame.stdframe.candata[R_OFF * i], tx->data[i]);
-	    	/* SLOW_DOWN_IO; SLOW_DOWN_IO; */
-	}
-    }
-    /* - /end --------------------------------------------------------- */
-    CANout(board, cancmd, CAN_TRANSMISSION_REQUEST );
-
-  DBGout();return i;
-}
-
 int CAN_VendorInit (int minor)
 {
     DBGin("CAN_VendorInit");
@@ -450,85 +373,59 @@ int CAN_VendorInit (int minor)
     DBGout(); return 0;
 }
 
+static int txinprogress;
 
-
-/* called from within CAN_Interrupt on transmit interrupt, and
-   from within the delayed_send tasklet */
-static void
-send_tx_queue_msg (int minor)
+/* called from qconsume to transmit one message on transmit interrupt, and */
+int sendcanmsg(canmsg_t *msg, void *data)
 {
-    int i;
-    unsigned int id;
-    int ext;
+	unsigned long id;
+	int minor;
+	int ext, i;
+	uint8 tx2reg;
 
-    msg_fifo_t	 *TxFifo = &Tx_Buf[minor];
-
-    uint8 tx2reg;
-
-    tx2reg = (TxFifo->data[TxFifo->tail]).length;
-    if( (TxFifo->data[TxFifo->tail]).flags & MSG_RTR) {
-	tx2reg |= CAN_RTR;
-    }
-    ext = (TxFifo->data[TxFifo->tail]).flags & MSG_EXT;
-    id = (TxFifo->data[TxFifo->tail]).id;
-    if(ext) {
-	DBGprint(DBG_DATA, ("---> send ext message"));
-	CANout(minor, frameinfo, CAN_EFF + tx2reg);
-	CANout(minor, frame.extframe.canid1, (uint8)(id >> 21));
-	CANout(minor, frame.extframe.canid2, (uint8)(id >> 13));
-	CANout(minor, frame.extframe.canid3, (uint8)(id >> 5));
-	CANout(minor, frame.extframe.canid4, (uint8)(id << 3) & 0xff);
-    } else {
-	DBGprint(DBG_DATA, ("---> send std message"));
-	CANout(minor, frameinfo, CAN_SFF + tx2reg);
-	CANout(minor, frame.stdframe.canid1, (uint8)((id) >> 3) );
-	CANout(minor, frame.stdframe.canid2, (uint8)(id << 5 ) & 0xe0);
-    }
-
-
-    tx2reg &= 0x0f;		/* restore length only */
-    if(ext) {
-	for( i=0; i < tx2reg ; i++) {
-	    CANout(minor, frame.extframe.canxdata[R_OFF * i],
-		   (TxFifo->data[TxFifo->tail]).data[i]);
+	minor = (int)data;
+	if (msg->timestamp.tv_usec != 0) {
+		/* start delayed worker */
+		return 0;	/* not consumed */
 	}
-    } else {
-	for( i=0; i < tx2reg ; i++) {
-	    CANout(minor, frame.stdframe.candata[R_OFF * i],
-		   (TxFifo->data[TxFifo->tail]).data[i]);
+
+	if (msg->length > 8)
+		msg->length = 8;
+	tx2reg = msg->length;
+	if (msg->flags & MSG_RTR) {
+		tx2reg |= CAN_RTR;
 	}
-    }
+	ext = msg->flags & MSG_EXT;
+	id = msg->id;
+	if (ext) {
+		DBGprint(DBG_DATA, ("---> send ext message"));
+		CANout(minor, frameinfo, CAN_EFF + tx2reg);
+		CANout(minor, frame.extframe.canid1, (uint8) (id >> 21));
+		CANout(minor, frame.extframe.canid2, (uint8) (id >> 13));
+		CANout(minor, frame.extframe.canid3, (uint8) (id >> 5));
+		CANout(minor, frame.extframe.canid4, (uint8) (id << 3) & 0xff);
+	} else {
+		DBGprint(DBG_DATA, ("---> send std message"));
+		CANout(minor, frameinfo, CAN_SFF + tx2reg);
+		CANout(minor, frame.stdframe.canid1, (uint8) ((id) >> 3));
+		CANout(minor, frame.stdframe.canid2, (uint8) (id << 5) & 0xe0);
+	}
 
-    CANout (minor, cancmd, CAN_TRANSMISSION_REQUEST);
+	if (ext) {
+		for (i = 0; i < msg->length; i++) {
+			CANout(minor, frame.extframe.canxdata[R_OFF * i], msg->data[i]);
+		}
+	} else {
+		for (i = 0; i < msg->length; i++) {
+			CANout(minor, frame.stdframe.candata[R_OFF * i], msg->data[i]);
+		}
+	}
 
-    TxFifo->free[TxFifo->tail] = BUF_EMPTY; /* now this entry is EMPTY */
-    TxFifo->tail = ++(TxFifo->tail) % TxFifo->size;
+	CANout(minor, cancmd, CAN_TRANSMISSION_REQUEST);
+	txinprogress |= 1<<minor;
+
+	return 1;	/* consumed msg */
 }
-
-
-
-/* tasklet for the delayed transmission of a message */
-static void
-delayed_send (unsigned long minor)
-{
-    unsigned long flags;
-
-    msg_fifo_t	 *TxFifo = &Tx_Buf[minor];
-
-    /* enter critical section */
-    save_flags(flags);cli();
-
-    if (TxFifo->data[TxFifo->tail].timestamp.tv_usec > 1000)
-	mdelay (TxFifo->data[TxFifo->tail].timestamp.tv_usec / 1000);
-    else
-	udelay (TxFifo->data[TxFifo->tail].timestamp.tv_usec);
-
-    send_tx_queue_msg (minor);
-
-    /* leave critical section */
-    restore_flags(flags);
-}
-
 
 
 
@@ -569,11 +466,10 @@ int CAN_Interrupt ( int irq, void *dev_id)
 {
 int minor;
 int i;
-unsigned long flags;
 int ext;			/* flag for extended message format */
 int irqsrc, dummy;
 msg_fifo_t   *RxFifo; 
-msg_fifo_t   *TxFifo;
+	MsgQ *txq;
 #if CAN_USE_FILTER
 msg_filter_t *RxPass;
 unsigned int id;
@@ -587,8 +483,8 @@ int first = 0;
 #endif
 
     minor = *(int *)dev_id;
-    RxFifo = &Rx_Buf[minor]; 
-    TxFifo = &Tx_Buf[minor];
+    RxFifo = &Rx_Buf[minor];
+    txq = &txqueues[minor];
 #if CAN_USE_FILTER
     RxPass = &Rx_Filter[minor];
 #endif 
@@ -709,7 +605,7 @@ int first = 0;
 
 	if (!err) {
 	    printk (" ACT");
-	    if (TxFifo->active
+	    if ((txinprogress&1<<minor)
 		&& !(irqsrc & CAN_TRANSMIT_INT)
 		&& (CANin(minor, canstat) & CAN_TRANSMIT_BUFFER_ACCESS)) {
 
@@ -742,42 +638,14 @@ int first = 0;
 
 
 
-    /*========== transmit interrupt */
-    if( irqsrc & CAN_TRANSMIT_INT ) {
-	if( TxFifo->free[TxFifo->tail] == BUF_EMPTY ) {
-	    /* printk("TXE\n"); */
-	    TxFifo->status = BUF_EMPTY;
-            TxFifo->active = 0;
-
-	    /* wake up the user sleeping in select call; tx-queue is
-	       empty, user may fill the tx-queue again */
-	    wake_up_interruptible (&CanWait[minor]);
-            goto Tx_done;
-	} else {
-	    /* printk("TX\n"); */
+	/*========== transmit interrupt */
+	if( irqsrc & CAN_TRANSMIT_INT ) {
+		txinprogress &= ~(1<<minor);
+		qconsume(txq, sendcanmsg, (void*)minor);
+		if (qlen(txq) <= qsize(txq)/2)
+			wake_up_interruptible (&CanWait[minor]);
 	}
 
-        /* enter critical section */
-        save_flags(flags);cli();
-
-
-	/* if the user wants the current message to be delayed for
-	   some micro-seconds, a tasklet will be registered to handle
-	   the delayed sending */
-	if (TxFifo->data[TxFifo->tail].timestamp.tv_usec) {
-	    static struct tasklet_struct delayed_send_tasklet[MAX_CHANNELS];
-
-	    tasklet_init (&delayed_send_tasklet[minor], delayed_send, minor);
-
-	    tasklet_hi_schedule (&delayed_send_tasklet[minor]);
-	}
-	else /* no delay, send it immediately */
-	    send_tx_queue_msg (minor);
-
-        /* leave critical section */
-	restore_flags(flags);
-   }
-Tx_done:
    /*========== error status */
     if( irqsrc & CAN_OVERRUN_INT ) {
    int s;

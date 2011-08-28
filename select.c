@@ -10,12 +10,14 @@
 */
 
 #include "defs.h"
+#include "msgq.h"
 
 unsigned int can_select( __LDDK_SELECT_PARAM )
 {
 
 unsigned int minor = __LDDK_MINOR;
 msg_fifo_t *RxFifo = &Rx_Buf[minor];
+MsgQ *txq = &txqueues[minor];
     DBGin("can_select");
 	    DBGprint(DBG_DATA,("minor = %d", minor));
 #ifdef DEBUG
@@ -35,9 +37,6 @@ msg_fifo_t *RxFifo = &Rx_Buf[minor];
     {
       int ret_mask = 0;
 
-      msg_fifo_t   *TxFifo = &Tx_Buf[minor];
-
-
       if( RxFifo->head != RxFifo->tail ) {
 	  /* fifo has some telegrams */
 	  /* Return a bit mask
@@ -56,18 +55,9 @@ msg_fifo_t *RxFifo = &Rx_Buf[minor];
 	   */
 	  ret_mask |= POLLIN | POLLRDNORM;
       }
-      if(!TxFifo->active) {
-	  /* Tx-queue is empty, the user may fill it again.
+      if (qlen(txq) <= qsize(txq)/2) {
+	  /* Tx-queue is half-empty, the user may fill it again.
 	   *
-	   * The condition above has been used in favor of
-	   *   (TxFifo->free[TxFifo->head] != BUF_FULL)
-	   * to allow the process using this driver to sleep larger
-	   * amounts of time in a select call. The user will be waken
-	   * up in CAN_Interrupt if a transmit interrupt has occured and
-	   * the tx_queue has become empty.
-	   *
-	   */
-	  /*
 	   * POLLOUT This bit is set in the return value if the device
 	   * can be written to without blocking.
 	   *
