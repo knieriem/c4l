@@ -16,9 +16,6 @@
 #include <linux/pci.h>
 #include ",,sysctl.h"
 
- volatile int irq2minormap[15];
- volatile int irq2pidmap[15];
-
  /* each CAN channel has one wait_queue for read() */
  /* #define wait_queue_head_t     struct wait_queue * */
  wait_queue_head_t CanWait[MAX_CHANNELS];
@@ -64,8 +61,6 @@ int err=0;
     err = kapi_request_irq(irq, "Can", &Can_minors[minor]);
     if( !err ){
 /* printk("Requested IRQ[%d]: %d @ 0x%x", minor, irq, handler); */
-      irq2minormap[irq] = minor;
-      irq2pidmap[irq] = current->pid;
       DBGprint(DBG_BRANCH,("Requested IRQ: %d", irq));
       IRQ_requested[minor] = 1;
     }

@@ -137,8 +137,6 @@ extern __LDDK_CLOSE_TYPE can_close (__LDDK_CLOSE_PARAM);
 
 #include "can4linux.h"
 /************************************************************************/
- extern volatile int irq2minormap[];
- extern volatile int irq2pidmap[];
  extern u32 Can_pitapci_control[];
 
 

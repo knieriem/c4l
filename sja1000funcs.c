@@ -584,7 +584,6 @@ int first = 0;
     outb(0xff, 0x378);  
 #endif
 
-    /*  minor = irq2minormap[irq]; */
     minor = *(int *)dev_id;
     RxFifo = &Rx_Buf[minor]; 
     TxFifo = &Tx_Buf[minor];
