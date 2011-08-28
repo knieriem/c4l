@@ -177,76 +177,60 @@ canregs_t* regbase=0;
 
 int core_init(void)
 {
-int i;
-#if LDDK_USE_BLKREQUEST
-  extern int Can_request ();
-#endif
+	int i;
 
-  DBGin("init_module");
-      if( kapi_register_chrdev(Can_major, "Can") ) {
-	  printk("can't get Major %d\n", Can_major);
-      return(-EIO);
-    }
-    {
+	DBGin("init_module");
+	if (kapi_register_chrdev(Can_major, "Can")) {
+		printk("can't get Major %d\n", Can_major);
+		return(-EIO);
+	}
 	printk(__CAN_TYPE__ "CAN Driver " VERSION " (c) " __DATE__  "\n");
 	printk(" H.J. Oertel (oe@port.de)\n");
-	printk(" C.Schroeter (clausi@chemie.fu-berlin.de), H.D. Stich\n"); 
-	    
-    }
+	printk(" C.Schroeter (clausi@chemie.fu-berlin.de), H.D. Stich\n");
 
-    /*
-    initialize the variables layed down in /proc/sys/Can
-    */
-    for (i = 0; i < MAX_CHANNELS; i++) {
-	IOModel[i]       = IO_MODEL;
-	Baud[i]          = 125;
-	AccCode[i]       = AccMask[i] =  0xffffffff;
-	Timeout[i]       = 100;
-	Outc[i]          = CAN_OUTC_VAL;
-	candevs[i].minor = i;
-	candevs[i].requestedIrq = 0;
-    }
-    IOModel[i] = '\0';
-
+	/*
+	 * initialize the variables layed down in /proc/sys/Can
+	 */
+	for (i = 0; i < MAX_CHANNELS; i++) {
+		IOModel[i]       = IO_MODEL;
+		Baud[i]          = 125;
+		AccCode[i]       = AccMask[i] =  0xffffffff;
+		Timeout[i]       = 100;
+		Outc[i]          = CAN_OUTC_VAL;
+		candevs[i].minor = i;
+		candevs[i].requestedIrq = 0;
+	}
+	IOModel[i] = '\0';
 
 #if CAN4LINUX_PCI
-    /* make some syctl entries read only
-     * IRQ number
-     * Base address
-     * and access mode
-     * are fixed and provided by the PCI BIOS
-     */
-    can_sysctl_table[SYSCTL_IRQ - 1].mode = 0444;
-    can_sysctl_table[SYSCTL_BASE - 1].mode = 0444;
-    /* printk("CAN pci test loaded\n"); */
-    /* dbgMask = 0; */
-    pcimod_scan();
+	/* make some syctl entries read only
+	 * IRQ number
+	 * Base address
+	 * and access mode
+	 * are fixed and provided by the PCI BIOS
+	 */
+	can_sysctl_table[SYSCTL_IRQ - 1].mode = 0444;
+	can_sysctl_table[SYSCTL_BASE - 1].mode = 0444;
+	/* printk("CAN pci test loaded\n"); */
+	/* dbgMask = 0; */
+	pcimod_scan();
 #endif
 
-    register_systables();
+	register_systables();
 
-#if LDDK_USE_BLKREQUEST
-    blk_dev[Can_major].request_fn = Can_request ;
-#endif
-
-    DBGout();
-    return 0;
+	DBGout();
+	return 0;
 }
 
 void core_cleanup(void)
 {
-  DBGin("cleanup_module");
-  if (inuse()) {
-    printk("Can : device busy, remove delayed\n");
-  }
+	DBGin("cleanup_module");
+	if (inuse()) {
+		printk("Can : device busy, remove delayed\n");
+	}
+	/* printk("CAN: removed successfully \n"); */
 
-  /* printk("CAN: removed successfully \n"); */
-	
-
-#if LDDK_USE_BLKREQUEST
-    blk_dev[Can_major].request_fn = NULL ;
-#endif
-    kapi_unregister_chrdev(Can_major, "Can");
-    unregister_systables();
-    DBGout();
+	kapi_unregister_chrdev(Can_major, "Can");
+	unregister_systables();
+	DBGout();
 }
