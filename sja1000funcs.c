@@ -371,9 +371,6 @@ int CAN_VendorInit(Dev *dev)
 	return 0;
 }
 
-static int txinprogress;
-static int rxstatus[MAX_CHANNELS];
-
 /* called from qconsume to transmit one message on transmit interrupt, and */
 int sendcanmsg(canmsg_t *msg, void *v)
 {
@@ -422,7 +419,7 @@ int sendcanmsg(canmsg_t *msg, void *v)
 	}
 
 	CANout(minor, cancmd, CAN_TRANSMISSION_REQUEST);
-	txinprogress |= 1<<minor;
+	dev->txinprogress = 1;
 
 	return 1;	/* consumed msg */
 }
@@ -483,15 +480,15 @@ void errmsg(canmsg_t *msg, void *v)
 	/* msg->data[i] = 0; */
 }
 
-void rxproduce(MsgQ *q, void (*f)(canmsg_t*, void*), void *v)
+void rxproduce(Dev *dev, void (*f)(canmsg_t*, void*), void *v)
 {
 	Msginf *inf = v;
 
-	if (qproduce(q, f, inf)) {
-		rxstatus[inf->minor] = BUF_OK;
+	if (qproduce(&dev->rxq, f, inf)) {
+		dev->rxstatus = BUF_OK;
 		wake_up_interruptible(&CanWait[inf->minor]);
 	} else {
-		rxstatus[inf->minor] = BUF_OVERRUN;
+		dev->rxstatus = BUF_OVERRUN;
 		printk("CAN[%d] RX: FIFO overrun\n", inf->minor);
 	}
 }
@@ -577,10 +574,10 @@ int first = 0;
 #endif
 
 	/* preset flags */
-	msginf.flags = rxstatus[minor] & BUF_OVERRUN ? MSG_BOVR : 0;
+	msginf.flags = dev->rxstatus & BUF_OVERRUN ? MSG_BOVR : 0;
 
 	if (irqsrc & CAN_RECEIVE_INT) {
-		rxproduce(&dev->rxq, readcanmsg, &msginf);
+		rxproduce(dev, readcanmsg, &msginf);
 		if (CANin(minor, canstat) & CAN_DATA_OVERRUN) {
 			printk("CAN[%d] Rx: Overrun Status \n", minor);
 			CANout(minor, cancmd, CAN_CLEAR_OVERRUN_STATUS);
@@ -612,7 +609,7 @@ int first = 0;
 
 	if (!err) {
 	    printk (" ACT");
-	    if ((txinprogress&1<<minor)
+	    if (dev->txinprogress
 		&& !(irqsrc & CAN_TRANSMIT_INT)
 		&& (CANin(minor, canstat) & CAN_TRANSMIT_BUFFER_ACCESS)) {
 
@@ -630,11 +627,11 @@ int first = 0;
 	    msginf.flags += err;
 
 	printk ("\n");
-	rxproduce(&dev->rxq, errmsg, &msginf);
+	rxproduce(dev, errmsg, &msginf);
     }
 
 	if (irqsrc & CAN_TRANSMIT_INT) {
-		txinprogress &= ~(1<<minor);
+		dev->txinprogress = 0;
 		qconsume(&dev->txq, sendcanmsg, dev);
 		if (qlen(&dev->txq) <= qsize(&dev->txq)/2)
 			wake_up_interruptible (&CanWait[minor]);
@@ -650,7 +647,7 @@ int first = 0;
 		s = CANin(minor,canstat);
 		if (s & CAN_DATA_OVERRUN)
 			msginf.flags += MSG_OVR;
-		rxproduce(&dev->rxq, errmsg, &msginf);
+		rxproduce(dev, errmsg, &msginf);
 
 		CANout(minor, cancmd, CAN_CLEAR_OVERRUN_STATUS );
 	}

@@ -176,6 +176,8 @@ struct Dev {
 	int	requestedIrq;
 	MsgQ	rxq;
 	MsgQ	txq;
+	int	txinprogress;
+	int	rxstatus;
 };
 
 extern	Dev*	filedev(struct file*);
