@@ -19,6 +19,13 @@
 #include "msgq.h"
 #include ",,sysctl.h"
 
+typedef struct Msginf Msginf;
+struct Msginf {
+	int	flags;
+	int	minor;
+	struct timeval tstamp;
+};
+
 /* int	CAN_Open = 0; */
 
 /* timing values */
@@ -83,36 +90,26 @@ int CAN_ShowStat (int board)
 * occur until the reset mode is cancelled again.
 */
 
-int can_GetStat(
-	struct inode *inode,
-	CanStatusPar_t *stat
-	)
+int can_GetStat(struct inode *inode, CanStatusPar_t *stat)
 {
-unsigned int board = MINOR(inode->i_rdev);	
-msg_fifo_t *Fifo;
+	unsigned int board = MINOR(inode->i_rdev);	
 
-    stat->type = CAN_TYPE_SJA1000;
+	stat->type = CAN_TYPE_SJA1000;
 
-    stat->baud = Baud[board];
-    /* printk(" STAT ST %d\n", CANin(board, canstat)); */
-    stat->status = CANin(board, canstat);
-    /* printk(" STAT EWL %d\n", CANin(board, errorwarninglimit)); */
-    stat->error_warning_limit = CANin(board, errorwarninglimit);
-    stat->rx_errors = CANin(board, rxerror);
-    stat->tx_errors = CANin(board, txerror);
-    stat->error_code= CANin(board, errorcode);
+	stat->baud = Baud[board];
+	/* printk(" STAT ST %d\n", CANin(board, canstat)); */
+	stat->status = CANin(board, canstat);
+	/* printk(" STAT EWL %d\n", CANin(board, errorwarninglimit)); */
+	stat->error_warning_limit = CANin(board, errorwarninglimit);
+	stat->rx_errors = CANin(board, rxerror);
+	stat->tx_errors = CANin(board, txerror);
+	stat->error_code= CANin(board, errorcode);
 
-    /* Disable CAN Interrupts */
-    /* !!!!!!!!!!!!!!!!!!!!! */
-    Fifo = &Rx_Buf[board];
-    stat->rx_buffer_size = Fifo->size;		/**< size of rx buffer  */
-    /* number of messages */
-    stat->rx_buffer_used =
-    	(Fifo->head < Fifo->tail)
-    	? (Fifo->size - Fifo->tail + Fifo->head) : (Fifo->head - Fifo->tail);
-    stat->tx_buffer_size = qsize(&txqueues[board]);		/* size of tx buffer  */
-    stat->tx_buffer_used = qlen(&txqueues[board]);		/* number of messages */
-    return 0;
+	stat->rx_buffer_size = qsize(&txqueues[board]);
+	stat->rx_buffer_used = qlen(&txqueues[board]);
+	stat->tx_buffer_size = qsize(&txqueues[board]);
+	stat->tx_buffer_used = qlen(&txqueues[board]);
+	return 0;
 }
 
 int CAN_ChipReset (int board)
@@ -374,6 +371,7 @@ int CAN_VendorInit (int minor)
 }
 
 static int txinprogress;
+static int rxstatus[MAX_CHANNELS];
 
 /* called from qconsume to transmit one message on transmit interrupt, and */
 int sendcanmsg(canmsg_t *msg, void *data)
@@ -427,7 +425,74 @@ int sendcanmsg(canmsg_t *msg, void *data)
 	return 1;	/* consumed msg */
 }
 
+void readcanmsg(canmsg_t *msg, void *data)
+{
+	Msginf *inf = data;
+	int ext, i;
+	int reg, minor;
 
+	minor = inf->minor;
+	msg->timestamp = inf->tstamp;
+	msg->flags = inf->flags;
+
+	reg  = CANin(minor, frameinfo );
+	if (reg & CAN_RTR) {
+		msg->flags |= MSG_RTR;
+	}
+	if (reg & CAN_EFF) {
+		msg->flags |= MSG_EXT;
+	}
+	ext = reg & CAN_EFF;
+	if(ext) {
+	    msg->id =
+	          ((unsigned int)(CANin(minor, frame.extframe.canid1)) << 21)
+		+ ((unsigned int)(CANin(minor, frame.extframe.canid2)) << 13)
+		+ ((unsigned int)(CANin(minor, frame.extframe.canid3)) << 5)
+		+ ((unsigned int)(CANin(minor, frame.extframe.canid4)) >> 3);
+	} else {
+	    msg->id =
+        	  ((unsigned int)(CANin(minor, frame.stdframe.canid1 )) << 3) 
+        	+ ((unsigned int)(CANin(minor, frame.stdframe.canid2 )) >> 5);
+	}
+
+        reg  &= 0x0f;			/* strip length code */ 
+        msg->length = reg;
+
+        reg %= 9;	/* limit count to 8 bytes */
+        for (i=0; i < reg; i++) {
+		/* SLOW_DOWN_IO;SLOW_DOWN_IO; */
+		if(ext) {
+			msg->data[i] = CANin(minor, frame.extframe.canxdata[R_OFF * i]);
+		} else {
+			msg->data[i] = CANin(minor, frame.stdframe.candata[R_OFF * i]);
+		}
+	}
+        CANout(minor, cancmd, CAN_RELEASE_RECEIVE_BUFFER );
+}
+
+void errmsg(canmsg_t *msg, void *v)
+{
+	Msginf *inf = v;
+
+	msg->id = 0xFFFFFFFF;
+	msg->timestamp = inf->tstamp;
+	msg->flags = inf->flags;
+	msg->length = 0;
+	/* msg->data[i] = 0; */
+}
+
+void rxproduce(MsgQ *q, void (*f)(canmsg_t*, void*), void *v)
+{
+	Msginf *inf = v;
+
+	if (qproduce(q, f, inf)) {
+		rxstatus[inf->minor] = BUF_OK;
+		wake_up_interruptible(&CanWait[inf->minor]);
+	} else {
+		rxstatus[inf->minor] = BUF_OVERRUN;
+		printk("CAN[%d] RX: FIFO overrun\n", inf->minor);
+	}
+}
 
 /*
  * The plain SJA1000 interrupt
@@ -465,10 +530,9 @@ int sendcanmsg(canmsg_t *msg, void *data)
 int CAN_Interrupt ( int irq, void *dev_id)
 {
 int minor;
-int i;
-int ext;			/* flag for extended message format */
-int irqsrc, dummy;
-msg_fifo_t   *RxFifo; 
+int irqsrc;
+	Msginf msginf;
+	MsgQ *rxq;
 	MsgQ *txq;
 #if CAN_USE_FILTER
 msg_filter_t *RxPass;
@@ -483,11 +547,13 @@ int first = 0;
 #endif
 
     minor = *(int *)dev_id;
-    RxFifo = &Rx_Buf[minor];
+    rxq = &rxqueues[minor];
     txq = &txqueues[minor];
 #if CAN_USE_FILTER
     RxPass = &Rx_Filter[minor];
 #endif 
+
+    msginf.minor = minor;
 
     /* Disable PITA Interrupt */
     /* writel(0x00000000, Can_pitapci_control[minor] + 0x0); */
@@ -502,85 +568,27 @@ int first = 0;
     DBGprint(DBG_DATA, (" => got IRQ[%d]: 0x%0x", minor, irqsrc));
     /* Can_dump(minor); */
 
-    do_gettimeofday(&(RxFifo->data[RxFifo->head]).timestamp);
+	do_gettimeofday(&msginf.tstamp);
 
 #if 0
-    /* how often do we lop through the ISR ? */
-    if(first) printk("n = %d", first);
-    first++;
+	/* how often do we lop through the ISR ? */
+	if (first)
+		printk("n = %d", first);
+	first++;
 #endif
 
-    /* preset flags */
-    (RxFifo->data[RxFifo->head]).flags =
-        		(RxFifo->status & BUF_OVERRUN ? MSG_BOVR : 0);
+	/* preset flags */
+	msginf.flags = rxstatus[minor] & BUF_OVERRUN ? MSG_BOVR : 0;
 
-    /*========== receive interrupt */
-    if( irqsrc & CAN_RECEIVE_INT ) {
-        /* fill timestamp as first action */
-
-	dummy  = CANin(minor, frameinfo );
-        if( dummy & CAN_RTR ) {
-	    (RxFifo->data[RxFifo->head]).flags |= MSG_RTR;
+	if (irqsrc & CAN_RECEIVE_INT) {
+		rxproduce(rxq, readcanmsg, &msginf);
+		if (CANin(minor, canstat) & CAN_DATA_OVERRUN) {
+			printk("CAN[%d] Rx: Overrun Status \n", minor);
+			CANout(minor, cancmd, CAN_CLEAR_OVERRUN_STATUS);
+		}
 	}
 
-        if( dummy & CAN_EFF ) {
-	    (RxFifo->data[RxFifo->head]).flags |= MSG_EXT;
-	}
-	ext = (dummy & CAN_EFF);
-	if(ext) {
-	    (RxFifo->data[RxFifo->head]).id =
-	          ((unsigned int)(CANin(minor, frame.extframe.canid1)) << 21)
-		+ ((unsigned int)(CANin(minor, frame.extframe.canid2)) << 13)
-		+ ((unsigned int)(CANin(minor, frame.extframe.canid3)) << 5)
-		+ ((unsigned int)(CANin(minor, frame.extframe.canid4)) >> 3);
-	} else {
-	    (RxFifo->data[RxFifo->head]).id =
-        	  ((unsigned int)(CANin(minor, frame.stdframe.canid1 )) << 3) 
-        	+ ((unsigned int)(CANin(minor, frame.stdframe.canid2 )) >> 5);
-	}
-	/* get message length */
-        dummy  &= 0x0f;			/* strip length code */ 
-        (RxFifo->data[RxFifo->head]).length = dummy;
-
-        dummy %= 9;	/* limit count to 8 bytes */
-        for( i = 0; i < dummy; i++) {
-            /* SLOW_DOWN_IO;SLOW_DOWN_IO; */
-	    if(ext) {
-		(RxFifo->data[RxFifo->head]).data[i] =
-			CANin(minor, frame.extframe.canxdata[R_OFF * i]);
-	    } else {
-		(RxFifo->data[RxFifo->head]).data[i] =
-			CANin(minor, frame.stdframe.candata[R_OFF * i]);
-	    }
-	}
-	RxFifo->status = BUF_OK;
-        RxFifo->head = (RxFifo->head+1) % RxFifo->size;
-
-	if(RxFifo->head == RxFifo->tail) {
-		printk("CAN[%d] RX: FIFO overrun", minor);
-		RxFifo->status = BUF_OVERRUN;
-        } 
-        /*---------- kick the select() call  -*/
-        /* __wake_up(struct wait_queue ** p, unsigned int mode); */
-        /* __wake_up(struct wait_queue_head_t *q, unsigned int mode); */
-        /*
-        void wake_up(struct wait_queue**condition)                                                                  
-        */
-        /* This function will wake up all processes
-           that are waiting on this event queue,
-           that are in interruptible sleep
-        */
-        wake_up_interruptible(  &CanWait[minor] ); 
-
-        CANout(minor, cancmd, CAN_RELEASE_RECEIVE_BUFFER );
-        if(CANin(minor, canstat) & CAN_DATA_OVERRUN ) {
-		 printk("CAN[%d] Rx: Overrun Status \n", minor);
-		 CANout(minor, cancmd, CAN_CLEAR_OVERRUN_STATUS );
-	}
-
-   }
-
-    if( irqsrc & CAN_ERROR_WARN_INT ) {
+    if (irqsrc & CAN_ERROR_WARN_INT) {
 	int s;
 	int err = 0;
 	printk("CAN[%d]: ErrWarn!", minor);
@@ -620,55 +628,33 @@ int first = 0;
 	    }
 	}
 	else
-	    (RxFifo->data[RxFifo->head]).flags += err;
+	    msginf.flags += err;
 
 	printk ("\n");
-
-	/* do nothing, but check FIFO */
-	(RxFifo->data[RxFifo->head]).id = 0xFFFFFFFF;
-	/* (RxFifo->data[RxFifo->head]).length = 0; */
-	/* (RxFifo->data[RxFifo->head]).data[i] = 0; */
-	RxFifo->status = BUF_OK;
-	RxFifo->head = (RxFifo->head+1) % RxFifo->size;
-	if(RxFifo->head == RxFifo->tail) {
-	    printk("CAN[%d] RX: FIFO overrun\n", minor);
-            RxFifo->status = BUF_OVERRUN;
-	}
+	rxproduce(rxq, errmsg, &msginf);
     }
 
-
-
-	/*========== transmit interrupt */
-	if( irqsrc & CAN_TRANSMIT_INT ) {
+	if (irqsrc & CAN_TRANSMIT_INT) {
 		txinprogress &= ~(1<<minor);
 		qconsume(txq, sendcanmsg, (void*)minor);
 		if (qlen(txq) <= qsize(txq)/2)
 			wake_up_interruptible (&CanWait[minor]);
 	}
 
-   /*========== error status */
-    if( irqsrc & CAN_OVERRUN_INT ) {
-   int s;
-	printk("CAN[%d]: Overrun!\n", minor);
-	Overrun[minor]++;
+	if (irqsrc & CAN_OVERRUN_INT) {
+		int s;
 
-	/* insert error */
-	s = CANin(minor,canstat);
-	if(s & CAN_DATA_OVERRUN)
-	    (RxFifo->data[RxFifo->head]).flags += MSG_OVR;
+		printk("CAN[%d]: Overrun!\n", minor);
+		Overrun[minor]++;
 
-	(RxFifo->data[RxFifo->head]).id = 0xFFFFFFFF;
-	/* (RxFifo->data[RxFifo->head]).length = 0; */
-	/* (RxFifo->data[RxFifo->head]).data[i] = 0; */
-	RxFifo->status = BUF_OK;
-	RxFifo->head = (RxFifo->head+1) % RxFifo->size;
-	if(RxFifo->head == RxFifo->tail) {
-            printk("CAN[%d] RX: FIFO overrun\n", minor);
-            RxFifo->status = BUF_OVERRUN;
+		/* insert error */
+		s = CANin(minor,canstat);
+		if (s & CAN_DATA_OVERRUN)
+			msginf.flags += MSG_OVR;
+		rxproduce(rxq, errmsg, &msginf);
+
+		CANout(minor, cancmd, CAN_CLEAR_OVERRUN_STATUS );
 	}
-
-	CANout(minor, cancmd, CAN_CLEAR_OVERRUN_STATUS );
-    }
    } while( (irqsrc = CANin(minor, canirq)) != 0);
 
 /* IRQdone: */

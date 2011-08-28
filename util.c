@@ -24,8 +24,8 @@
 
 
 
-MsgQ   txqueues[MAX_CHANNELS];
-msg_fifo_t   Rx_Buf[MAX_CHANNELS];
+MsgQ txqueues[MAX_CHANNELS];
+MsgQ rxqueues[MAX_CHANNELS];
 #ifdef CAN_USE_FILTER
     msg_filter_t Rx_Filter[MAX_CHANNELS]; 
 #endif
@@ -116,32 +116,21 @@ create_msg_fifo (msg_fifo_t *fifo)
 
 int Can_FifoInit(int minor)
 {
-    DBGin("Can_FifoInit");
-       Rx_Buf[minor].head = 0;
-       Rx_Buf[minor].tail = 0;
-       Rx_Buf[minor].status = 0;
-       Rx_Buf[minor].active = 0;
-
-	Rx_Buf[minor].size = MAX_RX_BUFSIZE;
-
-	if (create_msg_fifo (&Rx_Buf[minor]) == -1 
-	    ||	qcreate(&txqueues[minor], MAX_TX_BUFSIZE, 1) == -1)
-	{
+	DBGin("Can_FifoInit");
+	if (qcreate(&rxqueues[minor], MAX_RX_BUFSIZE, 0) == -1 || qcreate(&txqueues[minor], MAX_TX_BUFSIZE, 1) == -1) {
 		DBGout();
 		return -1;
 	}
 
-    DBGout();
-    return 0;
+	DBGout();
+	return 0;
 }
 
 
 int Can_FifoCleanup(int minor)
 {
 	qfree(&txqueues[minor]);
-
-	kfree (Rx_Buf[minor].data);
-	kfree (Rx_Buf[minor].free);
+	qfree(&rxqueues[minor]);
 	return 0;
 }
 

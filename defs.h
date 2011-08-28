@@ -187,9 +187,6 @@ extern __LDDK_CLOSE_TYPE can_close (__LDDK_CLOSE_PARAM);
  extern msg_filter_t Rx_Filter[];
 #endif
 
- extern msg_fifo_t Tx_Buf[];
- extern msg_fifo_t Rx_Buf[];
-
  extern int Can_RequestIrq(int minor, int irq);
 
  extern wait_queue_head_t CanWait[];

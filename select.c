@@ -16,7 +16,7 @@ unsigned int can_select( __LDDK_SELECT_PARAM )
 {
 
 unsigned int minor = __LDDK_MINOR;
-msg_fifo_t *RxFifo = &Rx_Buf[minor];
+MsgQ *rxq = &rxqueues[minor];
 MsgQ *txq = &txqueues[minor];
     DBGin("can_select");
 	    DBGprint(DBG_DATA,("minor = %d", minor));
@@ -37,7 +37,7 @@ MsgQ *txq = &txqueues[minor];
     {
       int ret_mask = 0;
 
-      if( RxFifo->head != RxFifo->tail ) {
+      if (qlen(rxq) > 0) {
 	  /* fifo has some telegrams */
 	  /* Return a bit mask
 	   * describing operations that could be immediately performed

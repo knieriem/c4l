@@ -21,3 +21,4 @@ extern	int	qlen(MsgQ*);
 extern	int	qsize(MsgQ*);
 
 extern	MsgQ	txqueues[MAX_CHANNELS];
+extern	MsgQ	rxqueues[MAX_CHANNELS];
