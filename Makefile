@@ -101,7 +101,7 @@ LINK	= $(ECHO) "--- Linking "$@"..." ; $(TOOLS)gcc
 
 CC	= $(COMPILE)
 
-all: $(CAN_MODULE)
+all: info $(CAN_MODULE)
 
 # That are the finally used flags for compiling the sources
 CFLAGS = -O2 -Wall -Wstrict-prototypes -fomit-frame-pointer\
@@ -121,7 +121,7 @@ export \
 	CAN_MAJOR\
 	DVERSION\
 
-all:
+all: info
 	make -C $(LINUXSRC) 'M=$(CURDIR)' modules
 
 endif
@@ -146,3 +146,6 @@ distclean: clean
 	cd trm816; make clean
 
 endif
+
+info:
+	$(shell $(SHELL) ./linux-info.sh)
