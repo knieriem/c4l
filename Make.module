@@ -21,6 +21,7 @@ OBJS=\
 	error.o\
 	util.o\
 	sysctl.o\
+	msgq.o\
 	$(DEV)funcs.o\
 
 
