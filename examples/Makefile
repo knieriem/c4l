@@ -3,8 +3,8 @@
 CC=powerpc-linux-gcc
 CC=gcc
 
-CFLAGS = -Wall -I../src
-CFLAGS = -Wall -I../src -DUSE_RT_SCHEDULING
+CFLAGS = -Wall -I..
+CFLAGS = -Wall -I.. -DUSE_RT_SCHEDULING
 
 
 all: ctest baud can_send acceptance noiser receive transmit \
