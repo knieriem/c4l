@@ -16,7 +16,6 @@
 #include ",,sysctl.h"
 
 int can_Command(struct inode *inode, int cmd);
-int can_Send(struct inode *inode, canmsg_t *Tx);
 int can_Receive(struct inode *inode, canmsg_t *Rx);
 int can_GetStat(struct inode *inode, CanStatusPar_t *s);
 int can_Config(struct inode *inode, int target, unsigned long val1,
@@ -51,8 +50,6 @@ start, stop and reset the CAN controller chip
 like acceptance filtering, bit timings, mode of the output control register
 or the optional software message filter configuration(not implemented yet).
 \li \c STATUS request the CAN controllers status
-\li \c SEND a single message over the \a ioctl interface 
-\li \c RECEIVE poll a receive message
 \li \c CONFIGURERTR configure automatic rtr responses(not implemented)
 
 The third argument is a parameter structure depending on the request.
@@ -62,8 +59,6 @@ struct Command_par
 struct Config_par
 struct CanStatus_par
 struct ConfigureRTR_par
-struct Receive_par
-struct Send_par
 \endcode
 described in can4linux.h
 
@@ -192,23 +187,6 @@ int retval = -EIO;
 	  					sizeof(Config_par_t));
 	  kfree(argp);
 	  break;
-      case SEND:
-	  if( !access_ok(VERIFY_READ, (void *) arg, sizeof(Send_par_t))) {
-	     DBGout(); return(retval); 
-	  }
-	  if( !access_ok(VERIFY_WRITE, (void *) arg, sizeof(Send_par_t))) {
-	     DBGout(); return(retval); 
-	  }
-	  argp = (void *)kmalloc( sizeof(Send_par_t) +1 ,GFP_KERNEL );
-	  __lddk_copy_from_user( (void *) argp, (Send_par_t *)arg,
-	  				sizeof(Send_par_t));
-	  ((Send_par_t *) argp)->retval =
-	  		can_Send(inode, ((Send_par_t *) argp)->Tx );
-	  ((Send_par_t *) argp)->error = Can_errno;
-	  __lddk_copy_to_user( (Send_par_t *) arg, (void *)argp,
-	  				sizeof(Send_par_t));
-	  kfree(argp);
-	  break;
       case STATUS:
 	  if( !access_ok(VERIFY_READ, (void *) arg,
 	  				sizeof(CanStatusPar_t))) {
@@ -286,19 +264,6 @@ unsigned int minor = MINOR(inode->i_rdev);
 	    return(-EINVAL);
     }
     return 0;
-}
-
-/* is not very useful! use it if you are sure the tx queu is empty */
-int can_Send(struct inode *inode, canmsg_t *Tx)
-{
-unsigned int minor = MINOR(inode->i_rdev);	
-canmsg_t tx;
-
-    if( !access_ok(VERIFY_READ,Tx,sizeof(canmsg_t)) ) {
-	    return -EINVAL;
-    }
-    __lddk_copy_from_user((canmsg_t *) &tx, (canmsg_t *) Tx,sizeof(canmsg_t));
-    return CAN_SendMessage(minor, &tx);
 }
 
 int can_Config(

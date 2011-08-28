@@ -50,8 +50,6 @@ typedef struct {
 
 #define COMMAND 	 0	/**< IOCTL command request */
 #define CONFIG 		 1	/**< IOCTL configuration request */
-#define SEND 		 2	/**< IOCTL request */
-#define RECEIVE 	 3	/**< IOCTL request */
 #define CONFIGURERTR 	 4	/**< IOCTL request */
 #define STATUS           5      /**< IOCTL status request */
 
@@ -101,23 +99,6 @@ typedef struct CanStatusPar {
 #define CAN_TYPE_TouCAN		3
 #define CAN_TYPE_82527		4
 #define CAN_TYPE_TwinCAN	5
-
-
-/**
- IOCTL Send request parameter structure */
-typedef struct Send_par {
-    canmsg_t *Tx;		/**< CAN message struct  */
-    int error;	 		/**< return value for errno */
-    unsigned long retval;	/**< return value */
-} Send_par_t ;
-
-/**
- IOCTL Receive request parameter structure */
-typedef struct Receive_par {
-    canmsg_t *Rx;		/**< CAN message struct  */
-    int error;	 		/**< return value for errno */
-    unsigned long retval;	/**< return value */
-} Receive_par_t ;
 
 /**
 IOCTL ConfigureRTR request parameter structure */
