@@ -174,6 +174,7 @@ typedef struct Dev Dev;
 struct Dev {
 	int	minor;
 	int	isopen;
+	unsigned int	can_range;		/* ioremapped adresses */
 	int	requestedIrq;
 	wait_queue_head_t wq;
 	MsgQ	rxq;
@@ -187,7 +188,6 @@ extern	Dev*	filedev(struct file*);
 extern int Can_RequestIrq(Dev*, int irq);
 
  extern unsigned char *can_base[];
- extern unsigned int   can_range[];
 
 
 #ifndef Can_MAJOR

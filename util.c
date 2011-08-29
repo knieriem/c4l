@@ -21,7 +21,6 @@
 #endif
 
 unsigned char *can_base[MAX_CHANNELS];		/* ioremapped adresses */
-unsigned int can_range[MAX_CHANNELS];		/* ioremapped adresses */
 
 
 int Can_RequestIrq(Dev *dev, int irq)

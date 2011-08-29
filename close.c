@@ -46,13 +46,13 @@ __LDDK_CLOSE_TYPE can_close ( __LDDK_CLOSE_PARAM )
         /* since Vx.y (2.4?) macros defined in ioport.h,
            called is  __release_region()  */
 #if defined(CAN_PORT_IO) 
-	release_region(Base[minor], can_range[minor] );
+	release_region(Base[minor], dev->can_range);
 #else
 #if defined(CAN_INDEXED_PORT_IO)
 	release_region(Base[minor],2);
 #else
 # ifndef CAN4LINUX_PCI
-	release_mem_region(Base[minor], can_range[minor] );
+	release_mem_region(Base[minor], dev->can_range);
 # endif
 #endif
 #endif

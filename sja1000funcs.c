@@ -289,34 +289,31 @@ int CAN_VendorInit(Dev *dev)
 	minor = dev->minor;
 	DBGin("CAN_VendorInit");
 
-/* 1. Vendor specific part ------------------------------------------------ */
 #if defined(IXXAT_PCI03) || defined (PCM3680)
-    can_range[minor] = 0x200; /*stpz board or Advantech Pcm-3680 */
+	dev->can_range = 0x200; /*stpz board or Advantech Pcm-3680 */
 #else
-    can_range[minor] = CAN_RANGE;
+	dev->can_range = CAN_RANGE;
 #endif
-    
-/* End: 1. Vendor specific part ------------------------------------------- */
 
 
 #if !defined(CAN4LINUX_PCI)
-    /* Request the controllers address space */
+	/* Request the controllers address space */
 #if defined(CAN_PORT_IO) 
-    /* It's port I/O */
-    if(NULL == request_region(Base[minor], can_range[minor], "CAN-IO")) {
-	return -EBUSY;
-    }
+	/* It's port I/O */
+	if (request_region(Base[minor], dev->can_range, "CAN-IO") == NULL) {
+		return -EBUSY;
+	}
 #else
 #if defined(CAN_INDEXED_PORT_IO)
-    /* It's indexed port I/O */
-    if(NULL == request_region(Base[minor], 2, "CAN-IO")) {
-      return -EBUSY;
-    } 
+	/* It's indexed port I/O */
+	if (request_region(Base[minor], 2, "CAN-IO") == NULL) {
+		return -EBUSY;
+	} 
 #else
-    /* It's Memory I/O */
-    if(NULL == request_mem_region(Base[minor], can_range[minor], "CAN-IO")) {
-	return -EBUSY;
-    }
+	/* It's Memory I/O */
+	if (request_mem_region(Base[minor], dev->can_range, "CAN-IO") == NULL) {
+		return -EBUSY;
+	}
 #endif
 #endif
 #endif 	/* !defined(CAN4LINUX_PCI) */
@@ -328,7 +325,7 @@ int CAN_VendorInit(Dev *dev)
 	can_base[minor] = ioremap(Base[minor], 0x200);
 #endif
 
-    /* now the virtual address can be used for the register address macros */
+	/* now the virtual address can be used for the register address macros */
 
 
 /* 2. Vendor specific part ------------------------------------------------ */
