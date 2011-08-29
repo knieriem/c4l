@@ -22,39 +22,19 @@
 
 unsigned char *can_base[MAX_CHANNELS];		/* ioremapped adresses */
 
-
 int Can_RequestIrq(Dev *dev, int irq)
 {
-int err=0;
+	int err=0;
 
-    DBGin("Can_RequestIrq");
-    /*
-
-    int request_irq(unsigned int irq,			// interrupt number  
-              void (*handler)(int, void *, struct pt_regs *), // pointer to ISR
-		              irq, dev_id, registers on stack
-              unsigned long irqflags, const char *devname,
-              void *dev_id);
-
-       dev_id - The device ID of this handler (see below).       
-       This parameter is usually set to NULL,
-       but should be non-null if you wish to do  IRQ  sharing.
-       This  doesn't  matter when hooking the
-       interrupt, but is required so  that,  when  free_irq()  is
-       called,  the  correct driver is unhooked.  Since this is a
-       void *, it can point to anything (such  as  a  device-spe­
-       cific  structure,  or even empty space), but make sure you
-       pass the same pointer to free_irq().
-
-    */
-
-    err = kapi_request_irq(irq, "Can", dev);
-    if (!err) {
-	/* printk("Requested IRQ[%d]: %d @ 0x%x", minor, irq, handler); */
-	DBGprint(DBG_BRANCH,("Requested IRQ: %d", irq));
-	dev->requestedIrq = 1;
-    }
-    DBGout();return err;
+	DBGin("Can_RequestIrq");
+	err = kapi_request_irq(irq, "Can", dev);
+	if (!err) {
+		/* printk("Requested IRQ[%d]: %d @ 0x%x", dev->minor, irq, handler); */
+		DBGprint(DBG_BRANCH,("Requested IRQ: %d", irq));
+		dev->requestedIrq = 1;
+	}
+	DBGout();
+	return err;
 }
 
 int Can_FreeIrq(Dev *dev, int irq)

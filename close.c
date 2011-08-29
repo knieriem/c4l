@@ -39,22 +39,17 @@ __LDDK_CLOSE_TYPE can_close ( __LDDK_CLOSE_PARAM )
 	Dev *dev = filedev(file);
 	int minor = dev->minor;
 
-    DBGin("can_close");
-    {
+	DBGin("can_close");
 	CAN_StopChip(minor);
 
         /* since Vx.y (2.4?) macros defined in ioport.h,
            called is  __release_region()  */
 #if defined(CAN_PORT_IO) 
 	release_region(Base[minor], dev->can_range);
-#else
-#if defined(CAN_INDEXED_PORT_IO)
+#elif defined(CAN_INDEXED_PORT_IO)
 	release_region(Base[minor],2);
-#else
-# ifndef CAN4LINUX_PCI
+#elif defined(CAN4LINUX_PCI)
 	release_mem_region(Base[minor], dev->can_range);
-# endif
-#endif
 #endif
 
 #ifdef CAN_USE_FILTER
@@ -74,7 +69,6 @@ __LDDK_CLOSE_TYPE can_close ( __LDDK_CLOSE_PARAM )
 		return 0;
 	}
 	
-    }
-    DBGout();
-    return -EBADF;
+	DBGout();
+	return -EBADF;
 }

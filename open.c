@@ -50,25 +50,22 @@
 */
 int can_open( __LDDK_OPEN_PARAM )
 {
-int retval = 0;
-
-    DBGin("can_open");
-    incusers();
-    {
-
-	int lasterr;	
 	Dev *dev = filedev(file);
 	unsigned int minor = dev->minor;
+	int retval = 0;
+	int lasterr;
+
+	DBGin("can_open");
+	incusers();
 
 	/* Can_dump(minor); */
 
 	/* release_mem_region(0xd8000, 0x200 ); */
-	if( minor > 3 )
-	{
-	    printk("CAN: Illegal minor number %d\n", minor);
-	    decusers();
-	    DBGout();
-	    return -EINVAL;
+	if (minor > 3) {
+		printk("CAN: Illegal minor number %d\n", minor);
+		decusers();
+		DBGout();
+		return -EINVAL;
 	}
 	/* check if device is already open, should be used only by one process */
 
@@ -78,29 +75,27 @@ int retval = 0;
 		return -ENXIO;
 	}
 	dev->isopen = 1;		/* flag device in use */
-	if( Base[minor] == 0x00) {
-	    /* No device available */
-	    printk("CAN[%d]: no device available\n", minor);
-	    decusers();
-	    DBGout();
-	    return -ENXIO;
+	if (Base[minor] == 0x00) {
+		/* No device available */
+		printk("CAN[%d]: no device available\n", minor);
+		decusers();
+		DBGout();
+		return -ENXIO;
 	}
 
 	/* the following does all the board specific things
 	   also memory remapping if necessary */
-	if( (lasterr = CAN_VendorInit(dev	)) < 0 ){
-	    decusers();
-	    DBGout();
-	    return lasterr;
+	if ((lasterr = CAN_VendorInit(dev)) < 0) {
+		decusers();
+		DBGout();
+		return lasterr;
 	}
 
 	/* Can_dump(minor); */
 
-/* controller_available(curr + 0x400, 4); */
 	Can_WaitInit(dev);	/* initialize wait queue for select() */
 
-	if (Can_FifoInit(dev) < 0)
-	{
+	if (Can_FifoInit(dev) < 0) {
 		decusers();
 		DBGout();
 		return -ENOMEM;
@@ -110,17 +105,17 @@ int retval = 0;
 	Can_FilterInit(minor);
 #endif
 
-	if( CAN_ChipReset(minor) < 0 ) {
-	    decusers();
-	    DBGout();
-	    return -EINVAL;
+	if (CAN_ChipReset(minor) < 0) {
+		decusers();
+		DBGout();
+		return -EINVAL;
 	}
 	CAN_StartChip(minor);
 #if DEBUG
-    CAN_ShowStat(minor);
+	CAN_ShowStat(minor);
 #endif
 	/* Can_dump(minor); */
-    }
-    DBGout();
-    return retval;
+
+	DBGout();
+	return retval;
 }
