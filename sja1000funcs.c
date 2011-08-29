@@ -17,6 +17,7 @@
 #include <linux/sched.h>
 #include "io.h"
 #include ",,sysctl.h"
+#include "kapi.h"
 
 typedef struct Msginf Msginf;
 struct Msginf {
@@ -368,29 +369,52 @@ int CAN_VendorInit(Dev *dev)
 	return 0;
 }
 
+void delayedmsgworker(void *v)
+{
+	Dev *dev = v;
+
+	qconsume(&dev->txq, sendcanmsg, dev);
+	if (qlen(&dev->txq) <= qsize(&dev->txq)/2)
+		wake_up_interruptible(&dev->wq);
+}
+
 /* called from qconsume to transmit one message on transmit interrupt, and */
 int sendcanmsg(canmsg_t *msg, void *v)
 {
 	unsigned long id;
 	Dev *dev = v;
 	int minor;
+	int dly;
 	int ext, i;
 	uint8 tx2reg;
 
+//	kapi_t0(TMeasSend, -1);
 	minor = dev->minor;
-	if (msg->timestamp.tv_usec != 0) {
-		/* start delayed worker */
-		return 0;	/* not consumed */
-	}
-
+	ext = msg->flags & MSG_EXT;
+	id = msg->id;
 	if (msg->length > 8)
 		msg->length = 8;
+	dly = msg->timestamp.tv_usec;
+	if (dly != 0) {
+		int nbits = 1+11+1+1+1+4+15+1+1+1+7;
+		if (ext)
+			nbits += 18+2;
+		nbits += msg->length*8;
+		/* subtract the minimal transmission time of the message
+		 * from the delay to avoid waiting too long
+		 */
+		dly -= nbits*1000/Baud[dev->minor];
+		if (dly>0) {
+			msg->timestamp.tv_usec = 0;
+			kapi_schedule_delayed(&dev->delayedwork, delayedmsgworker, dly, dev);
+			return 0;	/* not consumed */
+		}
+	}
+
 	tx2reg = msg->length;
 	if (msg->flags & MSG_RTR) {
 		tx2reg |= CAN_RTR;
 	}
-	ext = msg->flags & MSG_EXT;
-	id = msg->id;
 	if (ext) {
 		DBGprint(DBG_DATA, ("---> send ext message"));
 		CANout(minor, frameinfo, CAN_EFF + tx2reg);
@@ -421,7 +445,7 @@ int sendcanmsg(canmsg_t *msg, void *v)
 	return 1;	/* consumed msg */
 }
 
-void readcanmsg(canmsg_t *msg, void *data)
+static void readcanmsg(canmsg_t *msg, void *data)
 {
 	Msginf *inf = data;
 	int ext, i;
@@ -466,7 +490,7 @@ void readcanmsg(canmsg_t *msg, void *data)
         CANout(minor, cancmd, CAN_RELEASE_RECEIVE_BUFFER );
 }
 
-void errmsg(canmsg_t *msg, void *v)
+static void errmsg(canmsg_t *msg, void *v)
 {
 	Msginf *inf = v;
 
@@ -477,7 +501,7 @@ void errmsg(canmsg_t *msg, void *v)
 	/* msg->data[i] = 0; */
 }
 
-void rxproduce(Dev *dev, void (*f)(canmsg_t*, void*), void *v)
+static void rxproduce(Dev *dev, void (*f)(canmsg_t*, void*), void *v)
 {
 	Msginf *inf = v;
 
@@ -628,6 +652,7 @@ int first = 0;
     }
 
 	if (irqsrc & CAN_TRANSMIT_INT) {
+//		kapi_tprint(TMeasSend, 80);
 		dev->txinprogress = 0;
 		qconsume(&dev->txq, sendcanmsg, dev);
 		if (qlen(&dev->txq) <= qsize(&dev->txq)/2)

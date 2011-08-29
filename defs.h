@@ -181,6 +181,7 @@ struct Dev {
 	MsgQ	txq;
 	int	txinprogress;
 	int	rxstatus;
+	void	*delayedwork;				/* pointer to kapi_schedule_delayed instance */
 };
 
 extern	Dev*	filedev(struct file*);
@@ -214,6 +215,8 @@ extern int CAN_SetMask(int, unsigned int, unsigned int);
 extern int CAN_SetOMode(int,int);
 extern int CAN_Interrupt(int irq, void *unused);
 extern int CAN_VendorInit(Dev*);
+
+extern int sendcanmsg(canmsg_t* , void*);
 
 extern void register_systables(void);
 extern void unregister_systables(void);

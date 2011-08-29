@@ -13,8 +13,6 @@
 
 #include "defs.h"
 
-extern int sendcanmsg(canmsg_t* , void*);
-
 /**
 
 \brief size_t write(int fd, const char *buf, size_t count);

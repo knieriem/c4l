@@ -114,3 +114,26 @@ struct inode* kapi_fileinode(struct file *file)
 {
 	return file->f_dentry->d_inode;
 }
+
+
+/*
+ * measure Δt, i.e. time between `t0' and `tprint'
+ */
+void kapi_t0(int name, int cmpval)
+{
+	/* TBD */
+}
+
+void kapi_tprint(int name, int period)
+{
+	/* TBD */
+}
+
+
+/*
+ * utility for scheduling delayed work, using high resolution timers
+ */
+void kapi_schedule_delayed(void **v, void (*f)(void*), int usec, void *data)
+{
+	/* TBD */
+}
