@@ -2,7 +2,7 @@
 # $Id: Readme,v 1.5 2003/08/27 13:05:42 oe Exp $
 #
 This driver is derived from the LLP projects can4linux driver
-which was started by Clausi Schröter and later maintained by Heinz-Jürgen Oertel
+which was started by Clausi SchrÃ¶ter and later maintained by Heinz-JÃ¼rgen Oertel
 
 the most of the ddl stuff is removed
 as is the support for supporting different chip-sets and i/o models.
