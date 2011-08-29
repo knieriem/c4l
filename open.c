@@ -108,7 +108,7 @@ int retval = 0;
 	/* Can_dump(minor); */
 
 /* controller_available(curr + 0x400, 4); */
-	Can_WaitInit(minor);	/* initialize wait queue for select() */
+	Can_WaitInit(dev);	/* initialize wait queue for select() */
 
 	if (Can_FifoInit(dev) < 0)
 	{

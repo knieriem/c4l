@@ -486,7 +486,7 @@ void rxproduce(Dev *dev, void (*f)(canmsg_t*, void*), void *v)
 
 	if (qproduce(&dev->rxq, f, inf)) {
 		dev->rxstatus = BUF_OK;
-		wake_up_interruptible(&CanWait[inf->minor]);
+		wake_up_interruptible(&dev->wq);
 	} else {
 		dev->rxstatus = BUF_OVERRUN;
 		printk("CAN[%d] RX: FIFO overrun\n", inf->minor);
@@ -634,7 +634,7 @@ int first = 0;
 		dev->txinprogress = 0;
 		qconsume(&dev->txq, sendcanmsg, dev);
 		if (qlen(&dev->txq) <= qsize(&dev->txq)/2)
-			wake_up_interruptible (&CanWait[minor]);
+			wake_up_interruptible(&dev->wq);
 	}
 
 	if (irqsrc & CAN_OVERRUN_INT) {

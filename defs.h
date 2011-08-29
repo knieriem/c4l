@@ -174,6 +174,7 @@ typedef struct Dev Dev;
 struct Dev {
 	int	minor;
 	int	requestedIrq;
+	wait_queue_head_t wq;
 	MsgQ	rxq;
 	MsgQ	txq;
 	int	txinprogress;
@@ -183,8 +184,6 @@ struct Dev {
 extern	Dev*	filedev(struct file*);
 
 extern int Can_RequestIrq(Dev*, int irq);
-
- extern wait_queue_head_t CanWait[];
 
  extern unsigned char *can_base[];
  extern unsigned int   can_range[];
@@ -232,7 +231,7 @@ extern int Can_FilterSigNo(int minor, unsigned signo, unsigned signal);
 extern int Can_FilterSignal(int minor, unsigned id, unsigned signal);
 extern int Can_FilterTimestamp(int minor, unsigned message, unsigned stamp);
 extern int Can_FreeIrq(Dev*, int irq);
-extern int Can_WaitInit(int minor);
+extern int Can_WaitInit(Dev*);
 extern void Can_StartTimer(unsigned long v);
 extern void Can_StopTimer(void);
 extern void Can_TimerInterrupt(unsigned long unused);

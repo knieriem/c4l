@@ -28,7 +28,7 @@ unsigned int can_select( __LDDK_SELECT_PARAM )
      * calling the function poll_wait:  
      */
                 /*     _select para, wait queue, _select para */
-/* X */		poll_wait(file, &CanWait[dev->minor] , wait);
+/* X */		poll_wait(file, &dev->wq, wait);
 
     DBGprint(DBG_BRANCH,("POLL: wait returned \n"));
     {

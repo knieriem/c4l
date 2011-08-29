@@ -16,12 +16,6 @@
 #include <linux/pci.h>
 #include ",,sysctl.h"
 
- /* each CAN channel has one wait_queue for read() */
- /* #define wait_queue_head_t     struct wait_queue * */
- wait_queue_head_t CanWait[MAX_CHANNELS];
- /* wait_queue_head_t *CanWait[MAX_CHANNELS]; */
-
-
 #ifdef CAN_USE_FILTER
     msg_filter_t Rx_Filter[MAX_CHANNELS]; 
 #endif
@@ -73,16 +67,12 @@ int Can_FreeIrq(Dev *dev, int irq)
 	return 0;
 }
 
-int Can_WaitInit(int minor)
+int Can_WaitInit(Dev *dev)
 {
-    DBGin("Can_WaitInit");
-	/* reset the wait_queue pointer */
-/* soll so sein */
-	init_waitqueue_head(&CanWait[minor]);
-/* das geht */
-	/* CanWait[minor] = NULL; */
-    DBGout();
-    return 0;
+	DBGin("Can_WaitInit");
+	init_waitqueue_head(&dev->wq);
+	DBGout();
+	return 0;
 }
 
 int Can_FifoInit(Dev *dev)
