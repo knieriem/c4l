@@ -13,8 +13,6 @@
 
 #include "defs.h"
 
-int Can_isopen[MAX_CHANNELS] = { 0 };   /* device minor already opened */
-
 /**
 *
 * \brief int open(const char *pathname, int flags);
@@ -74,21 +72,12 @@ int retval = 0;
 	}
 	/* check if device is already open, should be used only by one process */
 
-#ifdef UNSAFE
-	/* if(Can_isopen[minor]) { */
-	    /* decusers(); */
-	    /* DBGout(); */
-	    /* return -ENXIO; */
-	/* } */
-	++Can_isopen[minor];		/* flag device in use */
-#else
-	if(Can_isopen[minor] == 1) {
-	    decusers();
-	    DBGout();
-	    return -ENXIO;
+	if (dev->isopen == 1) {
+		decusers();
+		DBGout();
+		return -ENXIO;
 	}
-	Can_isopen[minor] = 1;		/* flag device in use */
-#endif
+	dev->isopen = 1;		/* flag device in use */
 	if( Base[minor] == 0x00) {
 	    /* No device available */
 	    printk("CAN[%d]: no device available\n", minor);

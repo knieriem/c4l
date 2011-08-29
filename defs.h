@@ -173,6 +173,7 @@ extern __LDDK_CLOSE_TYPE can_close (__LDDK_CLOSE_PARAM);
 typedef struct Dev Dev;
 struct Dev {
 	int	minor;
+	int	isopen;
 	int	requestedIrq;
 	wait_queue_head_t wq;
 	MsgQ	rxq;

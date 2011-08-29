@@ -14,7 +14,6 @@
 #include "defs.h"
 #include ",,sysctl.h"
 
-extern int Can_isopen[];   		/* device minor already opened */
 
 /***************************************************************************/
 /**
@@ -69,10 +68,10 @@ __LDDK_CLOSE_TYPE can_close ( __LDDK_CLOSE_PARAM )
 	/* printk("CAN module %d has been closed\n",minor); */
 #endif
 
-	if(Can_isopen[minor] > 0) {
-	    --Can_isopen[minor];		/* flag device as free */
-	    decusers();
-	    return 0;
+	if (dev->isopen > 0) {
+		--dev->isopen;		/* flag device as free */
+		decusers();
+		return 0;
 	}
 	
     }
