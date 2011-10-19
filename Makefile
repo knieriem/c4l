@@ -140,6 +140,7 @@ clean:
 	-rm -f *.o
 	-rm -f .*.o.cmd
 	-rm -f .*.ko.cmd
+	-rm -rf ,,linux-headers
 	-rm -f can.mod.c
 	-rm -f Module.symvers modules.order
 	-rm -f can.ko can.o

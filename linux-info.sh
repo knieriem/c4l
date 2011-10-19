@@ -10,14 +10,22 @@ set -e
 
 prog=linux-info
 
-if test -f +linux-info; then
-    . +linux-info
+if test -f +linux; then
+	linux=`cat +linux | sed '/^#/d'`
 else
-    # kernel version to be used
-     # linux source directory to be used
-    linux=/dev/null
-
-    # remove when properly filled in the above values
+	linux=,,linux-headers
+	if ! test -d $linux; then
+		mkdir $linux
+		cd $linux
+		echo '* extracing linux headers' >&2
+		if ! tar xzf ../../runsys/linux/linux-headers.tar.gz; then
+			cd ..
+			rm -rf $linux
+			exit 1
+		else
+			cd ..
+		fi
+	fi
 fi
 
 wd=`pwd`
