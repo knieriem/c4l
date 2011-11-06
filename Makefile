@@ -66,7 +66,7 @@ TARGET=ATCANMINI_PELICAN
 # NODEBUG
 # doesn't compile any debug code into the driver
 DEBUG=NODEBUG
-DEBUG=DEBUG=1
+#DEBUG=DEBUG=1
 
 # all definitions for compiling the sources
 # CAN_PORT_IO		- use port I/O instead of memory I/O
