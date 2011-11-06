@@ -18,7 +18,7 @@ else
 		mkdir $linux
 		cd $linux
 		echo '* extracing linux headers' >&2
-		if ! tar xzf ../../runsys/linux/linux-headers.tar.gz; then
+		if ! tar xf ../../runsys/linux/linux-headers.tar; then
 			cd ..
 			rm -rf $linux
 			exit 1
