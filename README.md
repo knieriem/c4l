@@ -1,10 +1,11 @@
-This is a linux driver for the [Controller Area Network][can]. It
-is an early fork of [*can4linux*][c4lwiki] v2.6 started in 2003, updated
-to v3.1 in the same year.
+This is a linux driver for the [CAN bus][can]. It is an early fork of
+[*can4linux*][c4lwiki] v2.6 started in 2003, updated to v3.1 in the
+same year.
 
-If you are interested in *can4linux*, you most likely are looking for
-the [official version][c4l]. There are quite a few differences between that
-version and this early fork!
+This repo exists mostly for historical reasons. If you are interested
+in *can4linux*, you most likely are looking for the [official
+version][c4l]. There are quite a few differences between that version
+and this early fork!
 
 The driver is used in Transmeta Crusoe and Intel Atom based
 embedded systems running Linux 3.0.y. These systems contain an
@@ -28,7 +29,7 @@ Run *make*. This should build the driver module `can.ko`.
 
 
 
-[can]: https://en.wikipedia.org/wiki/Controller_area_network
+[can]: https://en.wikipedia.org/wiki/CAN_bus
 [c4lwiki]: https://en.wikipedia.org/wiki/Can4linux
 [c4l]: https://gitlab.com/hjoertel/can4linux
 [sf]: http://sourceforge.net/projects/can4linux/
